@@ -45,7 +45,8 @@ class JournalEventHandler(FileSystemEventHandler):
         self.event_loop = event_loop
         self.current_positions: Dict[str, int] = {}
         self.monitored_files: Set[str] = set()
-        self.last_status_check = datetime.now()
+        # Initialize to past time so first status check won't be throttled
+        self.last_status_check = datetime.now() - timedelta(seconds=1.0)
         
         logger.info("Initialized journal event handler")
     
@@ -179,8 +180,8 @@ class JournalEventHandler(FileSystemEventHandler):
             
             self.last_status_check = now
             
-            # Read status data
-            status_data = self.parser.read_status_file()
+            # Read status data from the specific file
+            status_data = self._read_status_file(file_path)
             
             if status_data:
                 logger.debug("Status.json updated")
@@ -190,6 +191,40 @@ class JournalEventHandler(FileSystemEventHandler):
             
         except Exception as e:
             logger.error(f"Error handling Status.json modification: {e}")
+    
+    def _read_status_file(self, file_path: Path) -> Optional[Dict]:
+        """
+        Read and parse a Status.json file from specific path.
+        
+        Args:
+            file_path: Path to Status.json file
+            
+        Returns:
+            Optional[Dict]: Parsed status data, or None if not available
+        """
+        try:
+            if not file_path.exists():
+                logger.debug(f"Status file not found: {file_path}")
+                return None
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if not content:
+                    return None
+                
+                import orjson
+                status_data = orjson.loads(content)
+                
+                # Validate basic structure
+                if not isinstance(status_data, dict):
+                    logger.warning(f"Status file is not a dictionary: {type(status_data)}")
+                    return None
+                
+                return status_data
+                
+        except Exception as e:
+            logger.error(f"Error reading status file {file_path}: {e}")
+            return None
     
     async def _safe_callback(self, data, event_type: str):
         """
