@@ -12,10 +12,15 @@ Modules:
 # Package version
 __version__ = "0.1.0"
 
+# Configuration management exports
+from .config import EliteConfig, load_config, create_sample_config
+
 # Future exports - will be implemented in later milestones
-# from .config import EliteConfig
 # from .data_store import EventStore
 
 __all__ = [
-    # Will be populated as classes are implemented
+    "EliteConfig",
+    "load_config", 
+    "create_sample_config",
+    # Data store will be added in Milestone 6
 ]
