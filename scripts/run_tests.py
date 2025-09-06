@@ -47,7 +47,7 @@ def print_step(step_num, total_steps, title, description=""):
 
 def print_substep(title, description=""):
     """Print a formatted substep."""
-    print(f"\n→ {title}")
+    print(f"\n-> {title}")
     if description:
         print(f"  {description}")
 
@@ -76,17 +76,17 @@ def run_command(cmd, description, capture_output=False, show_output=True):
             )
             return result.returncode == 0, "", ""
     except Exception as e:
-        print(f"  ❌ Error running command: {e}")
+        print(f"  [ERROR] Error running command: {e}")
         return False, "", str(e)
 
 
 def check_virtual_environment():
     """Check if virtual environment is activated."""
     if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-        print("  ✅ Virtual environment is activated")
+        print("  [SUCCESS] Virtual environment is activated")
         return True
     else:
-        print("  ❌ Virtual environment is not activated")
+        print("  [FAILED] Virtual environment is not activated")
         print("     Please run: python scripts/setup_dependencies.py")
         return False
 
@@ -96,12 +96,12 @@ def main():
     start_time = time.time()
     total_steps = 8
     
-    print("🚀 Elite Dangerous MCP Server - Test Suite Runner")
+    print("Elite Dangerous MCP Server - Test Suite Runner")
     print(f"Started at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Verify we're in the project root
     if not Path("src").exists() or not Path("tests").exists():
-        print("❌ Error: Must be run from project root directory")
+        print("[ERROR] Must be run from project root directory")
         sys.exit(1)
     
     # Step 1: Environment Check
@@ -111,9 +111,9 @@ def main():
     success, python_version, _ = run_command([sys.executable, "--version"], 
                                            "Check Python version", capture_output=True)
     if success:
-        print(f"  ✅ Python version: {python_version.strip()}")
+        print(f"  [SUCCESS] Python version: {python_version.strip()}")
     else:
-        print("  ❌ Failed to get Python version")
+        print("  [FAILED] Failed to get Python version")
         sys.exit(1)
     
     if not check_virtual_environment():
@@ -136,13 +136,13 @@ def main():
         success, _, _ = run_command([sys.executable, "-c", f"import {import_name}"], 
                                    f"Check {package}", capture_output=True, show_output=False)
         if success:
-            print(f"  ✅ {package}")
+            print(f"  [SUCCESS] {package}")
         else:
-            print(f"  ❌ {package} - missing")
+            print(f"  [FAILED] {package} - missing")
             missing_packages.append(package)
     
     if missing_packages:
-        print(f"\n  ❌ Missing packages: {', '.join(missing_packages)}")
+        print(f"\n  [FAILED] Missing packages: {', '.join(missing_packages)}")
         print("     Please run: python scripts/setup_dependencies.py")
         sys.exit(1)
     
@@ -166,13 +166,13 @@ def main():
     all_paths_exist = True
     for path in required_paths:
         if Path(path).exists():
-            print(f"  ✅ {path}")
+            print(f"  [SUCCESS] {path}")
         else:
-            print(f"  ❌ {path} - missing")
+            print(f"  [FAILED] {path} - missing")
             all_paths_exist = False
     
     if not all_paths_exist:
-        print("\n  ❌ Some required files are missing")
+        print("\n  [FAILED] Some required files are missing")
         sys.exit(1)
     
     # Step 4: Import Tests
@@ -189,16 +189,17 @@ def main():
     
     all_imports_successful = True
     for module, description in import_tests:
-        success, _, error = run_command([sys.executable, "-c", f"import {module}; print('✅ {description}')"], 
+        # Use plain text without emoji for subprocess commands
+        success, _, error = run_command([sys.executable, "-c", f"import {module}; print('OK: {description}')"], 
                                        f"Import {module}", capture_output=True)
         if success:
-            print(f"  ✅ {description}")
+            print(f"  [SUCCESS] {description}")
         else:
-            print(f"  ❌ {description} - {error.strip()}")
+            print(f"  [FAILED] {description} - {error.strip()}")
             all_imports_successful = False
     
     if not all_imports_successful:
-        print("\n  ❌ Some imports failed")
+        print("\n  [FAILED] Some imports failed")
         sys.exit(1)
     
     # Step 5: Individual Component Tests
@@ -221,9 +222,9 @@ with tempfile.TemporaryDirectory() as temp_dir:
     success, output, error = run_command([sys.executable, "-c", parser_test],
                                         "JournalParser test", capture_output=True)
     if success:
-        print(f"  ✅ {output.strip()}")
+        print(f"  [SUCCESS] {output.strip()}")
     else:
-        print(f"  ❌ JournalParser test failed: {error.strip()}")
+        print(f"  [FAILED] JournalParser test failed: {error.strip()}")
     
     print_substep("Testing Configuration system")
     config_test = '''
@@ -236,9 +237,9 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     success, output, error = run_command([sys.executable, "-c", config_test],
                                         "Config test", capture_output=True)
     if success:
-        print(f"  ✅ {output.strip()}")
+        print(f"  [SUCCESS] {output.strip()}")
     else:
-        print(f"  ❌ Configuration test failed: {error.strip()}")
+        print(f"  [FAILED] Configuration test failed: {error.strip()}")
     
     # Step 6: Unit Test Suite - Parser
     print_step(6, total_steps, "Journal Parser Unit Tests",
@@ -247,7 +248,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     success, _, _ = run_command([sys.executable, "-m", "pytest", "tests/unit/test_journal_parser.py", "-v"],
                                "Journal parser tests")
     if not success:
-        print("  ❌ Journal parser tests failed")
+        print("  [FAILED] Journal parser tests failed")
         sys.exit(1)
     
     # Step 7: Unit Test Suite - Monitor  
@@ -257,7 +258,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     success, _, _ = run_command([sys.executable, "-m", "pytest", "tests/unit/test_journal_monitor.py", "-v"],
                                "Journal monitor tests")
     if not success:
-        print("  ❌ Journal monitor tests failed")
+        print("  [FAILED] Journal monitor tests failed")
         sys.exit(1)
     
     # Step 8: Full Test Suite with Coverage
@@ -271,7 +272,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     ], "Complete test suite with coverage")
     
     if not success:
-        print("  ❌ Complete test suite failed")
+        print("  [FAILED] Complete test suite failed")
         sys.exit(1)
     
     # Summary
@@ -279,12 +280,12 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     duration = end_time - start_time
     
     print("\n" + "="*60)
-    print("🎉 ALL TESTS COMPLETED SUCCESSFULLY!")
+    print("ALL TESTS COMPLETED SUCCESSFULLY!")
     print("="*60)
-    print(f"⏱️  Total execution time: {duration:.2f} seconds")
-    print(f"📊 Coverage report generated in: htmlcov/index.html")
-    print(f"✅ All milestones 1-4 functionality verified")
-    print("\n🚀 Ready for Milestone 5: Event Processing and Classification")
+    print(f"Total execution time: {duration:.2f} seconds")
+    print(f"Coverage report generated in: htmlcov/index.html")
+    print(f"All milestones 1-4 functionality verified")
+    print("\nReady for Milestone 5: Event Processing and Classification")
     print("="*60)
 
 
@@ -292,8 +293,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n❌ Test run interrupted by user")
+        print("\n\n[INTERRUPTED] Test run interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n❌ Unexpected error: {e}")
+        print(f"\n\n[ERROR] Unexpected error: {e}")
         sys.exit(1)
