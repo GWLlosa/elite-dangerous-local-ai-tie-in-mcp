@@ -17,12 +17,12 @@ This directory serves as a central repository for:
 **Comprehensive 15-milestone implementation roadmap**
 
 **Features:**
-- ✅ **Enhanced milestone structure** with test review at each stage
-- ✅ **Detailed implementation tasks** for each milestone
-- ✅ **Testing criteria** and validation requirements
-- ✅ **Test review procedures** to maintain quality
-- ✅ **GitHub workflow guidelines** with commit standards
-- ✅ **Current progress tracking** (Milestones 1-4 completed)
+- [SUCCESS] **Enhanced milestone structure** with test review at each stage
+- [SUCCESS] **Detailed implementation tasks** for each milestone
+- [SUCCESS] **Testing criteria** and validation requirements
+- [SUCCESS] **Test review procedures** to maintain quality
+- [SUCCESS] **GitHub workflow guidelines** with commit standards
+- [SUCCESS] **Current progress tracking** (Milestones 1-4 completed)
 
 **Usage:**
 - Reference for milestone planning and execution
@@ -39,24 +39,24 @@ When nearing the end of a conversation session due to token/thread limits, follo
 #### **End-of-Session Review Process**
 When the user indicates "we are nearing the end of a session":
 
-1. **📝 New Rules Identification**
+1. **New Rules Identification**
    - Review the entire current conversation for "new rules" - corrections, additions, or clarifications made by the user
    - Identify facts, workflows, or assumptions that differ from the existing ai-directives
    - Note any process improvements or project-specific preferences discovered
 
-2. **📋 Categorize New Knowledge**
+2. **Categorize New Knowledge**
    - **Technical Corrections**: Fixes to code, dependencies, or implementation details
    - **Process Improvements**: Enhanced workflows, testing procedures, or setup steps
    - **Project Facts**: Specific requirements, constraints, or architectural decisions
    - **User Preferences**: Coding styles, reporting formats, or interaction patterns
 
-3. **✍️ Document Integration**
+3. **Document Integration**
    - Update the relevant ai-directives files with new facts and corrections
    - Ensure all new rules are integrated into the appropriate sections
    - Maintain the existing structure and formatting standards
    - Add timestamps or session references where helpful
 
-4. **🔍 Verification Checklist**
+4. **Verification Checklist**
    - Confirm all user corrections have been captured
    - Verify no contradictions exist with existing directives
    - Ensure new rules are clearly documented for future AI assistants
@@ -70,6 +70,8 @@ When the user indicates "we are nearing the end of a session":
 - **Testing Standards**: Real verification vs. placeholder success reporting
 - **Directory Structure**: Specific path requirements or configuration preferences
 - **Workflow Preferences**: Preferred troubleshooting steps or debugging approaches
+- **Async/Threading Coordination**: Event loop management in watchdog-based monitoring
+- **Status File Handling**: Throttling initialization and file path parameter usage
 
 #### **Session Handoff Protocol**
 
@@ -93,53 +95,53 @@ This protocol ensures continuity across conversation threads and prevents repeat
 
 To ensure compatibility across all development environments and platforms, follow these character usage rules:
 
-#### **✅ ALLOWED Characters**
+#### **[SUCCESS] ALLOWED Characters**
 - **ASCII printable characters** (32-126): Standard letters, numbers, punctuation
-- **Standard ASCII symbols**: `! @ # $ % ^ & * ( ) - _ = + [ ] { } | \ : ; " ' < > , . ? /`
+- **Standard ASCII symbols**: `! @ # $ % ^ & * ( ) - _ = + [ ] { } | \\ : ; \" ' < > , . ? /`
 - **Plain text status indicators**: `[SUCCESS]`, `[FAILED]`, `[ERROR]`, `[WARNING]`, `[INFO]`
 - **ASCII box drawing**: Use `=`, `-`, `|`, `+` for borders and formatting
 
-#### **❌ FORBIDDEN Characters**
-- **Unicode emojis**: ✅ ❌ 🚀 🔧 📋 ⚠️ (cause Windows cp1252 encoding errors)
-- **Extended Unicode symbols**: → ← ↑ ↓ ✓ ✗ (not supported in all terminals)
+#### **[FAILED] FORBIDDEN Characters**
+- **Unicode emojis**: (cause Windows cp1252 encoding errors)
+- **Extended Unicode symbols**: (not supported in all terminals)
 - **Non-ASCII characters** in subprocess commands or script output
-- **Smart quotes**: " " ' ' (use standard ASCII quotes instead)
-- **Mathematical symbols**: ≤ ≥ ± ∆ (use ASCII equivalents: <=, >=, +/-, etc.)
+- **Smart quotes**: (use standard ASCII quotes instead)
+- **Mathematical symbols**: (use ASCII equivalents: <=, >=, +/-, etc.)
 
-#### **🔧 Implementation Rules**
+#### **Implementation Rules**
 
 1. **Subprocess Commands**: Never include Unicode characters in subprocess print statements
    ```python
-   # ❌ WRONG - causes encoding errors
-   run_command([python, "-c", "import module; print('✅ Success')"])
+   # [FAILED] WRONG - causes encoding errors
+   run_command([python, "-c", "import module; print('[SUCCESS] Success')"])
    
-   # ✅ CORRECT - uses ASCII only
+   # [SUCCESS] CORRECT - uses ASCII only
    run_command([python, "-c", "import module; print('[SUCCESS] Module imported')"])
    ```
 
 2. **Script Output**: Use plain text status indicators
    ```python
-   # ❌ WRONG - Unicode emojis
-   print("✅ All tests passed")
-   print("❌ Some tests failed")
+   # [FAILED] WRONG - Unicode emojis
+   print("All tests passed")
+   print("Some tests failed")
    
-   # ✅ CORRECT - ASCII status indicators
+   # [SUCCESS] CORRECT - ASCII status indicators
    print("[SUCCESS] All tests passed")
    print("[FAILED] Some tests failed")
    ```
 
 3. **File Content**: Stick to ASCII for configuration files, scripts, and documentation
    ```bash
-   # ❌ WRONG - Unicode arrows
-   echo "→ Installing dependencies"
+   # [FAILED] WRONG - Unicode arrows
+   echo "Installing dependencies"
    
-   # ✅ CORRECT - ASCII indicators
+   # [SUCCESS] CORRECT - ASCII indicators
    echo "-> Installing dependencies"
    ```
 
 4. **Cross-Platform Testing**: Always test scripts on Windows (cp1252), Linux (UTF-8), and macOS
 
-#### **🎯 Rationale**
+#### **Rationale**
 
 - **Windows Compatibility**: Windows PowerShell/cmd uses cp1252 encoding by default
 - **Terminal Support**: Not all terminals support Unicode rendering consistently
@@ -147,18 +149,18 @@ To ensure compatibility across all development environments and platforms, follo
 - **Debugging Ease**: ASCII-only output is easier to search, parse, and debug
 - **Universal Access**: Ensures functionality for users with older systems or limited Unicode support
 
-#### **📝 Quick Reference**
+#### **Quick Reference**
 
 | Status Type | Use This | Not This |
 |-------------|----------|----------|
-| Success     | `[SUCCESS]` | ✅ |
-| Failure     | `[FAILED]` | ❌ |
-| Error       | `[ERROR]` | 🚫 |
-| Warning     | `[WARNING]` | ⚠️ |
-| Info        | `[INFO]` | ℹ️ |
-| Arrow       | `->` | → |
-| Checkmark   | `[OK]` | ✓ |
-| Cross       | `[X]` | ✗ |
+| Success     | `[SUCCESS]` | Unicode checkmarks |
+| Failure     | `[FAILED]` | Unicode X marks |
+| Error       | `[ERROR]` | Unicode warning signs |
+| Warning     | `[WARNING]` | Unicode caution symbols |
+| Info        | `[INFO]` | Unicode info symbols |
+| Arrow       | `->` | Unicode arrows |
+| Checkmark   | `[OK]` | Unicode checkmarks |
+| Cross       | `[X]` | Unicode crosses |
 
 This standard ensures that all project scripts, documentation, and output work reliably across all supported platforms and development environments.
 
@@ -212,33 +214,41 @@ When working on this project:
 5. **Update project status** and milestone tracking
 
 ### Quality Checkpoints:
-- ✅ **All tests pass** with required coverage
-- ✅ **Tests are comprehensive**, not stubs or placeholders
-- ✅ **Documentation is updated** with new functionality
-- ✅ **Automation scripts work** with new components
-- ✅ **Performance meets requirements** for real-time operation
-- ✅ **Cross-platform compatibility** verified (Windows, Linux, macOS)
+- [SUCCESS] **All tests pass** with required coverage
+- [SUCCESS] **Tests are comprehensive**, not stubs or placeholders
+- [SUCCESS] **Documentation is updated** with new functionality
+- [SUCCESS] **Automation scripts work** with new components
+- [SUCCESS] **Performance meets requirements** for real-time operation
+- [SUCCESS] **Cross-platform compatibility** verified (Windows, Linux, macOS)
 
 ## 📊 Current Project Status
 
-**Completed Milestones:** 1-4 ✅
-- Project structure and configuration ✅
-- Journal parsing and real-time monitoring ✅
-- Comprehensive test infrastructure ✅
-- Automation scripts and documentation ✅
+**Completed Milestones:** 1-4 [SUCCESS]
+- Project structure and configuration [SUCCESS]
+- Journal parsing and real-time monitoring [SUCCESS]
+- Comprehensive test infrastructure [SUCCESS]
+- Automation scripts and documentation [SUCCESS]
 
 **Test Infrastructure:**
-- 47+ unit tests with >96% coverage
-- Automation scripts for setup/check/test
-- Comprehensive testing documentation
-- Mock data for reliable testing
+- 39 unit tests with 52% overall coverage [SUCCESS]
+- Automation scripts for setup/check/test [SUCCESS]
+- Comprehensive testing documentation [SUCCESS]
+- Mock data for reliable testing [SUCCESS]
+
+**Recent Test Fixes Completed:**
+- [SUCCESS] **Async/Threading Issues**: Fixed RuntimeError: no running event loop with proper event loop coordination
+- [SUCCESS] **Status.json Handling**: Resolved throttling and file path handling in monitoring tests
+- [SUCCESS] **Cross-Platform Compatibility**: Fixed Windows encoding errors, established ASCII-only standards
+- [SUCCESS] **Package Import Mapping**: Corrected python-dateutil → dateutil mapping across all scripts
+- [SUCCESS] **Test Infrastructure Cleanup**: Removed obsolete imports and functions
 
 **Current Setup Status:**
-- ✅ **requirements.txt** includes all necessary dependencies including `pydantic-settings>=2.5.2`
-- ✅ **setup_dependencies.py** properly maps package names to import names (e.g., `python-dateutil` → `dateutil`)
-- ✅ **Error handling** accurately reports setup failures and provides detailed troubleshooting
-- ✅ **Package verification** tests actual imports rather than relying on pip install success
-- ✅ **Cross-platform compatibility** ensured with ASCII-only characters in all script output
+- [SUCCESS] **requirements.txt** includes all necessary dependencies including `pydantic-settings>=2.5.2`
+- [SUCCESS] **setup_dependencies.py** properly maps package names to import names (e.g., `python-dateutil` → `dateutil`)
+- [SUCCESS] **Error handling** accurately reports setup failures and provides detailed troubleshooting
+- [SUCCESS] **Package verification** tests actual imports rather than relying on pip install success
+- [SUCCESS] **Cross-platform compatibility** ensured with ASCII-only characters in all script output
+- [SUCCESS] **All automation scripts** use consistent package import name mapping
 
 **Next Milestone:** 5 - Event Processing and Classification
 
@@ -256,12 +266,12 @@ The goal is to maintain high-quality development standards while ensuring effici
 ## 🎯 Success Metrics
 
 Each milestone completion should demonstrate:
-- ✅ **Functional implementation** meeting all requirements
-- ✅ **Comprehensive testing** with excellent coverage
-- ✅ **Updated documentation** reflecting new functionality
-- ✅ **Working automation** validating the implementation
-- ✅ **Integration success** with existing components
-- ✅ **Performance compliance** for real-time operation
-- ✅ **Cross-platform compatibility** verified across all target systems
+- [SUCCESS] **Functional implementation** meeting all requirements
+- [SUCCESS] **Comprehensive testing** with excellent coverage
+- [SUCCESS] **Updated documentation** reflecting new functionality
+- [SUCCESS] **Working automation** validating the implementation
+- [SUCCESS] **Integration success** with existing components
+- [SUCCESS] **Performance compliance** for real-time operation
+- [SUCCESS] **Cross-platform compatibility** verified across all target systems
 
 This ensures the project maintains quality and reliability throughout the development process while building toward the ultimate goal of seamless Elite Dangerous and Claude Desktop integration.
