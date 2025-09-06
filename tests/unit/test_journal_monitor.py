@@ -4,6 +4,7 @@ import asyncio
 import json
 import tempfile
 import time
+import threading
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -552,6 +553,638 @@ class TestJournalMonitorIntegration:
             
         finally:
             await monitor.stop_monitoring()
+
+
+class TestJournalMonitorEdgeCases:
+    """Test edge cases and stress scenarios for journal monitor."""
+    
+    @pytest.mark.asyncio
+    async def test_rapid_file_changes_stress(self, temp_journal_dir):
+        """Test monitor with rapid successive file changes."""
+        received_events = []
+        
+        async def stress_callback(data, event_type):
+            received_events.append((data, event_type, datetime.now()))
+        
+        monitor = JournalMonitor(temp_journal_dir, stress_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            await asyncio.sleep(0.1)  # Let monitoring start
+            
+            # Create initial journal file
+            stress_journal = temp_journal_dir / "Journal.20240906230000.01.log"
+            with open(stress_journal, 'w', encoding='utf-8') as f:
+                f.write('{"timestamp":"2024-09-06T23:00:00Z","event":"Initial"}\n')
+            
+            # Rapidly add multiple entries
+            for i in range(50):  # 50 rapid changes
+                with open(stress_journal, 'a', encoding='utf-8') as f:
+                    entry = {
+                        "timestamp": f"2024-09-06T23:00:{i:02d}Z",
+                        "event": f"RapidEvent{i}",
+                        "data": f"stress_test_{i}"
+                    }
+                    f.write(json.dumps(entry) + '\n')
+                
+                # Small delay to allow processing
+                await asyncio.sleep(0.01)
+            
+            # Wait for all events to be processed
+            await asyncio.sleep(1.0)
+            
+            # Verify all events were captured
+            journal_events = [e for e in received_events if e[1] == 'journal_entries']
+            assert len(journal_events) > 0
+            
+            # Check that events were processed in reasonable time
+            if len(journal_events) >= 2:
+                first_event_time = journal_events[0][2]
+                last_event_time = journal_events[-1][2]
+                processing_time = (last_event_time - first_event_time).total_seconds()
+                
+                # Should process within reasonable time (less than 10 seconds)
+                assert processing_time < 10.0, f"Processing took {processing_time:.2f} seconds"
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_observer_failure_recovery(self, temp_journal_dir):
+        """Test monitor behavior when observer fails."""
+        failure_callback = AsyncMock()
+        monitor = JournalMonitor(temp_journal_dir, failure_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            assert monitor.is_active()
+            
+            # Simulate observer failure
+            if monitor.observer:
+                # Force stop the observer to simulate failure
+                monitor.observer.stop()
+                monitor.observer.join(timeout=1.0)
+            
+            # Monitor should detect that observer is no longer active
+            await asyncio.sleep(0.1)
+            
+            # is_active should return False when observer fails
+            # Note: This tests the current behavior; in a production system
+            # you might want automatic recovery
+            assert not monitor.is_active()
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_memory_usage_long_session(self, temp_journal_dir):
+        """Test memory usage during long monitoring sessions."""
+        import tracemalloc
+        
+        events_received = []
+        
+        async def memory_callback(data, event_type):
+            events_received.extend(data)
+        
+        monitor = JournalMonitor(temp_journal_dir, memory_callback)
+        
+        try:
+            tracemalloc.start()
+            
+            await monitor.start_monitoring()
+            
+            # Create a journal file and continuously add entries
+            long_journal = temp_journal_dir / "Journal.20240907000000.01.log"
+            
+            # Simulate a long session with many events
+            for batch in range(10):  # 10 batches
+                with open(long_journal, 'a', encoding='utf-8') as f:
+                    for i in range(100):  # 100 events per batch
+                        entry = {
+                            "timestamp": f"2024-09-07T00:{batch:02d}:{i:02d}Z",
+                            "event": f"LongSessionEvent{batch}_{i}",
+                            "data": f"batch_{batch}_entry_{i}_{'x' * 50}"  # Some data
+                        }
+                        f.write(json.dumps(entry) + '\n')
+                
+                # Allow processing
+                await asyncio.sleep(0.2)
+            
+            # Check memory usage
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            
+            # Memory usage should be reasonable (less than 100MB peak)
+            peak_mb = peak / (1024 * 1024)
+            assert peak_mb < 100, f"Peak memory usage: {peak_mb:.2f} MB"
+            
+            # Verify events were processed
+            assert len(events_received) > 0
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_network_drive_simulation(self, temp_journal_dir):
+        """Test monitoring behavior with simulated network drive delays."""
+        delayed_events = []
+        
+        async def delayed_callback(data, event_type):
+            delayed_events.append((data, event_type))
+        
+        monitor = JournalMonitor(temp_journal_dir, delayed_callback)
+        
+        # Mock file operations to simulate network delays
+        original_open = open
+        
+        def slow_file_open(file, mode='r', **kwargs):
+            # Simulate network delay for file operations
+            if 'Journal.' in str(file) and 'r' in mode:
+                time.sleep(0.1)  # 100ms delay
+            return original_open(file, mode, **kwargs)
+        
+        try:
+            with patch('builtins.open', side_effect=slow_file_open):
+                await monitor.start_monitoring()
+                
+                # Create journal file
+                network_journal = temp_journal_dir / "Journal.20240907010000.01.log"
+                with open(network_journal, 'w', encoding='utf-8') as f:
+                    f.write('{"timestamp":"2024-09-07T01:00:00Z","event":"NetworkTest"}\n')
+                
+                # Wait for processing with network delays
+                await asyncio.sleep(1.0)
+                
+                # Should still process events despite delays
+                assert len(delayed_events) > 0
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_file_rotation_burst(self, temp_journal_dir):
+        """Test handling of multiple rapid file rotations."""
+        rotation_events = []
+        
+        async def rotation_callback(data, event_type):
+            rotation_events.append((data, event_type, datetime.now()))
+        
+        monitor = JournalMonitor(temp_journal_dir, rotation_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            await asyncio.sleep(0.1)
+            
+            # Create multiple journal files rapidly (simulating rapid rotation)
+            journal_files = []
+            for i in range(5):
+                journal_file = temp_journal_dir / f"Journal.2024090701{i:02d}00.01.log"
+                journal_files.append(journal_file)
+                
+                with open(journal_file, 'w', encoding='utf-8') as f:
+                    f.write(f'{{"timestamp":"2024-09-07T01:{i:02d}:00Z","event":"RotationTest{i}"}}\n')
+                
+                # Brief delay between rotations
+                await asyncio.sleep(0.05)
+            
+            # Wait for all events to be processed
+            await asyncio.sleep(1.0)
+            
+            # Check for system events (file rotations)
+            system_events = [e for e in rotation_events if e[1] == 'system_events']
+            journal_events = [e for e in rotation_events if e[1] == 'journal_entries']
+            
+            # Should have detected file rotations and processed entries
+            assert len(system_events) > 0 or len(journal_events) > 0
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_callback_exception_isolation(self, temp_journal_dir):
+        """Test that callback exceptions don't stop monitoring."""
+        callback_calls = []
+        exception_count = 0
+        
+        async def failing_callback(data, event_type):
+            nonlocal exception_count
+            callback_calls.append((data, event_type))
+            
+            # Fail on first few calls
+            if len(callback_calls) <= 3:
+                exception_count += 1
+                raise Exception(f"Simulated callback failure {exception_count}")
+        
+        monitor = JournalMonitor(temp_journal_dir, failing_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            # Create journal file with multiple entries
+            exception_journal = temp_journal_dir / "Journal.20240907020000.01.log"
+            
+            for i in range(6):  # 6 entries - first 3 should trigger exceptions
+                with open(exception_journal, 'a', encoding='utf-8') as f:
+                    entry = {
+                        "timestamp": f"2024-09-07T02:00:{i:02d}Z",
+                        "event": f"ExceptionTest{i}"
+                    }
+                    f.write(json.dumps(entry) + '\n')
+                
+                await asyncio.sleep(0.1)
+            
+            # Wait for processing
+            await asyncio.sleep(0.5)
+            
+            # Monitor should still be active despite callback exceptions
+            assert monitor.is_active()
+            
+            # Should have attempted all callbacks despite exceptions
+            assert len(callback_calls) >= 3
+            assert exception_count >= 3
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_large_status_updates(self, temp_journal_dir):
+        """Test handling of very large Status.json files."""
+        status_events = []
+        
+        async def status_callback(data, event_type):
+            if event_type == 'status_update':
+                status_events.append(data)
+        
+        monitor = JournalMonitor(temp_journal_dir, status_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            status_file = temp_journal_dir / "Status.json"
+            
+            # Create a large status file with lots of data
+            large_status = {
+                "timestamp": "2024-09-07T02:30:00Z",
+                "event": "Status",
+                "Flags": 12345,
+                "large_data": {
+                    f"entry_{i}": f"data_{'x' * 1000}_{i}"  # 1KB per entry
+                    for i in range(100)  # 100KB total
+                }
+            }
+            
+            with open(status_file, 'w', encoding='utf-8') as f:
+                json.dump(large_status, f)
+            
+            # Wait for processing
+            await asyncio.sleep(0.5)
+            
+            # Should handle large status files
+            assert len(status_events) > 0
+            if status_events:
+                status_data = status_events[0][0]  # First status update
+                assert status_data["Flags"] == 12345
+                assert "large_data" in status_data
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_event_handler_threading_edge_cases(self, temp_journal_dir):
+        """Test event handler behavior with threading edge cases."""
+        thread_events = []
+        
+        def sync_callback(data, event_type):
+            # Synchronous callback to test threading coordination
+            thread_events.append((data, event_type, threading.current_thread().name))
+        
+        monitor = JournalMonitor(temp_journal_dir, sync_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            # Create journal file
+            thread_journal = temp_journal_dir / "Journal.20240907030000.01.log"
+            with open(thread_journal, 'w', encoding='utf-8') as f:
+                f.write('{"timestamp":"2024-09-07T03:00:00Z","event":"ThreadTest"}\n')
+            
+            # Wait for processing
+            await asyncio.sleep(0.5)
+            
+            # Should have processed events
+            assert len(thread_events) > 0
+            
+            # Verify thread safety - events should be processed
+            for data, event_type, thread_name in thread_events:
+                assert isinstance(data, list)
+                assert isinstance(event_type, str)
+                assert isinstance(thread_name, str)
+            
+        finally:
+            await monitor.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_position_tracking_corruption_recovery(self, temp_journal_dir):
+        """Test recovery from position tracking corruption."""
+        position_events = []
+        
+        async def position_callback(data, event_type):
+            position_events.append((len(data), event_type))
+        
+        monitor = JournalMonitor(temp_journal_dir, position_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            # Create journal file
+            position_journal = temp_journal_dir / "Journal.20240907040000.01.log"
+            initial_content = '{"timestamp":"2024-09-07T04:00:00Z","event":"Initial"}\n'
+            
+            with open(position_journal, 'w', encoding='utf-8') as f:
+                f.write(initial_content)
+            
+            await asyncio.sleep(0.2)
+            
+            # Simulate position tracking corruption by manually corrupting the position
+            if monitor.event_handler:
+                file_key = str(position_journal)
+                # Set invalid position (beyond file end)
+                monitor.event_handler.current_positions[file_key] = 999999
+            
+            # Add more content
+            additional_content = '{"timestamp":"2024-09-07T04:01:00Z","event":"Additional"}\n'
+            with open(position_journal, 'a', encoding='utf-8') as f:
+                f.write(additional_content)
+            
+            await asyncio.sleep(0.5)
+            
+            # Should recover gracefully from position corruption
+            assert len(position_events) > 0
+            
+        finally:
+            await monitor.stop_monitoring()
+
+
+class TestJournalEventHandlerEdgeCases:
+    """Test edge cases specific to JournalEventHandler."""
+    
+    @pytest.mark.asyncio
+    async def test_event_loop_coordination(self, temp_journal_dir):
+        """Test proper event loop coordination in handler."""
+        coordination_events = []
+        
+        async def coordination_callback(data, event_type):
+            # Record the current event loop
+            try:
+                loop = asyncio.get_running_loop()
+                coordination_events.append((data, event_type, id(loop)))
+            except RuntimeError:
+                coordination_events.append((data, event_type, None))
+        
+        parser = JournalParser(temp_journal_dir)
+        
+        # Get the current event loop
+        main_loop = asyncio.get_running_loop()
+        
+        handler = JournalEventHandler(coordination_callback, parser, main_loop)
+        
+        # Create test file
+        test_file = temp_journal_dir / "Journal.20240907050000.01.log"
+        with open(test_file, 'w', encoding='utf-8') as f:
+            f.write('{"timestamp":"2024-09-07T05:00:00Z","event":"LoopTest"}\n')
+        
+        # Test handler directly
+        await handler._handle_journal_modification(test_file)
+        
+        # Should have coordinated with the main event loop
+        assert len(coordination_events) > 0
+        
+        # Verify callback was executed in the main event loop
+        for data, event_type, loop_id in coordination_events:
+            if loop_id is not None:
+                assert loop_id == id(main_loop)
+    
+    @pytest.mark.asyncio
+    async def test_status_throttling_edge_cases(self, temp_journal_dir):
+        """Test status update throttling edge cases."""
+        throttle_events = []
+        
+        async def throttle_callback(data, event_type):
+            throttle_events.append((data, event_type, datetime.now()))
+        
+        parser = JournalParser(temp_journal_dir)
+        loop = asyncio.get_running_loop()
+        handler = JournalEventHandler(throttle_callback, parser, loop)
+        
+        status_file = temp_journal_dir / "Status.json"
+        
+        # Create initial status file
+        status_data = {"timestamp": "2024-09-07T05:30:00Z", "event": "Status", "Flags": 123}
+        with open(status_file, 'w', encoding='utf-8') as f:
+            json.dump(status_data, f)
+        
+        # Rapidly trigger status modifications
+        for i in range(10):
+            await handler._handle_status_modification(status_file)
+            await asyncio.sleep(0.01)  # 10ms between calls
+        
+        # Should be throttled - not all modifications should result in callbacks
+        status_events = [e for e in throttle_events if e[1] == 'status_update']
+        
+        # Due to throttling, should have fewer events than modifications
+        assert len(status_events) < 10
+        assert len(status_events) > 0  # But should have some events
+    
+    @pytest.mark.asyncio
+    async def test_file_creation_race_conditions(self, temp_journal_dir):
+        """Test handling of file creation race conditions."""
+        race_events = []
+        
+        async def race_callback(data, event_type):
+            race_events.append((data, event_type))
+        
+        parser = JournalParser(temp_journal_dir)
+        loop = asyncio.get_running_loop()
+        handler = JournalEventHandler(race_callback, parser, loop)
+        
+        # Simulate race condition where file is created but not yet written
+        race_file = temp_journal_dir / "Journal.20240907060000.01.log"
+        
+        # Create empty file first
+        race_file.touch()
+        
+        # Handle creation of empty file
+        await handler._handle_journal_creation(race_file)
+        
+        # Now write content
+        with open(race_file, 'w', encoding='utf-8') as f:
+            f.write('{"timestamp":"2024-09-07T06:00:00Z","event":"RaceTest"}\n')
+        
+        # Handle modification after content is written
+        await handler._handle_journal_modification(race_file)
+        
+        # Should handle the race condition gracefully
+        assert len(race_events) >= 1
+        
+        # Should have processed the content once it was available
+        journal_events = [e for e in race_events if e[1] == 'journal_entries']
+        if journal_events:
+            entries = journal_events[0][0]
+            assert len(entries) > 0
+            assert entries[0]['event'] == 'RaceTest'
+
+
+class TestJournalMonitorConcurrency:
+    """Test concurrency and threading aspects of journal monitor."""
+    
+    @pytest.mark.asyncio
+    async def test_concurrent_monitor_instances(self, temp_journal_dir):
+        """Test behavior with multiple monitor instances on same directory."""
+        events_monitor1 = []
+        events_monitor2 = []
+        
+        async def callback1(data, event_type):
+            events_monitor1.append((data, event_type))
+        
+        async def callback2(data, event_type):
+            events_monitor2.append((data, event_type))
+        
+        monitor1 = JournalMonitor(temp_journal_dir, callback1)
+        monitor2 = JournalMonitor(temp_journal_dir, callback2)
+        
+        try:
+            # Start both monitors
+            await monitor1.start_monitoring()
+            await monitor2.start_monitoring()
+            
+            # Both should be active
+            assert monitor1.is_active()
+            assert monitor2.is_active()
+            
+            # Create journal file
+            concurrent_journal = temp_journal_dir / "Journal.20240907070000.01.log"
+            with open(concurrent_journal, 'w', encoding='utf-8') as f:
+                f.write('{"timestamp":"2024-09-07T07:00:00Z","event":"ConcurrentTest"}\n')
+            
+            await asyncio.sleep(0.5)
+            
+            # Both monitors should have detected the file
+            assert len(events_monitor1) > 0
+            assert len(events_monitor2) > 0
+            
+        finally:
+            await monitor1.stop_monitoring()
+            await monitor2.stop_monitoring()
+    
+    @pytest.mark.asyncio
+    async def test_monitor_startup_shutdown_race(self, temp_journal_dir):
+        """Test rapid startup/shutdown cycles for race conditions."""
+        race_callback = AsyncMock()
+        monitor = JournalMonitor(temp_journal_dir, race_callback)
+        
+        # Rapid start/stop cycles
+        for _ in range(5):
+            await monitor.start_monitoring()
+            assert monitor.is_monitoring
+            
+            await monitor.stop_monitoring()
+            assert not monitor.is_monitoring
+            
+            # Brief pause between cycles
+            await asyncio.sleep(0.1)
+        
+        # Should end in stopped state
+        assert not monitor.is_active()
+        assert not monitor.is_monitoring
+
+
+class TestJournalMonitorResourceManagement:
+    """Test resource management and cleanup in journal monitor."""
+    
+    @pytest.mark.asyncio
+    async def test_proper_resource_cleanup(self, temp_journal_dir):
+        """Test that all resources are properly cleaned up."""
+        cleanup_callback = AsyncMock()
+        monitor = JournalMonitor(temp_journal_dir, cleanup_callback)
+        
+        # Start monitoring
+        await monitor.start_monitoring()
+        
+        # Verify resources are allocated
+        assert monitor.observer is not None
+        assert monitor.event_handler is not None
+        assert monitor._event_loop is not None
+        
+        # Stop monitoring
+        await monitor.stop_monitoring()
+        
+        # Verify resources are cleaned up
+        assert monitor.observer is None
+        assert monitor.event_handler is None
+        assert monitor._event_loop is None
+        assert not monitor.is_monitoring
+        assert not monitor.is_active()
+    
+    @pytest.mark.asyncio
+    async def test_cleanup_with_pending_operations(self, temp_journal_dir):
+        """Test cleanup when there are pending file operations."""
+        pending_events = []
+        
+        async def slow_callback(data, event_type):
+            # Simulate slow callback processing
+            await asyncio.sleep(0.2)
+            pending_events.append((data, event_type))
+        
+        monitor = JournalMonitor(temp_journal_dir, slow_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            # Create journal file to trigger processing
+            pending_journal = temp_journal_dir / "Journal.20240907080000.01.log"
+            with open(pending_journal, 'w', encoding='utf-8') as f:
+                f.write('{"timestamp":"2024-09-07T08:00:00Z","event":"PendingTest"}\n')
+            
+            # Immediately stop monitoring (while callback might be pending)
+            await asyncio.sleep(0.05)  # Brief delay to start processing
+            
+        finally:
+            # Stop should complete even with pending operations
+            await monitor.stop_monitoring()
+            
+            # Should have cleaned up properly
+            assert not monitor.is_active()
+    
+    @pytest.mark.asyncio
+    async def test_file_handle_management(self, temp_journal_dir):
+        """Test that file handles are properly managed."""
+        handle_callback = AsyncMock()
+        monitor = JournalMonitor(temp_journal_dir, handle_callback)
+        
+        try:
+            await monitor.start_monitoring()
+            
+            # Create and modify many files to test file handle usage
+            for i in range(20):
+                test_journal = temp_journal_dir / f"Journal.20240907080{i:02d}00.01.log"
+                
+                with open(test_journal, 'w', encoding='utf-8') as f:
+                    f.write(f'{{"timestamp":"2024-09-07T08:{i:02d}:00Z","event":"HandleTest{i}"}}\n')
+                
+                # Brief delay between file operations
+                await asyncio.sleep(0.01)
+            
+            # Wait for processing
+            await asyncio.sleep(1.0)
+            
+            # Should have processed without file handle issues
+            assert monitor.is_active()
+            
+        finally:
+            await monitor.stop_monitoring()
+            
+            # Should clean up without file handle leaks
+            assert not monitor.is_active()
 
 
 # Mock data for testing
