@@ -25,13 +25,12 @@ Example Usage:
 """
 
 from .parser import JournalParser
-from .monitor import JournalMonitor, JournalEventHandler, test_monitoring, create_journal_monitor
+from .monitor import JournalMonitor, JournalEventHandler, create_journal_monitor
 
 __all__ = [
     'JournalParser',
     'JournalMonitor', 
     'JournalEventHandler',
-    'test_monitoring',
     'create_journal_monitor'
 ]
 
