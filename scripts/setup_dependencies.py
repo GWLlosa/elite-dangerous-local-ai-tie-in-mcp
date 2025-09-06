@@ -95,6 +95,15 @@ class SetupTracker:
 # Global setup tracker
 setup_tracker = SetupTracker()
 
+# Mapping of package names to their import names
+PACKAGE_IMPORT_MAP = {
+    'python-dateutil': 'dateutil',
+    'pydantic-settings': 'pydantic_settings',
+    'pytest-asyncio': 'pytest_asyncio',
+    'pytest-cov': 'pytest_cov',
+    # Add more mappings as needed
+}
+
 
 def print_header(title):
     """Print a formatted header."""
@@ -270,11 +279,23 @@ def parse_requirements_file():
     return packages
 
 
+def get_import_name(package_name):
+    """Get the import name for a package, handling special cases."""
+    # Check if there's a specific mapping
+    if package_name in PACKAGE_IMPORT_MAP:
+        return PACKAGE_IMPORT_MAP[package_name]
+    
+    # Default: replace hyphens with underscores
+    return package_name.replace('-', '_')
+
+
 def check_package_installed(package_name, venv_python):
     """Check if a specific package is installed."""
+    import_name = get_import_name(package_name)
+    
     try:
         result = subprocess.run([
-            venv_python, "-c", f"import {package_name.replace('-', '_')}; print('OK')"
+            venv_python, "-c", f"import {import_name}; print('OK')"
         ], capture_output=True, text=True, check=False)
         return result.returncode == 0
     except:
@@ -338,7 +359,7 @@ def install_requirements():
             ], f"Install {package_name}")
             
             # Verify it actually got installed
-            if install_success and check_package_installed(package_name, venv_python):
+            if check_package_installed(package_name, venv_python):
                 print_status(f"{package_name} - Successfully installed")
                 installed_packages.append(package_name)
             else:
@@ -381,7 +402,7 @@ def verify_installation():
     # Get all required packages from requirements.txt
     required_packages = parse_requirements_file()
     
-    # Test critical imports
+    # Test critical imports with proper import names
     critical_imports = [
         ("orjson", "High-performance JSON parsing"),
         ("watchdog", "File system monitoring"),
@@ -390,19 +411,20 @@ def verify_installation():
         ("pytest", "Testing framework"),
         ("pytest_asyncio", "Async testing"),
         ("pytest_cov", "Coverage reporting"),
+        ("dateutil", "Date utilities (python-dateutil)"),
     ]
     
     package_failures = []
-    for package, description in critical_imports:
+    for import_name, description in critical_imports:
         success = run_command([
-            venv_python, "-c", f"import {package}; print(f'{package} OK')"
-        ], f"Test {package} import", check=False)
+            venv_python, "-c", f"import {import_name}; print(f'{import_name} OK')"
+        ], f"Test {import_name} import", check=False)
         
         if success:
-            print_status(f"{package} ({description})")
+            print_status(f"{import_name} ({description})")
         else:
-            print_status(f"{package} ({description}) - Failed", False)
-            package_failures.append(package)
+            print_status(f"{import_name} ({description}) - Failed", False)
+            package_failures.append(import_name)
     
     # Test project imports
     print_step("Testing", "Project imports")
