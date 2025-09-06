@@ -18,6 +18,80 @@ import sys
 import subprocess
 import platform
 from pathlib import Path
+from typing import List, Tuple
+
+
+class SetupTracker:
+    """Track setup progress and errors."""
+    
+    def __init__(self):
+        self.errors: List[Tuple[str, str]] = []
+        self.warnings: List[Tuple[str, str]] = []
+        self.successes: List[str] = []
+    
+    def add_error(self, step: str, message: str):
+        """Add an error to the tracker."""
+        self.errors.append((step, message))
+    
+    def add_warning(self, step: str, message: str):
+        """Add a warning to the tracker."""
+        self.warnings.append((step, message))
+    
+    def add_success(self, step: str):
+        """Add a success to the tracker."""
+        self.successes.append(step)
+    
+    def has_errors(self) -> bool:
+        """Check if there are any errors."""
+        return len(self.errors) > 0
+    
+    def has_critical_errors(self) -> bool:
+        """Check if there are critical errors that should stop setup."""
+        critical_steps = ['Python Version Check', 'Virtual Environment Setup', 'Dependency Installation']
+        return any(step in critical_steps for step, _ in self.errors)
+    
+    def print_summary(self):
+        """Print a summary of the setup process."""
+        print("\n" + "="*60)
+        
+        if self.has_errors():
+            print("❌ SETUP FAILED!")
+        else:
+            print("🎉 SETUP COMPLETE!")
+        
+        print("="*60)
+        
+        if self.successes:
+            print("\n✅ Successful Steps:")
+            for success in self.successes:
+                print(f"   • {success}")
+        
+        if self.warnings:
+            print("\n⚠️  Warnings:")
+            for step, message in self.warnings:
+                print(f"   • {step}: {message}")
+        
+        if self.errors:
+            print("\n❌ Errors:")
+            for step, message in self.errors:
+                print(f"   • {step}: {message}")
+            
+            print("\n📋 Troubleshooting:")
+            print("   1. Ensure you have Python 3.9+ installed")
+            print("   2. Try running the script again")
+            print("   3. Check your internet connection for package downloads")
+            print("   4. Manually install packages: pip install -r requirements.txt")
+        else:
+            print("\n📋 Next steps:")
+            print("   1. Activate virtual environment (see instructions above)")
+            print("   2. Run: python scripts/check_dependencies.py")
+            print("   3. Run: python scripts/run_tests.py")
+        
+        print("="*60)
+
+
+# Global setup tracker
+setup_tracker = SetupTracker()
 
 
 def print_header(title):
@@ -60,9 +134,9 @@ def run_command(cmd, description, check=True):
             print_status(f"{description} - Failed", False)
             if result.stderr.strip():
                 print(f"    Error: {result.stderr.strip()}")
-            if check:
-                return False
-            return True  # Continue despite failure if check=False
+            if result.stdout.strip():
+                print(f"    Output: {result.stdout.strip()}")
+            return False
             
     except Exception as e:
         print_status(f"{description} - Error: {e}", False)
@@ -78,10 +152,12 @@ def check_python_version():
     
     if version.major == 3 and version.minor >= 9:
         print_status(f"Python {version_str} is suitable")
+        setup_tracker.add_success("Python Version Check")
         return True
     else:
         print_status(f"Python {version_str} is too old (requires 3.9+)", False)
         print("  Please install Python 3.9+ from https://python.org")
+        setup_tracker.add_error("Python Version Check", f"Python {version_str} is too old (requires 3.9+)")
         return False
 
 
@@ -105,9 +181,11 @@ def setup_virtual_environment():
         
         if python_exe.exists():
             print_status("Virtual environment appears valid")
+            setup_tracker.add_success("Virtual Environment Setup")
             return True
         else:
             print_status("Virtual environment appears corrupted, recreating", False)
+            setup_tracker.add_warning("Virtual Environment Setup", "Corrupted venv detected, recreating")
             # Remove corrupted venv
             import shutil
             shutil.rmtree(venv_path)
@@ -120,9 +198,11 @@ def setup_virtual_environment():
     if not success:
         print_status("Failed to create virtual environment", False)
         print("  Ensure you have the 'venv' module available")
+        setup_tracker.add_error("Virtual Environment Setup", "Failed to create virtual environment")
         return False
     
     print_status("Virtual environment created successfully")
+    setup_tracker.add_success("Virtual Environment Setup")
     return True
 
 
@@ -154,6 +234,7 @@ def upgrade_pip():
     
     if not Path(venv_python).exists():
         print_status("Virtual environment Python not found", False)
+        setup_tracker.add_error("Pip Upgrade", "Virtual environment Python not found")
         return False
     
     print_step("Upgrading", "pip, setuptools, and wheel")
@@ -161,6 +242,11 @@ def upgrade_pip():
         venv_python, "-m", "pip", "install", "--upgrade", 
         "pip", "setuptools", "wheel"
     ], "Upgrade pip and tools")
+    
+    if success:
+        setup_tracker.add_success("Pip Upgrade")
+    else:
+        setup_tracker.add_warning("Pip Upgrade", "Failed to upgrade pip")
     
     return success
 
@@ -174,10 +260,12 @@ def install_requirements():
     
     if not requirements_file.exists():
         print_status("requirements.txt not found", False)
+        setup_tracker.add_error("Dependency Installation", "requirements.txt not found")
         return False
     
     if not Path(venv_python).exists():
         print_status("Virtual environment Python not found", False)
+        setup_tracker.add_error("Dependency Installation", "Virtual environment Python not found")
         return False
     
     print_step("Installing", "All dependencies from requirements.txt")
@@ -189,36 +277,41 @@ def install_requirements():
     
     if success:
         print_status("All dependencies installed successfully")
+        setup_tracker.add_success("Dependency Installation")
         return True
     
     # If batch install failed, try installing core packages individually
     print_step("Retrying", "Installing core packages individually")
     
     core_packages = [
+        "mcp>=1.0.0",
         "orjson>=3.10.0",
         "watchdog>=4.0.0", 
         "pydantic>=2.6.0",
+        "pydantic-settings>=2.5.2",
         "aiofiles>=24.1.0",
         "pytest>=8.0.0",
         "pytest-asyncio>=0.21.0",
         "pytest-cov>=4.0.0"
     ]
     
-    all_success = True
+    core_failures = []
     for package in core_packages:
         success = run_command([
             venv_python, "-m", "pip", "install", package
         ], f"Install {package.split('>=')[0]}", check=False)
         
         if not success:
-            all_success = False
+            core_failures.append(package)
     
     # Try to install remaining packages (development tools)
     dev_packages = [
         "black>=24.0.0",
         "isort>=5.13.0", 
         "flake8>=7.0.0",
-        "mypy>=1.8.0"
+        "mypy>=1.8.0",
+        "python-dateutil>=2.8.0",
+        "typing-extensions>=4.9.0"
     ]
     
     print_step("Installing", "Development tools (optional)")
@@ -227,7 +320,12 @@ def install_requirements():
             venv_python, "-m", "pip", "install", package
         ], f"Install {package.split('>=')[0]}", check=False)
     
-    return all_success
+    if core_failures:
+        setup_tracker.add_error("Dependency Installation", f"Failed to install core packages: {', '.join(core_failures)}")
+        return False
+    else:
+        setup_tracker.add_success("Dependency Installation")
+        return True
 
 
 def verify_installation():
@@ -238,6 +336,7 @@ def verify_installation():
     
     if not Path(venv_python).exists():
         print_status("Virtual environment Python not found", False)
+        setup_tracker.add_error("Installation Verification", "Virtual environment Python not found")
         return False
     
     # Test critical imports
@@ -245,11 +344,12 @@ def verify_installation():
         ("orjson", "High-performance JSON parsing"),
         ("watchdog", "File system monitoring"),
         ("pydantic", "Data validation"),
+        ("pydantic_settings", "Pydantic settings support"),
         ("pytest", "Testing framework"),
         ("pytest_asyncio", "Async testing"),
     ]
     
-    all_good = True
+    package_failures = []
     for package, description in critical_packages:
         success = run_command([
             venv_python, "-c", f"import {package}; print(f'{package} OK')"
@@ -259,7 +359,7 @@ def verify_installation():
             print_status(f"{package} ({description})")
         else:
             print_status(f"{package} ({description}) - Failed", False)
-            all_good = False
+            package_failures.append(package)
     
     # Test project imports
     print_step("Testing", "Project imports")
@@ -269,6 +369,7 @@ def verify_installation():
         "src.utils.config"
     ]
     
+    project_failures = []
     for module in project_imports:
         success = run_command([
             venv_python, "-c", f"import {module}; print(f'{module} OK')"
@@ -278,9 +379,20 @@ def verify_installation():
             print_status(f"Project module: {module}")
         else:
             print_status(f"Project module: {module} - Failed", False)
-            all_good = False
+            project_failures.append(module)
     
-    return all_good
+    # Add errors to tracker
+    if package_failures:
+        setup_tracker.add_error("Installation Verification", f"Failed package imports: {', '.join(package_failures)}")
+    
+    if project_failures:
+        setup_tracker.add_error("Installation Verification", f"Failed project imports: {', '.join(project_failures)}")
+    
+    if not package_failures and not project_failures:
+        setup_tracker.add_success("Installation Verification")
+        return True
+    
+    return False
 
 
 def create_activation_instructions():
@@ -323,49 +435,43 @@ def main():
     if not Path("src").exists() or not Path("requirements.txt").exists():
         print("\n❌ Error: Must be run from project root directory")
         print("   Current directory should contain 'src' folder and 'requirements.txt'")
+        setup_tracker.add_error("Directory Check", "Not in project root directory")
+        setup_tracker.print_summary()
         sys.exit(1)
     
     # Check Python version
     if not check_python_version():
+        setup_tracker.print_summary()
         sys.exit(1)
     
     # Set up virtual environment
     if not setup_virtual_environment():
-        print("\n❌ Failed to set up virtual environment")
+        setup_tracker.print_summary()
         sys.exit(1)
     
     # Upgrade pip
-    if not upgrade_pip():
-        print("\n⚠️  Warning: Failed to upgrade pip, continuing anyway")
+    upgrade_pip()  # Continue even if this fails
     
     # Install requirements
     if not install_requirements():
         print("\n❌ Critical error: Failed to install required dependencies")
-        print("   Some core packages may be missing")
-        print("   Try running again or install packages manually")
+        setup_tracker.print_summary()
+        sys.exit(1)
     
     # Verify installation
-    if verify_installation():
-        print_status("All critical dependencies verified")
-    else:
-        print_status("Some dependencies may be missing", False)
+    verify_installation()  # Continue even if some verifications fail
     
     # Show activation instructions
     create_activation_instructions()
     
     # Final summary
-    print("\n" + "="*60)
-    print("🎉 SETUP COMPLETE!")
-    print("="*60)
-    print("✅ Virtual environment created and configured")
-    print("✅ Dependencies installed")
-    print("✅ Project imports working")
-    print()
-    print("📋 Next steps:")
-    print("   1. Activate virtual environment (see instructions above)")
-    print("   2. Run: python scripts/check_dependencies.py")
-    print("   3. Run: python scripts/run_tests.py")
-    print("="*60)
+    setup_tracker.print_summary()
+    
+    # Exit with appropriate code
+    if setup_tracker.has_errors():
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -373,8 +479,11 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n\n❌ Setup interrupted by user")
+        setup_tracker.add_error("Setup Process", "Interrupted by user")
+        setup_tracker.print_summary()
         sys.exit(1)
     except Exception as e:
         print(f"\n\n❌ Unexpected error during setup: {e}")
-        print("   Try running the script again or install dependencies manually")
+        setup_tracker.add_error("Setup Process", f"Unexpected error: {e}")
+        setup_tracker.print_summary()
         sys.exit(1)

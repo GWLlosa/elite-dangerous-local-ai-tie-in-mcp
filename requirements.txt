@@ -4,6 +4,7 @@ watchdog>=4.0.0
 orjson>=3.10.0
 aiofiles>=24.1.0
 pydantic>=2.6.0
+pydantic-settings>=2.5.2
 psutil>=5.9.0
 
 # Development and testing dependencies
