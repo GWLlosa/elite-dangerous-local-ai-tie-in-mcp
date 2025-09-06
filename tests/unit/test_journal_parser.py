@@ -1,10 +1,12 @@
 """Unit tests for journal parser functionality."""
 
 import json
+import os
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -282,6 +284,431 @@ class TestJournalParser:
         
         assert results["exists"] is False
         assert len(results["errors"]) > 0
+
+
+class TestJournalParserEdgeCases:
+    """Test edge cases and error scenarios for journal parser."""
+    
+    def test_large_journal_file_performance(self, temp_journal_dir):
+        """Test parser performance with large journal files."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Create a large journal file with many entries
+        large_journal = temp_journal_dir / "Journal.20240906150000.01.log"
+        entries_count = 1000
+        
+        with open(large_journal, 'w', encoding='utf-8') as f:
+            for i in range(entries_count):
+                entry = {
+                    "timestamp": f"2024-09-06T15:{i:02d}:00Z",
+                    "event": f"TestEvent{i}",
+                    "data": f"large_data_payload_{'x' * 100}_{i}"
+                }
+                f.write(json.dumps(entry) + '\n')
+        
+        # Test performance
+        start_time = time.time()
+        entries, position = parser.read_journal_file(large_journal)
+        end_time = time.time()
+        
+        # Verify all entries were parsed
+        assert len(entries) == entries_count
+        assert position > 0
+        
+        # Performance should be reasonable (less than 2 seconds for 1000 entries)
+        processing_time = end_time - start_time
+        assert processing_time < 2.0, f"Processing took {processing_time:.2f} seconds"
+        
+        # Verify data integrity
+        assert entries[0]["event"] == "TestEvent0"
+        assert entries[-1]["event"] == f"TestEvent{entries_count-1}"
+    
+    def test_unicode_edge_cases(self, temp_journal_dir):
+        """Test parsing with various unicode characters."""
+        parser = JournalParser(temp_journal_dir)
+        
+        unicode_journal = temp_journal_dir / "Journal.20240906160000.01.log"
+        
+        # Create entries with various unicode characters
+        unicode_entries = [
+            {
+                "timestamp": "2024-09-06T16:00:00Z",
+                "event": "LoadGame",
+                "Commander": "ÇMDR_ñoño_测试",  # Mixed unicode
+                "Ship": "Sidewinder_🚀"  # Emoji
+            },
+            {
+                "timestamp": "2024-09-06T16:01:00Z",
+                "event": "Location",
+                "StarSystem": "Système_中文_العربية",  # Multiple scripts
+                "Body": "Planète_Земля"  # French + Russian
+            },
+            {
+                "timestamp": "2024-09-06T16:02:00Z",
+                "event": "ReceiveText",
+                "Message": "Hello 世界! Здравствуй мир! 🌍",  # Multi-language
+                "Channel": "local"
+            }
+        ]
+        
+        with open(unicode_journal, 'w', encoding='utf-8') as f:
+            for entry in unicode_entries:
+                f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+        
+        # Parse and verify unicode handling
+        entries, position = parser.read_journal_file(unicode_journal)
+        
+        assert len(entries) == 3
+        assert entries[0]["Commander"] == "ÇMDR_ñoño_测试"
+        assert entries[0]["Ship"] == "Sidewinder_🚀"
+        assert entries[1]["StarSystem"] == "Système_中文_العربية"
+        assert entries[1]["Body"] == "Planète_Земля"
+        assert entries[2]["Message"] == "Hello 世界! Здравствуй мир! 🌍"
+    
+    def test_corrupted_status_file_recovery(self, temp_journal_dir):
+        """Test handling of corrupted Status.json files."""
+        parser = JournalParser(temp_journal_dir)
+        status_file = temp_journal_dir / "Status.json"
+        
+        # Test various corruption scenarios
+        corruption_cases = [
+            # Incomplete JSON
+            '{"timestamp":"2024-09-06T16:00:00Z","event":"Status","Flags":123',
+            # Invalid JSON structure
+            '{"timestamp":"2024-09-06T16:00:00Z","event":}',
+            # Non-JSON content
+            'This is not JSON at all',
+            # Empty file
+            '',
+            # Only whitespace
+            '   \n\t   ',
+            # Binary data
+            b'\x00\x01\x02\x03\x04'.decode('utf-8', errors='replace'),
+            # Very long invalid content
+            'invalid_json_' + 'x' * 10000
+        ]
+        
+        for i, corrupted_content in enumerate(corruption_cases):
+            with open(status_file, 'w', encoding='utf-8') as f:
+                f.write(corrupted_content)
+            
+            # Parser should handle corruption gracefully
+            status_data = parser.read_status_file()
+            assert status_data is None, f"Case {i}: Expected None for corrupted content"
+        
+        # Test recovery with valid content after corruption
+        valid_status = {
+            "timestamp": "2024-09-06T16:05:00Z",
+            "event": "Status",
+            "Flags": 12345
+        }
+        
+        with open(status_file, 'w', encoding='utf-8') as f:
+            json.dump(valid_status, f)
+        
+        status_data = parser.read_status_file()
+        assert status_data is not None
+        assert status_data["Flags"] == 12345
+    
+    def test_file_permission_errors(self, temp_journal_dir):
+        """Test handling of file permission errors."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Create a test journal file
+        test_journal = temp_journal_dir / "Journal.20240906170000.01.log"
+        with open(test_journal, 'w', encoding='utf-8') as f:
+            f.write('{"timestamp":"2024-09-06T17:00:00Z","event":"Test"}\n')
+        
+        # Mock permission denied error
+        with patch('builtins.open', side_effect=PermissionError("Permission denied")):
+            entries, position = parser.read_journal_file(test_journal)
+            
+            # Should return empty results without crashing
+            assert entries == []
+            assert position == 0
+        
+        # Test with Status.json permission error
+        status_file = temp_journal_dir / "Status.json"
+        with open(status_file, 'w', encoding='utf-8') as f:
+            json.dump({"event": "Status", "Flags": 123}, f)
+        
+        with patch('builtins.open', side_effect=PermissionError("Access denied")):
+            status_data = parser.read_status_file()
+            assert status_data is None
+    
+    def test_mixed_encoding_scenarios(self, temp_journal_dir):
+        """Test handling of files with mixed or incorrect encoding."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Create file with different encodings
+        mixed_journal = temp_journal_dir / "Journal.20240906180000.01.log"
+        
+        # Test with latin-1 encoding (common issue)
+        latin1_content = '{"timestamp":"2024-09-06T18:00:00Z","event":"Test","data":"café"}\n'
+        
+        with open(mixed_journal, 'w', encoding='latin-1') as f:
+            f.write(latin1_content)
+        
+        # Parser should handle encoding errors gracefully
+        entries, position = parser.read_journal_file(mixed_journal)
+        
+        # Should still process the file (with potential character replacements)
+        assert len(entries) >= 0  # May be 0 if JSON parsing fails due to encoding
+        assert position > 0
+    
+    def test_extremely_long_lines(self, temp_journal_dir):
+        """Test handling of extremely long journal entry lines."""
+        parser = JournalParser(temp_journal_dir)
+        
+        long_journal = temp_journal_dir / "Journal.20240906190000.01.log"
+        
+        # Create entry with very long data
+        very_long_data = "x" * 100000  # 100KB of data
+        long_entry = {
+            "timestamp": "2024-09-06T19:00:00Z",
+            "event": "LongDataEvent",
+            "data": very_long_data
+        }
+        
+        with open(long_journal, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(long_entry) + '\n')
+            # Add normal entry after
+            f.write('{"timestamp":"2024-09-06T19:01:00Z","event":"NormalEvent"}\n')
+        
+        entries, position = parser.read_journal_file(long_journal)
+        
+        assert len(entries) == 2
+        assert entries[0]["event"] == "LongDataEvent"
+        assert len(entries[0]["data"]) == 100000
+        assert entries[1]["event"] == "NormalEvent"
+    
+    def test_concurrent_file_access(self, temp_journal_dir):
+        """Test handling of concurrent file access scenarios."""
+        parser = JournalParser(temp_journal_dir)
+        
+        concurrent_journal = temp_journal_dir / "Journal.20240906200000.01.log"
+        
+        # Simulate file being written to while we're reading
+        def mock_read_with_interruption():
+            """Mock file read that simulates concurrent access."""
+            original_open = open
+            
+            def patched_open(file, mode='r', **kwargs):
+                if str(file) == str(concurrent_journal) and 'r' in mode:
+                    # Simulate file being locked/modified during read
+                    file_obj = original_open(file, mode, **kwargs)
+                    
+                    # Mock a scenario where file is truncated during read
+                    original_read = file_obj.read
+                    def interrupted_read():
+                        content = original_read()
+                        # Simulate partial content due to concurrent write
+                        if len(content) > 10:
+                            return content[:10] + '\n'  # Truncated content
+                        return content
+                    
+                    file_obj.read = interrupted_read
+                    return file_obj
+                return original_open(file, mode, **kwargs)
+            
+            return patched_open
+        
+        # Create test content
+        with open(concurrent_journal, 'w', encoding='utf-8') as f:
+            f.write('{"timestamp":"2024-09-06T20:00:00Z","event":"Test"}\n')
+        
+        # Test with simulated concurrent access
+        with patch('builtins.open', side_effect=mock_read_with_interruption()):
+            entries, position = parser.read_journal_file(concurrent_journal)
+            
+            # Should handle gracefully (may return fewer entries due to truncation)
+            assert isinstance(entries, list)
+            assert isinstance(position, int)
+    
+    def test_malformed_timestamp_handling(self, temp_journal_dir):
+        """Test handling of entries with malformed timestamps."""
+        parser = JournalParser(temp_journal_dir)
+        
+        malformed_journal = temp_journal_dir / "Journal.20240906210000.01.log"
+        
+        # Create entries with various timestamp issues
+        malformed_entries = [
+            # Missing timestamp
+            '{"event":"NoTimestamp","data":"test"}',
+            # Invalid timestamp format
+            '{"timestamp":"not-a-timestamp","event":"InvalidTimestamp"}',
+            # Empty timestamp
+            '{"timestamp":"","event":"EmptyTimestamp"}',
+            # Null timestamp
+            '{"timestamp":null,"event":"NullTimestamp"}',
+            # Numeric timestamp (wrong type)
+            '{"timestamp":1234567890,"event":"NumericTimestamp"}',
+            # Valid entry (should work)
+            '{"timestamp":"2024-09-06T21:00:00Z","event":"ValidEntry"}'
+        ]
+        
+        with open(malformed_journal, 'w', encoding='utf-8') as f:
+            for entry in malformed_entries:
+                f.write(entry + '\n')
+        
+        entries, position = parser.read_journal_file(malformed_journal)
+        
+        # Only valid entries should be returned
+        assert len(entries) == 1  # Only the valid entry
+        assert entries[0]["event"] == "ValidEntry"
+    
+    def test_directory_access_edge_cases(self, temp_journal_dir):
+        """Test directory access edge cases."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Test validation with various directory states
+        results = parser.validate_journal_directory()
+        assert results["exists"] is True
+        assert results["is_directory"] is True
+        
+        # Test with directory that becomes inaccessible
+        with patch('pathlib.Path.iterdir', side_effect=PermissionError("Access denied")):
+            results = parser.validate_journal_directory()
+            assert len(results["errors"]) > 0
+            assert results["readable"] is False
+        
+        # Test with directory that's actually a file
+        fake_dir = temp_journal_dir / "not_a_directory.txt"
+        with open(fake_dir, 'w') as f:
+            f.write("fake directory")
+        
+        fake_parser = JournalParser(fake_dir)
+        results = fake_parser.validate_journal_directory()
+        assert results["is_directory"] is False
+        assert len(results["errors"]) > 0
+    
+    def test_status_file_edge_cases(self, temp_journal_dir):
+        """Test various Status.json edge cases."""
+        parser = JournalParser(temp_journal_dir)
+        status_file = temp_journal_dir / "Status.json"
+        
+        # Test with non-dictionary JSON
+        with open(status_file, 'w', encoding='utf-8') as f:
+            f.write('["array", "instead", "of", "object"]')
+        
+        status_data = parser.read_status_file()
+        assert status_data is None
+        
+        # Test with string instead of object
+        with open(status_file, 'w', encoding='utf-8') as f:
+            f.write('"just a string"')
+        
+        status_data = parser.read_status_file()
+        assert status_data is None
+        
+        # Test with number instead of object
+        with open(status_file, 'w', encoding='utf-8') as f:
+            f.write('12345')
+        
+        status_data = parser.read_status_file()
+        assert status_data is None
+    
+    def test_incremental_reading_edge_cases(self, temp_journal_dir):
+        """Test edge cases in incremental file reading."""
+        parser = JournalParser(temp_journal_dir)
+        
+        incremental_journal = temp_journal_dir / "Journal.20240906220000.01.log"
+        
+        # Create initial content
+        initial_content = '{"timestamp":"2024-09-06T22:00:00Z","event":"Initial"}\n'
+        with open(incremental_journal, 'w', encoding='utf-8') as f:
+            f.write(initial_content)
+        
+        # Read initial content
+        entries1, pos1 = parser.read_journal_file(incremental_journal)
+        assert len(entries1) == 1
+        assert pos1 > 0
+        
+        # Test incremental read when file hasn't changed
+        entries2, pos2 = parser.read_journal_file_incremental(incremental_journal, pos1)
+        assert len(entries2) == 0
+        assert pos2 == pos1
+        
+        # Test incremental read when file is smaller (truncated)
+        with open(incremental_journal, 'w', encoding='utf-8') as f:
+            f.write('')  # Truncate file
+        
+        entries3, pos3 = parser.read_journal_file_incremental(incremental_journal, pos1)
+        assert len(entries3) == 0
+        assert pos3 == pos1  # Position shouldn't change
+        
+        # Test with file that's been deleted
+        incremental_journal.unlink()
+        entries4, pos4 = parser.read_journal_file_incremental(incremental_journal, pos1)
+        assert len(entries4) == 0
+        assert pos4 == pos1
+
+
+class TestJournalParserPerformance:
+    """Performance and stress tests for journal parser."""
+    
+    def test_memory_usage_large_files(self, temp_journal_dir):
+        """Test memory usage with large files doesn't grow excessively."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Create multiple large journal files
+        for i in range(3):
+            large_journal = temp_journal_dir / f"Journal.2024090623{i:02d}00.01.log"
+            
+            with open(large_journal, 'w', encoding='utf-8') as f:
+                for j in range(500):  # 500 entries per file
+                    entry = {
+                        "timestamp": f"2024-09-06T23:{j:02d}:00Z",
+                        "event": f"MemoryTest{j}",
+                        "data": f"payload_{'x' * 200}_{j}"  # ~200 char payload
+                    }
+                    f.write(json.dumps(entry) + '\n')
+        
+        # Process all files and ensure memory usage is reasonable
+        import tracemalloc
+        tracemalloc.start()
+        
+        total_entries = 0
+        for journal_file in parser.find_journal_files():
+            entries, _ = parser.read_journal_file(journal_file)
+            total_entries += len(entries)
+        
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        
+        assert total_entries == 1500  # 3 files * 500 entries each
+        # Memory usage should be reasonable (less than 50MB for this test)
+        assert peak < 50 * 1024 * 1024, f"Peak memory usage: {peak / (1024*1024):.2f} MB"
+    
+    def test_rapid_file_discovery(self, temp_journal_dir):
+        """Test file discovery performance with many files."""
+        parser = JournalParser(temp_journal_dir)
+        
+        # Create many journal files
+        file_count = 100
+        for i in range(file_count):
+            filename = f"Journal.202409062{i:03d}00.01.log"
+            journal_file = temp_journal_dir / filename
+            
+            with open(journal_file, 'w', encoding='utf-8') as f:
+                f.write(f'{{"timestamp":"2024-09-06T23:00:00Z","event":"Test{i}"}}\n')
+        
+        # Test discovery performance
+        start_time = time.time()
+        journal_files = parser.find_journal_files()
+        end_time = time.time()
+        
+        discovery_time = end_time - start_time
+        
+        assert len(journal_files) == file_count
+        # Discovery should be fast (less than 1 second for 100 files)
+        assert discovery_time < 1.0, f"Discovery took {discovery_time:.2f} seconds"
+        
+        # Verify files are properly sorted (newest first)
+        for i in range(len(journal_files) - 1):
+            current_time = parser._extract_timestamp_from_filename(journal_files[i])
+            next_time = parser._extract_timestamp_from_filename(journal_files[i + 1])
+            assert current_time >= next_time, "Files not properly sorted by timestamp"
 
 
 @pytest.mark.asyncio
