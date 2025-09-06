@@ -32,12 +32,40 @@ This directory serves as a central repository for:
 
 ## 🔄 Session Transition and Knowledge Preservation
 
+### **CRITICAL: Proactive Conversation Limit Monitoring**
+
+**NEW RULE: After every interaction, the AI must check conversation limits and proactively execute the end-of-session protocol when approaching limits.**
+
+#### **Conversation Limit Assessment Protocol**
+After EVERY AI response:
+
+1. **Estimate Remaining Capacity**
+   - Analyze conversation length and complexity patterns
+   - Estimate tokens consumed by average interactions in this conversation
+   - Calculate likely remaining interactions before hitting limits
+
+2. **Proactive Threshold Detection**
+   - If estimated remaining interactions ≤ 3-5 responses: **IMMEDIATELY execute end-of-session protocol**
+   - Consider complexity: technical discussions consume more tokens than simple questions
+   - Account for code examples, long explanations, or detailed documentation
+
+3. **Immediate Protocol Execution**
+   - Do NOT wait for user to indicate "nearing end of session"
+   - Proactively announce: "We are approaching conversation limits. Executing knowledge preservation protocol."
+   - Immediately begin the full end-of-session review process
+
+#### **Why This Rule Is Critical**
+- **Prevents Knowledge Loss**: Ensures we capture all corrections and improvements before hitting limits
+- **Maintains Continuity**: Future AI assistants will have complete context
+- **Preserves Work**: Technical fixes and problem-solving insights are never lost
+- **User Experience**: No interruption of work due to unexpected session termination
+
 ### **Thread Continuity Protocol**
 
 When nearing the end of a conversation session due to token/thread limits, follow this protocol to preserve knowledge and maintain project continuity:
 
 #### **End-of-Session Review Process**
-When the user indicates "we are nearing the end of a session":
+When the user indicates "we are nearing the end of a session" OR when proactive monitoring detects approaching limits:
 
 1. **New Rules Identification**
    - Review the entire current conversation for "new rules" - corrections, additions, or clarifications made by the user
@@ -72,6 +100,7 @@ When the user indicates "we are nearing the end of a session":
 - **Workflow Preferences**: Preferred troubleshooting steps or debugging approaches
 - **Async/Threading Coordination**: Event loop management in watchdog-based monitoring
 - **Status File Handling**: Throttling initialization and file path parameter usage
+- **Conversation Management**: Proactive limit monitoring and knowledge preservation
 
 #### **Session Handoff Protocol**
 
@@ -205,6 +234,7 @@ When working on this project:
 3. **Use automation scripts** for validation and testing
 4. **Maintain code quality** standards throughout
 5. **Apply cross-platform compatibility** rules for all output and scripts
+6. **Monitor conversation limits** after every interaction
 
 ### At Milestone Completion:
 1. **Execute test review procedure** as defined in the plan
@@ -220,6 +250,7 @@ When working on this project:
 - [SUCCESS] **Automation scripts work** with new components
 - [SUCCESS] **Performance meets requirements** for real-time operation
 - [SUCCESS] **Cross-platform compatibility** verified (Windows, Linux, macOS)
+- [SUCCESS] **Conversation limits monitored** proactively
 
 ## 📊 Current Project Status
 
@@ -273,5 +304,6 @@ Each milestone completion should demonstrate:
 - [SUCCESS] **Integration success** with existing components
 - [SUCCESS] **Performance compliance** for real-time operation
 - [SUCCESS] **Cross-platform compatibility** verified across all target systems
+- [SUCCESS] **Knowledge preservation** through proactive conversation monitoring
 
 This ensures the project maintains quality and reliability throughout the development process while building toward the ultimate goal of seamless Elite Dangerous and Claude Desktop integration.
