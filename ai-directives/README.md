@@ -87,6 +87,81 @@ When the user indicates "we are nearing the end of a session":
 
 This protocol ensures continuity across conversation threads and prevents repeated mistakes or misunderstandings.
 
+## 🌐 Cross-Platform Compatibility Standards
+
+### **Character Encoding and Unicode Guidelines**
+
+To ensure compatibility across all development environments and platforms, follow these character usage rules:
+
+#### **✅ ALLOWED Characters**
+- **ASCII printable characters** (32-126): Standard letters, numbers, punctuation
+- **Standard ASCII symbols**: `! @ # $ % ^ & * ( ) - _ = + [ ] { } | \ : ; " ' < > , . ? /`
+- **Plain text status indicators**: `[SUCCESS]`, `[FAILED]`, `[ERROR]`, `[WARNING]`, `[INFO]`
+- **ASCII box drawing**: Use `=`, `-`, `|`, `+` for borders and formatting
+
+#### **❌ FORBIDDEN Characters**
+- **Unicode emojis**: ✅ ❌ 🚀 🔧 📋 ⚠️ (cause Windows cp1252 encoding errors)
+- **Extended Unicode symbols**: → ← ↑ ↓ ✓ ✗ (not supported in all terminals)
+- **Non-ASCII characters** in subprocess commands or script output
+- **Smart quotes**: " " ' ' (use standard ASCII quotes instead)
+- **Mathematical symbols**: ≤ ≥ ± ∆ (use ASCII equivalents: <=, >=, +/-, etc.)
+
+#### **🔧 Implementation Rules**
+
+1. **Subprocess Commands**: Never include Unicode characters in subprocess print statements
+   ```python
+   # ❌ WRONG - causes encoding errors
+   run_command([python, "-c", "import module; print('✅ Success')"])
+   
+   # ✅ CORRECT - uses ASCII only
+   run_command([python, "-c", "import module; print('[SUCCESS] Module imported')"])
+   ```
+
+2. **Script Output**: Use plain text status indicators
+   ```python
+   # ❌ WRONG - Unicode emojis
+   print("✅ All tests passed")
+   print("❌ Some tests failed")
+   
+   # ✅ CORRECT - ASCII status indicators
+   print("[SUCCESS] All tests passed")
+   print("[FAILED] Some tests failed")
+   ```
+
+3. **File Content**: Stick to ASCII for configuration files, scripts, and documentation
+   ```bash
+   # ❌ WRONG - Unicode arrows
+   echo "→ Installing dependencies"
+   
+   # ✅ CORRECT - ASCII indicators
+   echo "-> Installing dependencies"
+   ```
+
+4. **Cross-Platform Testing**: Always test scripts on Windows (cp1252), Linux (UTF-8), and macOS
+
+#### **🎯 Rationale**
+
+- **Windows Compatibility**: Windows PowerShell/cmd uses cp1252 encoding by default
+- **Terminal Support**: Not all terminals support Unicode rendering consistently
+- **CI/CD Compatibility**: Build systems may not handle Unicode in logs properly
+- **Debugging Ease**: ASCII-only output is easier to search, parse, and debug
+- **Universal Access**: Ensures functionality for users with older systems or limited Unicode support
+
+#### **📝 Quick Reference**
+
+| Status Type | Use This | Not This |
+|-------------|----------|----------|
+| Success     | `[SUCCESS]` | ✅ |
+| Failure     | `[FAILED]` | ❌ |
+| Error       | `[ERROR]` | 🚫 |
+| Warning     | `[WARNING]` | ⚠️ |
+| Info        | `[INFO]` | ℹ️ |
+| Arrow       | `->` | → |
+| Checkmark   | `[OK]` | ✓ |
+| Cross       | `[X]` | ✗ |
+
+This standard ensures that all project scripts, documentation, and output work reliably across all supported platforms and development environments.
+
 ## 🎯 Key Principles
 
 ### Test-Driven Development
@@ -127,6 +202,7 @@ When working on this project:
 2. **Write comprehensive tests** alongside code implementation
 3. **Use automation scripts** for validation and testing
 4. **Maintain code quality** standards throughout
+5. **Apply cross-platform compatibility** rules for all output and scripts
 
 ### At Milestone Completion:
 1. **Execute test review procedure** as defined in the plan
@@ -141,6 +217,7 @@ When working on this project:
 - ✅ **Documentation is updated** with new functionality
 - ✅ **Automation scripts work** with new components
 - ✅ **Performance meets requirements** for real-time operation
+- ✅ **Cross-platform compatibility** verified (Windows, Linux, macOS)
 
 ## 📊 Current Project Status
 
@@ -161,6 +238,7 @@ When working on this project:
 - ✅ **setup_dependencies.py** properly maps package names to import names (e.g., `python-dateutil` → `dateutil`)
 - ✅ **Error handling** accurately reports setup failures and provides detailed troubleshooting
 - ✅ **Package verification** tests actual imports rather than relying on pip install success
+- ✅ **Cross-platform compatibility** ensured with ASCII-only characters in all script output
 
 **Next Milestone:** 5 - Event Processing and Classification
 
@@ -184,5 +262,6 @@ Each milestone completion should demonstrate:
 - ✅ **Working automation** validating the implementation
 - ✅ **Integration success** with existing components
 - ✅ **Performance compliance** for real-time operation
+- ✅ **Cross-platform compatibility** verified across all target systems
 
 This ensures the project maintains quality and reliability throughout the development process while building toward the ultimate goal of seamless Elite Dangerous and Claude Desktop integration.
