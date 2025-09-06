@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.journal.monitor import JournalMonitor, JournalEventHandler, test_monitoring
+from src.journal.monitor import JournalMonitor, JournalEventHandler
 from src.journal.parser import JournalParser
 
 
@@ -60,7 +60,14 @@ def parser(temp_journal_dir):
 @pytest.fixture
 def event_handler(mock_callback, parser):
     """Create JournalEventHandler instance."""
-    return JournalEventHandler(mock_callback, parser)
+    # Get current event loop for the handler
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
+    return JournalEventHandler(mock_callback, parser, loop)
 
 
 @pytest.fixture
@@ -74,10 +81,17 @@ class TestJournalEventHandler:
     
     def test_initialization(self, mock_callback, parser):
         """Test event handler initialization."""
-        handler = JournalEventHandler(mock_callback, parser)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        handler = JournalEventHandler(mock_callback, parser, loop)
         
         assert handler.callback == mock_callback
         assert handler.parser == parser
+        assert handler.event_loop == loop
         assert isinstance(handler.current_positions, dict)
         assert isinstance(handler.monitored_files, set)
         assert len(handler.current_positions) == 0
@@ -205,8 +219,14 @@ class TestJournalEventHandler:
     @pytest.mark.asyncio
     async def test_safe_callback_async(self, parser):
         """Test safe callback with async function."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
         async_callback = AsyncMock()
-        handler = JournalEventHandler(async_callback, parser)
+        handler = JournalEventHandler(async_callback, parser, loop)
         
         test_data = [{'test': 'data'}]
         await handler._safe_callback(test_data, 'test_event')
@@ -216,8 +236,14 @@ class TestJournalEventHandler:
     @pytest.mark.asyncio
     async def test_safe_callback_sync(self, parser):
         """Test safe callback with sync function."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
         sync_callback = MagicMock()
-        handler = JournalEventHandler(sync_callback, parser)
+        handler = JournalEventHandler(sync_callback, parser, loop)
         
         test_data = [{'test': 'data'}]
         await handler._safe_callback(test_data, 'test_event')
@@ -227,8 +253,14 @@ class TestJournalEventHandler:
     @pytest.mark.asyncio
     async def test_safe_callback_error_handling(self, parser):
         """Test safe callback error handling."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
         error_callback = AsyncMock(side_effect=Exception("Test error"))
-        handler = JournalEventHandler(error_callback, parser)
+        handler = JournalEventHandler(error_callback, parser, loop)
         
         test_data = [{'test': 'data'}]
         
@@ -520,23 +552,6 @@ class TestJournalMonitorIntegration:
             
         finally:
             await monitor.stop_monitoring()
-
-
-@pytest.mark.asyncio
-class TestUtilityFunctions:
-    """Test utility functions."""
-    
-    async def test_test_monitoring_function(self, temp_journal_dir):
-        """Test the test_monitoring utility function."""
-        # Note: This would normally run for 30 seconds, but we'll patch it for testing
-        with patch('asyncio.sleep') as mock_sleep:
-            mock_sleep.return_value = asyncio.sleep(0.1)  # Short sleep for testing
-            
-            # This should complete quickly due to the patch
-            await test_monitoring(temp_journal_dir, duration_seconds=1)
-            
-            # Verify sleep was called (indicating the function ran)
-            assert mock_sleep.called
 
 
 # Mock data for testing
