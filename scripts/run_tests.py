@@ -16,6 +16,26 @@ import time
 from pathlib import Path
 
 
+# Mapping of package names to their import names
+PACKAGE_IMPORT_MAP = {
+    'python-dateutil': 'dateutil',
+    'pydantic-settings': 'pydantic_settings',
+    'pytest-asyncio': 'pytest_asyncio',
+    'pytest-cov': 'pytest_cov',
+    # Add more mappings as needed
+}
+
+
+def get_import_name(package_name):
+    """Get the import name for a package, handling special cases."""
+    # Check if there's a specific mapping
+    if package_name in PACKAGE_IMPORT_MAP:
+        return PACKAGE_IMPORT_MAP[package_name]
+    
+    # Default: replace hyphens with underscores
+    return package_name.replace('-', '_')
+
+
 def print_step(step_num, total_steps, title, description=""):
     """Print a formatted step header."""
     print(f"\n{'='*60}")
@@ -110,7 +130,10 @@ def main():
     
     missing_packages = []
     for package in required_packages:
-        success, _, _ = run_command([sys.executable, "-c", f"import {package}"], 
+        # Get the correct import name
+        import_name = get_import_name(package)
+        
+        success, _, _ = run_command([sys.executable, "-c", f"import {import_name}"], 
                                    f"Check {package}", capture_output=True, show_output=False)
         if success:
             print(f"  ✅ {package}")
