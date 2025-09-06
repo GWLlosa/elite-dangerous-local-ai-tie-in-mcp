@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict, Optional, Set
 from datetime import datetime, timedelta
+import threading
 
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent
 from watchdog.observers import Observer
@@ -29,17 +30,19 @@ class JournalEventHandler(FileSystemEventHandler):
     - Callback-based event delivery
     """
     
-    def __init__(self, callback: Callable, parser: JournalParser):
+    def __init__(self, callback: Callable, parser: JournalParser, event_loop: asyncio.AbstractEventLoop):
         """
         Initialize journal event handler.
         
         Args:
             callback: Function to call with new journal entries
             parser: JournalParser instance for file operations
+            event_loop: Event loop for scheduling async tasks
         """
         super().__init__()
         self.callback = callback
         self.parser = parser
+        self.event_loop = event_loop
         self.current_positions: Dict[str, int] = {}
         self.monitored_files: Set[str] = set()
         self.last_status_check = datetime.now()
@@ -60,9 +63,9 @@ class JournalEventHandler(FileSystemEventHandler):
         
         # Handle different file types
         if file_path.name.startswith('Journal.') and file_path.name.endswith('.log'):
-            asyncio.create_task(self._handle_journal_modification(file_path))
+            self._schedule_coroutine(self._handle_journal_modification(file_path))
         elif file_path.name == 'Status.json':
-            asyncio.create_task(self._handle_status_modification(file_path))
+            self._schedule_coroutine(self._handle_status_modification(file_path))
     
     def on_created(self, event):
         """
@@ -78,7 +81,20 @@ class JournalEventHandler(FileSystemEventHandler):
         
         if file_path.name.startswith('Journal.') and file_path.name.endswith('.log'):
             logger.info(f"New journal file detected: {file_path.name}")
-            asyncio.create_task(self._handle_journal_creation(file_path))
+            self._schedule_coroutine(self._handle_journal_creation(file_path))
+    
+    def _schedule_coroutine(self, coro):
+        """
+        Schedule a coroutine on the main event loop from a thread.
+        
+        Args:
+            coro: Coroutine to schedule
+        """
+        try:
+            if self.event_loop and not self.event_loop.is_closed():
+                asyncio.run_coroutine_threadsafe(coro, self.event_loop)
+        except Exception as e:
+            logger.error(f"Error scheduling coroutine: {e}")
     
     async def _handle_journal_modification(self, file_path: Path):
         """
@@ -219,6 +235,7 @@ class JournalMonitor:
         self.event_handler: Optional[JournalEventHandler] = None
         self.is_monitoring = False
         self._stop_event = asyncio.Event()
+        self._event_loop: Optional[asyncio.AbstractEventLoop] = None
         
         logger.info(f"Initialized journal monitor for: {self.journal_path}")
     
@@ -234,14 +251,21 @@ class JournalMonitor:
                 logger.warning("Monitoring already active")
                 return True
             
+            # Get current event loop
+            self._event_loop = asyncio.get_running_loop()
+            
             # Validate journal directory
             validation_results = self.parser.validate_journal_directory()
             if not validation_results['exists']:
                 logger.error(f"Cannot start monitoring: {validation_results['errors']}")
                 return False
             
-            # Create event handler
-            self.event_handler = JournalEventHandler(self.event_callback, self.parser)
+            # Create event handler with event loop
+            self.event_handler = JournalEventHandler(
+                self.event_callback, 
+                self.parser, 
+                self._event_loop
+            )
             
             # Initialize position tracking for existing files
             await self._initialize_position_tracking()
@@ -282,6 +306,7 @@ class JournalMonitor:
                 self.observer = None
             
             self.event_handler = None
+            self._event_loop = None
             
             logger.info("Journal monitoring stopped")
             
@@ -396,49 +421,6 @@ class JournalMonitor:
                 'is_active': False,
                 'error': str(e)
             }
-
-
-# Utility functions for testing and validation
-
-async def test_monitoring(journal_path: Path, duration_seconds: int = 30):
-    """
-    Test journal monitoring for a specified duration.
-    
-    Args:
-        journal_path: Path to journal directory
-        duration_seconds: How long to monitor
-    """
-    events_received = []
-    
-    async def test_callback(data, event_type):
-        """Test callback to collect events."""
-        events_received.append({
-            'timestamp': datetime.now().isoformat(),
-            'event_type': event_type,
-            'data_count': len(data) if isinstance(data, list) else 1
-        })
-        print(f"Received {event_type}: {len(data) if isinstance(data, list) else 1} items")
-    
-    monitor = JournalMonitor(journal_path, test_callback)
-    
-    try:
-        print(f"Starting journal monitoring test for {duration_seconds} seconds...")
-        
-        if await monitor.start_monitoring():
-            print("Monitoring started successfully")
-            
-            # Wait for specified duration
-            await asyncio.sleep(duration_seconds)
-            
-            print(f"Test completed. Received {len(events_received)} event batches:")
-            for event in events_received:
-                print(f"  {event['timestamp']}: {event['event_type']} ({event['data_count']} items)")
-        else:
-            print("Failed to start monitoring")
-    
-    finally:
-        await monitor.stop_monitoring()
-        print("Monitoring stopped")
 
 
 def create_journal_monitor(journal_path: Path, callback: Callable) -> JournalMonitor:
