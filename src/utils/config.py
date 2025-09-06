@@ -10,8 +10,8 @@ import platform
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseSettings, Field, validator
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,13 @@ class EliteConfig(BaseSettings):
     - Path validation and existence checking
     - Configuration file loading and saving
     """
+    
+    model_config = SettingsConfigDict(
+        env_prefix="ELITE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )
     
     # Core paths
     journal_path: Path = Field(
@@ -54,7 +61,8 @@ class EliteConfig(BaseSettings):
     journal_encoding: str = Field(default="utf-8", description="Journal file encoding")
     async_mode: bool = Field(default=True, description="Use async file operations")
     
-    @validator('journal_path', pre=True)
+    @field_validator('journal_path', mode='before')
+    @classmethod
     def validate_journal_path(cls, v):
         """Validate and resolve journal path."""
         if isinstance(v, str):
@@ -67,7 +75,8 @@ class EliteConfig(BaseSettings):
         logger.debug(f"Validated journal path: {v}")
         return v
     
-    @validator('edcopilot_path', pre=True)
+    @field_validator('edcopilot_path', mode='before')
+    @classmethod
     def validate_edcopilot_path(cls, v):
         """Validate and resolve EDCoPilot path."""
         if isinstance(v, str):
@@ -80,7 +89,8 @@ class EliteConfig(BaseSettings):
         logger.debug(f"Validated EDCoPilot path: {v}")
         return v
     
-    @validator('max_recent_events')
+    @field_validator('max_recent_events')
+    @classmethod
     def validate_max_events(cls, v):
         """Validate max recent events is reasonable."""
         if v < 10:
@@ -89,7 +99,8 @@ class EliteConfig(BaseSettings):
             raise ValueError("max_recent_events cannot exceed 100,000")
         return v
     
-    @validator('file_check_interval', 'status_update_interval')
+    @field_validator('file_check_interval', 'status_update_interval')
+    @classmethod
     def validate_intervals(cls, v):
         """Validate interval values are reasonable."""
         if v < 0.1:
@@ -199,7 +210,7 @@ class EliteConfig(BaseSettings):
             
             # Convert configuration to dict for JSON serialization
             config_dict = {}
-            for field_name, field_info in self.__fields__.items():
+            for field_name, field_info in self.model_fields.items():
                 value = getattr(self, field_name)
                 if isinstance(value, Path):
                     config_dict[field_name] = str(value)
@@ -236,12 +247,6 @@ class EliteConfig(BaseSettings):
             'platform': platform.system(),
             'python_version': platform.python_version()
         }
-    
-    class Config:
-        env_prefix = "ELITE_"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
 
 
 def _get_default_journal_path() -> Path:
@@ -254,7 +259,7 @@ def _get_default_journal_path() -> Path:
     system = platform.system().lower()
     
     if system == "windows":
-        # Windows: %USERPROFILE%\Saved Games\Frontier Developments\Elite Dangerous
+        # Windows: %USERPROFILE%\\Saved Games\\Frontier Developments\\Elite Dangerous
         base_path = Path.home() / "Saved Games" / "Frontier Developments" / "Elite Dangerous"
     elif system == "darwin":  # macOS
         # macOS: ~/Library/Application Support/Frontier Developments/Elite Dangerous
