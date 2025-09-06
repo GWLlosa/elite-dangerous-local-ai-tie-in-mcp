@@ -84,11 +84,54 @@ When the user indicates "we are nearing the end of a session" OR when proactive 
    - Maintain the existing structure and formatting standards
    - Add timestamps or session references where helpful
 
-4. **Verification Checklist**
+4. **Create Session Report**
+   - **MANDATORY**: Create a session report file in `ai-directives/session-reports/` directory
+   - Use filename format: `session-YYYY-MM-DD-HH-MM.md`
+   - Include: new rules discovered, technical corrections, process improvements, work completed, next steps
+   - **SAVE TO GIT**: Commit the session report to the repository for future reference
+   - This creates a permanent record that future AI assistants can reference
+
+5. **Verification Checklist**
    - Confirm all user corrections have been captured
    - Verify no contradictions exist with existing directives
    - Ensure new rules are clearly documented for future AI assistants
+   - **Verify session report is committed to Git**
    - Test that the updated directives would prevent the same misunderstandings
+
+#### **Session Report Template**
+```markdown
+# AI Session Report - [DATE TIME]
+
+## Session Summary
+- **Duration**: [start time] to [end time]
+- **Focus**: [main topics covered]
+- **Status**: [completed work and current state]
+
+## New Rules Discovered
+### Technical Corrections
+- [list technical fixes and corrections]
+
+### Process Improvements
+- [list workflow and procedure improvements]
+
+### Project Facts
+- [list new requirements or constraints discovered]
+
+## Work Completed
+- [list specific tasks completed]
+- [list commits made]
+- [list milestones achieved]
+
+## Next Steps for Future Sessions
+- [list recommended next actions]
+- [list any incomplete work]
+- [list any issues to investigate]
+
+## Knowledge Preservation Notes
+- [list any critical insights for future AI assistants]
+- [list patterns or approaches that worked well]
+- [list things to avoid or be careful about]
+```
 
 #### **Examples of "New Rules" to Capture**
 
@@ -101,20 +144,23 @@ When the user indicates "we are nearing the end of a session" OR when proactive 
 - **Async/Threading Coordination**: Event loop management in watchdog-based monitoring
 - **Status File Handling**: Throttling initialization and file path parameter usage
 - **Conversation Management**: Proactive limit monitoring and knowledge preservation
+- **Session Documentation**: All sessions must create permanent Git records
 
 #### **Session Handoff Protocol**
 
 **Before ending session:**
 1. Complete the new rules review and documentation
-2. Commit all updates to the ai-directives
-3. Provide a brief summary of what was learned/corrected
-4. Note any incomplete work or next steps
+2. Update ai-directives files with new knowledge
+3. **Create and commit session report to Git**
+4. Provide a brief summary of what was learned/corrected
+5. Note any incomplete work or next steps
 
 **Starting new session:**
 1. User will ask AI to "review the ai-directives"
 2. AI should read all directive files to understand current project state
-3. Pay special attention to recent updates and new rules
-4. Confirm understanding of project status and next steps
+3. **Review recent session reports** in `ai-directives/session-reports/` for context
+4. Pay special attention to recent updates and new rules
+5. Confirm understanding of project status and next steps
 
 This protocol ensures continuity across conversation threads and prevents repeated mistakes or misunderstandings.
 
@@ -227,6 +273,7 @@ When working on this project:
 2. **Understand testing requirements** and quality standards
 3. **Check current project status** and completed milestones
 4. **Validate environment** using automation scripts
+5. **Review recent session reports** for context and continuity
 
 ### During Development:
 1. **Follow implementation tasks** as outlined in the plan
@@ -251,6 +298,7 @@ When working on this project:
 - [SUCCESS] **Performance meets requirements** for real-time operation
 - [SUCCESS] **Cross-platform compatibility** verified (Windows, Linux, macOS)
 - [SUCCESS] **Conversation limits monitored** proactively
+- [SUCCESS] **Session reports created** and committed to Git
 
 ## 📊 Current Project Status
 
@@ -291,6 +339,7 @@ This directory and its contents should be:
 - **Maintained as the source of truth** for project direction
 - **Used to ensure consistency** across development sessions
 - **Continuously improved** with new rules and corrections from each session
+- **Supplemented with session reports** providing detailed historical context
 
 The goal is to maintain high-quality development standards while ensuring efficient progress through the implementation milestones.
 
@@ -305,5 +354,6 @@ Each milestone completion should demonstrate:
 - [SUCCESS] **Performance compliance** for real-time operation
 - [SUCCESS] **Cross-platform compatibility** verified across all target systems
 - [SUCCESS] **Knowledge preservation** through proactive conversation monitoring
+- [SUCCESS] **Session documentation** committed to Git for future reference
 
 This ensures the project maintains quality and reliability throughout the development process while building toward the ultimate goal of seamless Elite Dangerous and Claude Desktop integration.
