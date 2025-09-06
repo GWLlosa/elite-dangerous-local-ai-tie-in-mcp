@@ -30,6 +30,63 @@ This directory serves as a central repository for:
 - Framework for maintaining development consistency
 - Validation criteria for milestone completion
 
+## 🔄 Session Transition and Knowledge Preservation
+
+### **Thread Continuity Protocol**
+
+When nearing the end of a conversation session due to token/thread limits, follow this protocol to preserve knowledge and maintain project continuity:
+
+#### **End-of-Session Review Process**
+When the user indicates "we are nearing the end of a session":
+
+1. **📝 New Rules Identification**
+   - Review the entire current conversation for "new rules" - corrections, additions, or clarifications made by the user
+   - Identify facts, workflows, or assumptions that differ from the existing ai-directives
+   - Note any process improvements or project-specific preferences discovered
+
+2. **📋 Categorize New Knowledge**
+   - **Technical Corrections**: Fixes to code, dependencies, or implementation details
+   - **Process Improvements**: Enhanced workflows, testing procedures, or setup steps
+   - **Project Facts**: Specific requirements, constraints, or architectural decisions
+   - **User Preferences**: Coding styles, reporting formats, or interaction patterns
+
+3. **✍️ Document Integration**
+   - Update the relevant ai-directives files with new facts and corrections
+   - Ensure all new rules are integrated into the appropriate sections
+   - Maintain the existing structure and formatting standards
+   - Add timestamps or session references where helpful
+
+4. **🔍 Verification Checklist**
+   - Confirm all user corrections have been captured
+   - Verify no contradictions exist with existing directives
+   - Ensure new rules are clearly documented for future AI assistants
+   - Test that the updated directives would prevent the same misunderstandings
+
+#### **Examples of "New Rules" to Capture**
+
+- **Package Import Mapping**: `python-dateutil` imports as `dateutil`, not `python_dateutil`
+- **Setup Script Behavior**: Must verify individual package installation, not just pip install success
+- **Error Handling Requirements**: Scripts must report accurate failure status and exit codes
+- **Testing Standards**: Real verification vs. placeholder success reporting
+- **Directory Structure**: Specific path requirements or configuration preferences
+- **Workflow Preferences**: Preferred troubleshooting steps or debugging approaches
+
+#### **Session Handoff Protocol**
+
+**Before ending session:**
+1. Complete the new rules review and documentation
+2. Commit all updates to the ai-directives
+3. Provide a brief summary of what was learned/corrected
+4. Note any incomplete work or next steps
+
+**Starting new session:**
+1. User will ask AI to "review the ai-directives"
+2. AI should read all directive files to understand current project state
+3. Pay special attention to recent updates and new rules
+4. Confirm understanding of project status and next steps
+
+This protocol ensures continuity across conversation threads and prevents repeated mistakes or misunderstandings.
+
 ## 🎯 Key Principles
 
 ### Test-Driven Development
@@ -99,6 +156,12 @@ When working on this project:
 - Comprehensive testing documentation
 - Mock data for reliable testing
 
+**Current Setup Status:**
+- ✅ **requirements.txt** includes all necessary dependencies including `pydantic-settings>=2.5.2`
+- ✅ **setup_dependencies.py** properly maps package names to import names (e.g., `python-dateutil` → `dateutil`)
+- ✅ **Error handling** accurately reports setup failures and provides detailed troubleshooting
+- ✅ **Package verification** tests actual imports rather than relying on pip install success
+
 **Next Milestone:** 5 - Event Processing and Classification
 
 ## 🔄 Continuous Improvement
@@ -108,6 +171,7 @@ This directory and its contents should be:
 - **Enhanced with lessons learned** from each milestone
 - **Maintained as the source of truth** for project direction
 - **Used to ensure consistency** across development sessions
+- **Continuously improved** with new rules and corrections from each session
 
 The goal is to maintain high-quality development standards while ensuring efficient progress through the implementation milestones.
 
