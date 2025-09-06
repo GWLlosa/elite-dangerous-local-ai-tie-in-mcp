@@ -18,7 +18,8 @@ import sys
 import subprocess
 import platform
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
+import re
 
 
 class SetupTracker:
@@ -81,6 +82,7 @@ class SetupTracker:
             print("   2. Try running the script again")
             print("   3. Check your internet connection for package downloads")
             print("   4. Manually install packages: pip install -r requirements.txt")
+            print("   5. Check for dependency conflicts: pip check")
         else:
             print("\n📋 Next steps:")
             print("   1. Activate virtual environment (see instructions above)")
@@ -112,7 +114,7 @@ def print_status(message, success=True):
     print(f"  {icon} {message}")
 
 
-def run_command(cmd, description, check=True):
+def run_command(cmd, description, check=True, capture_output=True):
     """Run a command and return success status."""
     print(f"  Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
     
@@ -120,22 +122,28 @@ def run_command(cmd, description, check=True):
         result = subprocess.run(
             cmd, 
             check=False,  # Don't raise exception on non-zero exit
-            capture_output=True,
+            capture_output=capture_output,
             text=True,
             shell=True if isinstance(cmd, str) else False
         )
         
         if result.returncode == 0:
             print_status(f"{description} - Success")
-            if result.stdout.strip():
-                print(f"    Output: {result.stdout.strip()}")
+            if capture_output and result.stdout.strip():
+                # Only show first few lines of output to avoid spam
+                output_lines = result.stdout.strip().split('\n')
+                if len(output_lines) <= 3:
+                    print(f"    Output: {result.stdout.strip()}")
+                else:
+                    print(f"    Output: {output_lines[0]}... ({len(output_lines)} lines)")
             return True
         else:
             print_status(f"{description} - Failed", False)
-            if result.stderr.strip():
-                print(f"    Error: {result.stderr.strip()}")
-            if result.stdout.strip():
-                print(f"    Output: {result.stdout.strip()}")
+            if capture_output:
+                if result.stderr.strip():
+                    print(f"    Error: {result.stderr.strip()}")
+                if result.stdout.strip():
+                    print(f"    Output: {result.stdout.strip()}")
             return False
             
     except Exception as e:
@@ -216,16 +224,6 @@ def get_venv_python():
         return str(venv_path / "bin" / "python")
 
 
-def get_venv_pip():
-    """Get path to pip executable in virtual environment."""
-    venv_path = Path("venv")
-    
-    if platform.system() == "Windows":
-        return str(venv_path / "Scripts" / "pip.exe")
-    else:
-        return str(venv_path / "bin" / "pip")
-
-
 def upgrade_pip():
     """Upgrade pip in virtual environment."""
     print_header("Pip Upgrade")
@@ -251,6 +249,38 @@ def upgrade_pip():
     return success
 
 
+def parse_requirements_file():
+    """Parse requirements.txt to get list of required packages."""
+    requirements_file = Path("requirements.txt")
+    
+    if not requirements_file.exists():
+        return []
+    
+    packages = []
+    with open(requirements_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            # Skip comments and empty lines
+            if line and not line.startswith('#'):
+                # Extract package name (everything before >=, ==, etc.)
+                package_name = re.split(r'[><=!]', line)[0].strip()
+                if package_name:
+                    packages.append((package_name, line))
+    
+    return packages
+
+
+def check_package_installed(package_name, venv_python):
+    """Check if a specific package is installed."""
+    try:
+        result = subprocess.run([
+            venv_python, "-c", f"import {package_name.replace('-', '_')}; print('OK')"
+        ], capture_output=True, text=True, check=False)
+        return result.returncode == 0
+    except:
+        return False
+
+
 def install_requirements():
     """Install all requirements from requirements.txt."""
     print_header("Dependency Installation")
@@ -268,60 +298,69 @@ def install_requirements():
         setup_tracker.add_error("Dependency Installation", "Virtual environment Python not found")
         return False
     
+    # Parse requirements to know what packages we expect
+    required_packages = parse_requirements_file()
+    print(f"  Found {len(required_packages)} packages in requirements.txt")
+    
     print_step("Installing", "All dependencies from requirements.txt")
     
-    # First, try to install everything at once
+    # Try to install everything at once
     success = run_command([
         venv_python, "-m", "pip", "install", "-r", "requirements.txt"
-    ], "Install all requirements", check=False)
+    ], "Install all requirements")
     
-    if success:
+    # Now verify what actually got installed
+    print_step("Verifying", "Package installation")
+    
+    missing_packages = []
+    installed_packages = []
+    
+    for package_name, requirement_line in required_packages:
+        if check_package_installed(package_name, venv_python):
+            installed_packages.append(package_name)
+            print_status(f"{package_name} - Installed")
+        else:
+            missing_packages.append((package_name, requirement_line))
+            print_status(f"{package_name} - Missing", False)
+    
+    print(f"  ✅ Installed: {len(installed_packages)} packages")
+    print(f"  ❌ Missing: {len(missing_packages)} packages")
+    
+    # If packages are missing, try to install them individually
+    if missing_packages:
+        print_step("Retrying", "Installing missing packages individually")
+        
+        remaining_failures = []
+        for package_name, requirement_line in missing_packages:
+            print(f"  Attempting to install: {package_name}")
+            install_success = run_command([
+                venv_python, "-m", "pip", "install", requirement_line
+            ], f"Install {package_name}")
+            
+            # Verify it actually got installed
+            if install_success and check_package_installed(package_name, venv_python):
+                print_status(f"{package_name} - Successfully installed")
+                installed_packages.append(package_name)
+            else:
+                print_status(f"{package_name} - Failed to install", False)
+                remaining_failures.append(package_name)
+        
+        if remaining_failures:
+            setup_tracker.add_error("Dependency Installation", 
+                                   f"Failed to install: {', '.join(remaining_failures)}")
+            
+            # Run pip check to see if there are dependency conflicts
+            print_step("Checking", "Dependency conflicts")
+            run_command([venv_python, "-m", "pip", "check"], "Check dependencies", check=False)
+            
+            return False
+    
+    if success and not missing_packages:
         print_status("All dependencies installed successfully")
         setup_tracker.add_success("Dependency Installation")
         return True
-    
-    # If batch install failed, try installing core packages individually
-    print_step("Retrying", "Installing core packages individually")
-    
-    core_packages = [
-        "mcp>=1.0.0",
-        "orjson>=3.10.0",
-        "watchdog>=4.0.0", 
-        "pydantic>=2.6.0",
-        "pydantic-settings>=2.5.2",
-        "aiofiles>=24.1.0",
-        "pytest>=8.0.0",
-        "pytest-asyncio>=0.21.0",
-        "pytest-cov>=4.0.0"
-    ]
-    
-    core_failures = []
-    for package in core_packages:
-        success = run_command([
-            venv_python, "-m", "pip", "install", package
-        ], f"Install {package.split('>=')[0]}", check=False)
-        
-        if not success:
-            core_failures.append(package)
-    
-    # Try to install remaining packages (development tools)
-    dev_packages = [
-        "black>=24.0.0",
-        "isort>=5.13.0", 
-        "flake8>=7.0.0",
-        "mypy>=1.8.0",
-        "python-dateutil>=2.8.0",
-        "typing-extensions>=4.9.0"
-    ]
-    
-    print_step("Installing", "Development tools (optional)")
-    for package in dev_packages:
-        run_command([
-            venv_python, "-m", "pip", "install", package
-        ], f"Install {package.split('>=')[0]}", check=False)
-    
-    if core_failures:
-        setup_tracker.add_error("Dependency Installation", f"Failed to install core packages: {', '.join(core_failures)}")
+    elif missing_packages:
+        setup_tracker.add_error("Dependency Installation", "Some packages failed to install")
         return False
     else:
         setup_tracker.add_success("Dependency Installation")
@@ -339,18 +378,22 @@ def verify_installation():
         setup_tracker.add_error("Installation Verification", "Virtual environment Python not found")
         return False
     
+    # Get all required packages from requirements.txt
+    required_packages = parse_requirements_file()
+    
     # Test critical imports
-    critical_packages = [
+    critical_imports = [
         ("orjson", "High-performance JSON parsing"),
         ("watchdog", "File system monitoring"),
         ("pydantic", "Data validation"),
         ("pydantic_settings", "Pydantic settings support"),
         ("pytest", "Testing framework"),
         ("pytest_asyncio", "Async testing"),
+        ("pytest_cov", "Coverage reporting"),
     ]
     
     package_failures = []
-    for package, description in critical_packages:
+    for package, description in critical_imports:
         success = run_command([
             venv_python, "-c", f"import {package}; print(f'{package} OK')"
         ], f"Test {package} import", check=False)
@@ -383,10 +426,12 @@ def verify_installation():
     
     # Add errors to tracker
     if package_failures:
-        setup_tracker.add_error("Installation Verification", f"Failed package imports: {', '.join(package_failures)}")
+        setup_tracker.add_error("Installation Verification", 
+                               f"Failed package imports: {', '.join(package_failures)}")
     
     if project_failures:
-        setup_tracker.add_error("Installation Verification", f"Failed project imports: {', '.join(project_failures)}")
+        setup_tracker.add_error("Installation Verification", 
+                               f"Failed project imports: {', '.join(project_failures)}")
     
     if not package_failures and not project_failures:
         setup_tracker.add_success("Installation Verification")
