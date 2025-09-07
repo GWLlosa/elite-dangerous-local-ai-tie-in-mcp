@@ -13,6 +13,7 @@ import os
 import sys
 import subprocess
 import time
+import platform
 from pathlib import Path
 
 
@@ -36,6 +37,16 @@ def get_import_name(package_name):
     return package_name.replace('-', '_')
 
 
+def get_venv_python():
+    """Get path to Python executable in virtual environment."""
+    venv_path = Path("venv")
+    
+    if platform.system() == "Windows":
+        return str(venv_path / "Scripts" / "python.exe")
+    else:
+        return str(venv_path / "bin" / "python")
+
+
 def print_step(step_num, total_steps, title, description=""):
     """Print a formatted step header."""
     print(f"\n{'='*60}")
@@ -52,8 +63,12 @@ def print_substep(title, description=""):
         print(f"  {description}")
 
 
-def run_command(cmd, description, capture_output=False, show_output=True):
+def run_command(cmd, description, capture_output=False, show_output=True, python_exe=None):
     """Run a command and return success status."""
+    # If a specific Python executable is provided, use it for Python commands
+    if python_exe and isinstance(cmd, list) and cmd[0] == sys.executable:
+        cmd = [python_exe] + cmd[1:]
+    
     print(f"\n  Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
     
     try:
@@ -81,14 +96,40 @@ def run_command(cmd, description, capture_output=False, show_output=True):
 
 
 def check_virtual_environment():
-    """Check if virtual environment is activated."""
-    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-        print("  [SUCCESS] Virtual environment is activated")
-        return True
-    else:
-        print("  [FAILED] Virtual environment is not activated")
+    """Check if virtual environment exists and is valid."""
+    venv_path = Path("venv")
+    venv_python = get_venv_python()
+    
+    if not venv_path.exists():
+        print("  [FAILED] Virtual environment directory not found")
         print("     Please run: python scripts/setup_dependencies.py")
-        return False
+        return False, None
+    
+    if not Path(venv_python).exists():
+        print("  [FAILED] Virtual environment Python executable not found")
+        print("     Please run: python scripts/setup_dependencies.py")
+        return False, None
+    
+    # Test that the venv Python actually works
+    try:
+        result = subprocess.run(
+            [venv_python, "--version"], 
+            capture_output=True, 
+            text=True, 
+            check=False
+        )
+        if result.returncode == 0:
+            print(f"  [SUCCESS] Virtual environment is valid: {result.stdout.strip()}")
+            print(f"  Using Python executable: {venv_python}")
+            return True, venv_python
+        else:
+            print("  [FAILED] Virtual environment Python is not working")
+            print("     Please run: python scripts/setup_dependencies.py")
+            return False, None
+    except Exception as e:
+        print(f"  [FAILED] Error testing virtual environment: {e}")
+        print("     Please run: python scripts/setup_dependencies.py")
+        return False, None
 
 
 def main():
@@ -116,7 +157,8 @@ def main():
         print("  [FAILED] Failed to get Python version")
         sys.exit(1)
     
-    if not check_virtual_environment():
+    venv_valid, venv_python = check_virtual_environment()
+    if not venv_valid:
         sys.exit(1)
     
     # Step 2: Dependency Check
@@ -133,7 +175,7 @@ def main():
         # Get the correct import name
         import_name = get_import_name(package)
         
-        success, _, _ = run_command([sys.executable, "-c", f"import {import_name}"], 
+        success, _, _ = run_command([venv_python, "-c", f"import {import_name}"], 
                                    f"Check {package}", capture_output=True, show_output=False)
         if success:
             print(f"  [SUCCESS] {package}")
@@ -190,7 +232,7 @@ def main():
     all_imports_successful = True
     for module, description in import_tests:
         # Use plain text without emoji for subprocess commands
-        success, _, error = run_command([sys.executable, "-c", f"import {module}; print('OK: {description}')"], 
+        success, _, error = run_command([venv_python, "-c", f"import {module}; print('OK: {description}')"], 
                                        f"Import {module}", capture_output=True)
         if success:
             print(f"  [SUCCESS] {description}")
@@ -219,7 +261,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     print(f"JournalParser: Directory validation successful, found {len(files)} files")
 '''
     
-    success, output, error = run_command([sys.executable, "-c", parser_test],
+    success, output, error = run_command([venv_python, "-c", parser_test],
                                         "JournalParser test", capture_output=True)
     if success:
         print(f"  [SUCCESS] {output.strip()}")
@@ -234,7 +276,7 @@ validation = config.validate_paths()
 print(f"Configuration: Journal path={config.journal_path.name}, validation completed")
 '''
     
-    success, output, error = run_command([sys.executable, "-c", config_test],
+    success, output, error = run_command([venv_python, "-c", config_test],
                                         "Config test", capture_output=True)
     if success:
         print(f"  [SUCCESS] {output.strip()}")
@@ -245,7 +287,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     print_step(6, total_steps, "Journal Parser Unit Tests",
                "Running comprehensive tests for journal parsing functionality")
     
-    success, _, _ = run_command([sys.executable, "-m", "pytest", "tests/unit/test_journal_parser.py", "-v"],
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_journal_parser.py", "-v"],
                                "Journal parser tests")
     if not success:
         print("  [FAILED] Journal parser tests failed")
@@ -255,7 +297,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     print_step(7, total_steps, "Journal Monitor Unit Tests",
                "Running comprehensive tests for real-time monitoring functionality")
     
-    success, _, _ = run_command([sys.executable, "-m", "pytest", "tests/unit/test_journal_monitor.py", "-v"],
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_journal_monitor.py", "-v"],
                                "Journal monitor tests")
     if not success:
         print("  [FAILED] Journal monitor tests failed")
@@ -267,7 +309,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     
     print_substep("Running complete test suite")
     success, _, _ = run_command([
-        sys.executable, "-m", "pytest", "tests/unit/", "-v", 
+        venv_python, "-m", "pytest", "tests/unit/", "-v", 
         "--cov=src", "--cov-report=term", "--cov-report=html"
     ], "Complete test suite with coverage")
     
