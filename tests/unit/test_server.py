@@ -94,17 +94,39 @@ class TestServerLogging:
     
     def test_logging_configuration(self):
         """Test that logging is properly configured."""
-        # Import the server module to trigger logging setup
-        from src import server
+        # Reset logging configuration to test fresh import
+        # Store original handlers to restore later
+        original_handlers = logging.root.handlers[:]
+        original_level = logging.root.level
         
-        # Get the root logger and verify it has handlers
-        root_logger = logging.getLogger()
-        
-        # Should have at least one handler (from basicConfig)
-        assert len(root_logger.handlers) > 0
-        
-        # Verify logging level is set
-        assert root_logger.level <= logging.INFO
+        try:
+            # Clear existing handlers and reset level
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            logging.root.setLevel(logging.NOTSET)
+            
+            # Import the server module to trigger logging setup
+            import importlib
+            from src import server
+            importlib.reload(server)
+            
+            # Get the root logger and verify it has handlers
+            root_logger = logging.getLogger()
+            
+            # Should have at least one handler (from basicConfig)
+            assert len(root_logger.handlers) > 0
+            
+            # Verify logging level is set to INFO or lower
+            # The server.py sets level to INFO, so it should be <= INFO
+            assert root_logger.level <= logging.INFO
+            
+        finally:
+            # Restore original logging configuration
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            for handler in original_handlers:
+                logging.root.addHandler(handler)
+            logging.root.setLevel(original_level)
     
     def test_logger_creation(self):
         """Test logger creation for server module."""
