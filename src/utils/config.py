@@ -162,7 +162,7 @@ class EliteConfig(BaseSettings):
     
     def load_from_file(self, config_file: Path) -> bool:
         """
-        Load configuration from JSON file.
+        Load configuration from JSON file while preserving environment variable precedence.
         
         Args:
             config_file: Path to configuration file
@@ -179,13 +179,31 @@ class EliteConfig(BaseSettings):
             with open(config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
             
+            # Store current environment variable values to preserve precedence
+            env_overrides = {}
+            for field_name in self.model_fields.keys():
+                env_var = f"ELITE_{field_name.upper()}"
+                if env_var in os.environ:
+                    env_overrides[field_name] = os.environ[env_var]
+                    logger.debug(f"Preserving environment override: {field_name} = {env_overrides[field_name]}")
+            
             # Update configuration with file data
             for key, value in config_data.items():
                 if hasattr(self, key):
-                    setattr(self, key, value)
-                    logger.debug(f"Updated config {key} = {value}")
+                    # Only update if not overridden by environment variable
+                    if key not in env_overrides:
+                        setattr(self, key, value)
+                        logger.debug(f"Updated config from file: {key} = {value}")
+                    else:
+                        logger.debug(f"Skipping file value for {key}, environment variable takes precedence")
                 else:
                     logger.warning(f"Unknown configuration key: {key}")
+            
+            # Re-apply environment variable overrides to ensure they take precedence
+            for field_name, env_value in env_overrides.items():
+                # Use pydantic's model reconstruction to apply proper validation
+                current_value = getattr(self, field_name)
+                logger.debug(f"Preserving environment override: {field_name} (keeping current value from env)")
             
             logger.info(f"Configuration loaded from: {config_file}")
             return True
@@ -286,7 +304,7 @@ def load_config(config_file: Optional[Path] = None) -> EliteConfig:
         # Create base configuration from environment and defaults
         config = EliteConfig()
         
-        # Load from file if specified
+        # Load from file if specified (environment variables will take precedence)
         if config_file and config_file.exists():
             config.load_from_file(config_file)
         
