@@ -711,7 +711,8 @@ class TestJournalParserPerformance:
                 for j in range(entries_per_file):
                     # Use helper function to generate valid timestamps
                     # Start each file at a different base time to avoid conflicts
-                    base_time = f"2024-09-06T{23 + i}:00:00Z"
+                    # Use hours 20, 21, 22 instead of 23, 24, 25 to stay within valid range (0-23)
+                    base_time = f"2024-09-06T{20 + i}:00:00Z"
                     timestamp = generate_valid_timestamp(base_time, j)
                     entry = {
                         "timestamp": timestamp,
