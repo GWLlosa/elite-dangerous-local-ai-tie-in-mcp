@@ -15,9 +15,17 @@ from src.journal.parser import JournalParser
 
 @pytest.fixture
 def temp_journal_dir():
-    """Create temporary directory with sample journal files."""
-    with tempfile.TemporaryDirectory() as temp_dir:
+    """Create completely isolated temporary directory with sample journal files."""
+    with tempfile.TemporaryDirectory(prefix="elite_test_") as temp_dir:
         journal_dir = Path(temp_dir)
+        
+        # Ensure directory is completely empty first
+        for item in journal_dir.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                import shutil
+                shutil.rmtree(item)
         
         # Create sample journal files with different timestamps
         journal_files = [
@@ -60,6 +68,23 @@ def temp_journal_dir():
             json.dump(status_data, f)
         
         yield journal_dir
+
+
+@pytest.fixture
+def isolated_temp_dir():
+    """Create a completely isolated temporary directory for performance tests."""
+    with tempfile.TemporaryDirectory(prefix="elite_perf_test_") as temp_dir:
+        test_dir = Path(temp_dir)
+        
+        # Ensure completely clean directory
+        for item in test_dir.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                import shutil
+                shutil.rmtree(item)
+        
+        yield test_dir
 
 
 @pytest.fixture
@@ -289,12 +314,12 @@ class TestJournalParser:
 class TestJournalParserEdgeCases:
     """Test edge cases and error scenarios for journal parser."""
     
-    def test_large_journal_file_performance(self, temp_journal_dir):
+    def test_large_journal_file_performance(self, isolated_temp_dir):
         """Test parser performance with large journal files."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
         # Create a large journal file with many entries
-        large_journal = temp_journal_dir / "Journal.20240906150000.01.log"
+        large_journal = isolated_temp_dir / "Journal.20240906150000.01.log"
         entries_count = 1000
         
         with open(large_journal, 'w', encoding='utf-8') as f:
@@ -323,11 +348,11 @@ class TestJournalParserEdgeCases:
         assert entries[0]["event"] == "TestEvent0"
         assert entries[-1]["event"] == f"TestEvent{entries_count-1}"
     
-    def test_unicode_edge_cases(self, temp_journal_dir):
+    def test_unicode_edge_cases(self, isolated_temp_dir):
         """Test parsing with various unicode characters."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        unicode_journal = temp_journal_dir / "Journal.20240906160000.01.log"
+        unicode_journal = isolated_temp_dir / "Journal.20240906160000.01.log"
         
         # Create entries with various unicode characters
         unicode_entries = [
@@ -365,10 +390,10 @@ class TestJournalParserEdgeCases:
         assert entries[1]["Body"] == "Planète_Земля"
         assert entries[2]["Message"] == "Hello 世界! Здравствуй мир! 🌍"
     
-    def test_corrupted_status_file_recovery(self, temp_journal_dir):
+    def test_corrupted_status_file_recovery(self, isolated_temp_dir):
         """Test handling of corrupted Status.json files."""
-        parser = JournalParser(temp_journal_dir)
-        status_file = temp_journal_dir / "Status.json"
+        parser = JournalParser(isolated_temp_dir)
+        status_file = isolated_temp_dir / "Status.json"
         
         # Test various corruption scenarios
         corruption_cases = [
@@ -410,12 +435,12 @@ class TestJournalParserEdgeCases:
         assert status_data is not None
         assert status_data["Flags"] == 12345
     
-    def test_file_permission_errors(self, temp_journal_dir):
+    def test_file_permission_errors(self, isolated_temp_dir):
         """Test handling of file permission errors."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
         # Create a test journal file
-        test_journal = temp_journal_dir / "Journal.20240906170000.01.log"
+        test_journal = isolated_temp_dir / "Journal.20240906170000.01.log"
         with open(test_journal, 'w', encoding='utf-8') as f:
             f.write('{"timestamp":"2024-09-06T17:00:00Z","event":"Test"}\n')
         
@@ -428,7 +453,7 @@ class TestJournalParserEdgeCases:
             assert position == 0
         
         # Test with Status.json permission error
-        status_file = temp_journal_dir / "Status.json"
+        status_file = isolated_temp_dir / "Status.json"
         with open(status_file, 'w', encoding='utf-8') as f:
             json.dump({"event": "Status", "Flags": 123}, f)
         
@@ -436,12 +461,12 @@ class TestJournalParserEdgeCases:
             status_data = parser.read_status_file()
             assert status_data is None
     
-    def test_mixed_encoding_scenarios(self, temp_journal_dir):
+    def test_mixed_encoding_scenarios(self, isolated_temp_dir):
         """Test handling of files with mixed or incorrect encoding."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
         # Create file with different encodings
-        mixed_journal = temp_journal_dir / "Journal.20240906180000.01.log"
+        mixed_journal = isolated_temp_dir / "Journal.20240906180000.01.log"
         
         # Test with latin-1 encoding (common issue)
         latin1_content = '{"timestamp":"2024-09-06T18:00:00Z","event":"Test","data":"café"}\n'
@@ -456,11 +481,11 @@ class TestJournalParserEdgeCases:
         assert len(entries) >= 0  # May be 0 if JSON parsing fails due to encoding
         assert position > 0
     
-    def test_extremely_long_lines(self, temp_journal_dir):
+    def test_extremely_long_lines(self, isolated_temp_dir):
         """Test handling of extremely long journal entry lines."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        long_journal = temp_journal_dir / "Journal.20240906190000.01.log"
+        long_journal = isolated_temp_dir / "Journal.20240906190000.01.log"
         
         # Create entry with very long data
         very_long_data = "x" * 100000  # 100KB of data
@@ -482,11 +507,11 @@ class TestJournalParserEdgeCases:
         assert len(entries[0]["data"]) == 100000
         assert entries[1]["event"] == "NormalEvent"
     
-    def test_concurrent_file_access(self, temp_journal_dir):
+    def test_concurrent_file_access(self, isolated_temp_dir):
         """Test handling of concurrent file access scenarios."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        concurrent_journal = temp_journal_dir / "Journal.20240906200000.01.log"
+        concurrent_journal = isolated_temp_dir / "Journal.20240906200000.01.log"
         
         # Simulate file being written to while we're reading
         def mock_read_with_interruption():
@@ -525,11 +550,11 @@ class TestJournalParserEdgeCases:
             assert isinstance(entries, list)
             assert isinstance(position, int)
     
-    def test_malformed_timestamp_handling(self, temp_journal_dir):
+    def test_malformed_timestamp_handling(self, isolated_temp_dir):
         """Test handling of entries with malformed timestamps."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        malformed_journal = temp_journal_dir / "Journal.20240906210000.01.log"
+        malformed_journal = isolated_temp_dir / "Journal.20240906210000.01.log"
         
         # Create entries with various timestamp issues
         malformed_entries = [
@@ -557,9 +582,9 @@ class TestJournalParserEdgeCases:
         assert len(entries) == 1  # Only the valid entry
         assert entries[0]["event"] == "ValidEntry"
     
-    def test_directory_access_edge_cases(self, temp_journal_dir):
+    def test_directory_access_edge_cases(self, isolated_temp_dir):
         """Test directory access edge cases."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
         # Test validation with various directory states
         results = parser.validate_journal_directory()
@@ -573,7 +598,7 @@ class TestJournalParserEdgeCases:
             assert results["readable"] is False
         
         # Test with directory that's actually a file
-        fake_dir = temp_journal_dir / "not_a_directory.txt"
+        fake_dir = isolated_temp_dir / "not_a_directory.txt"
         with open(fake_dir, 'w') as f:
             f.write("fake directory")
         
@@ -582,10 +607,10 @@ class TestJournalParserEdgeCases:
         assert results["is_directory"] is False
         assert len(results["errors"]) > 0
     
-    def test_status_file_edge_cases(self, temp_journal_dir):
+    def test_status_file_edge_cases(self, isolated_temp_dir):
         """Test various Status.json edge cases."""
-        parser = JournalParser(temp_journal_dir)
-        status_file = temp_journal_dir / "Status.json"
+        parser = JournalParser(isolated_temp_dir)
+        status_file = isolated_temp_dir / "Status.json"
         
         # Test with non-dictionary JSON
         with open(status_file, 'w', encoding='utf-8') as f:
@@ -608,11 +633,11 @@ class TestJournalParserEdgeCases:
         status_data = parser.read_status_file()
         assert status_data is None
     
-    def test_incremental_reading_edge_cases(self, temp_journal_dir):
+    def test_incremental_reading_edge_cases(self, isolated_temp_dir):
         """Test edge cases in incremental file reading."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        incremental_journal = temp_journal_dir / "Journal.20240906220000.01.log"
+        incremental_journal = isolated_temp_dir / "Journal.20240906220000.01.log"
         
         # Create initial content
         initial_content = '{"timestamp":"2024-09-06T22:00:00Z","event":"Initial"}\n'
@@ -647,16 +672,19 @@ class TestJournalParserEdgeCases:
 class TestJournalParserPerformance:
     """Performance and stress tests for journal parser."""
     
-    def test_memory_usage_large_files(self, temp_journal_dir):
+    def test_memory_usage_large_files(self, isolated_temp_dir):
         """Test memory usage with large files doesn't grow excessively."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        # Create multiple large journal files
-        for i in range(3):
-            large_journal = temp_journal_dir / f"Journal.2024090623{i:02d}00.01.log"
+        # Create multiple large journal files with STRICT file count control
+        file_count = 3
+        entries_per_file = 500
+        
+        for i in range(file_count):
+            large_journal = isolated_temp_dir / f"Journal.2024090623{i:02d}00.01.log"
             
             with open(large_journal, 'w', encoding='utf-8') as f:
-                for j in range(500):  # 500 entries per file
+                for j in range(entries_per_file):
                     entry = {
                         "timestamp": f"2024-09-06T23:{j:02d}:00Z",
                         "event": f"MemoryTest{j}",
@@ -669,29 +697,42 @@ class TestJournalParserPerformance:
         tracemalloc.start()
         
         total_entries = 0
-        for journal_file in parser.find_journal_files():
+        journal_files = parser.find_journal_files()
+        
+        # Ensure we only have the expected files
+        assert len(journal_files) == file_count, f"Expected {file_count} files, found {len(journal_files)}"
+        
+        for journal_file in journal_files:
             entries, _ = parser.read_journal_file(journal_file)
             total_entries += len(entries)
         
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         
-        assert total_entries == 1500  # 3 files * 500 entries each
+        expected_entries = file_count * entries_per_file
+        assert total_entries == expected_entries, f"Expected {expected_entries} entries, got {total_entries}"
         # Memory usage should be reasonable (less than 50MB for this test)
         assert peak < 50 * 1024 * 1024, f"Peak memory usage: {peak / (1024*1024):.2f} MB"
     
-    def test_rapid_file_discovery(self, temp_journal_dir):
+    def test_rapid_file_discovery(self, isolated_temp_dir):
         """Test file discovery performance with many files."""
-        parser = JournalParser(temp_journal_dir)
+        parser = JournalParser(isolated_temp_dir)
         
-        # Create many journal files
+        # Create many journal files with STRICT naming to avoid timestamp parsing issues
         file_count = 100
+        created_files = []
+        
         for i in range(file_count):
-            filename = f"Journal.202409062{i:03d}00.01.log"
-            journal_file = temp_journal_dir / filename
+            # Use valid timestamp format: YYYYMMDDHHMMSS
+            # Spread across different hours to avoid conflicts
+            hour = i // 10  # 10 files per hour
+            minute = (i % 10) * 6  # 6 minute intervals
+            filename = f"Journal.20240906{hour:02d}{minute:02d}00.01.log"
+            journal_file = isolated_temp_dir / filename
+            created_files.append(filename)
             
             with open(journal_file, 'w', encoding='utf-8') as f:
-                f.write(f'{{"timestamp":"2024-09-06T23:00:00Z","event":"Test{i}"}}\n')
+                f.write(f'{{"timestamp":"2024-09-06T{hour:02d}:{minute:02d}:00Z","event":"Test{i}"}}\n')
         
         # Test discovery performance
         start_time = time.time()
@@ -700,7 +741,9 @@ class TestJournalParserPerformance:
         
         discovery_time = end_time - start_time
         
-        assert len(journal_files) == file_count
+        # Should find exactly the files we created
+        assert len(journal_files) == file_count, f"Expected {file_count} files, found {len(journal_files)}: {[f.name for f in journal_files]}"
+        
         # Discovery should be fast (less than 1 second for 100 files)
         assert discovery_time < 1.0, f"Discovery took {discovery_time:.2f} seconds"
         
