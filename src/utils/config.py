@@ -181,29 +181,41 @@ class EliteConfig(BaseSettings):
             
             # Store current environment variable values to preserve precedence
             env_overrides = {}
-            for field_name in self.model_fields.keys():
+            for field_name in self.__class__.model_fields.keys():
                 env_var = f"ELITE_{field_name.upper()}"
                 if env_var in os.environ:
                     env_overrides[field_name] = os.environ[env_var]
                     logger.debug(f"Preserving environment override: {field_name} = {env_overrides[field_name]}")
             
-            # Update configuration with file data
+            # Filter out unknown keys and handle environment overrides
+            valid_config_data = {}
             for key, value in config_data.items():
-                if hasattr(self, key):
-                    # Only update if not overridden by environment variable
+                if key in self.__class__.model_fields:
+                    # Only include if not overridden by environment variable
                     if key not in env_overrides:
-                        setattr(self, key, value)
-                        logger.debug(f"Updated config from file: {key} = {value}")
+                        valid_config_data[key] = value
+                        logger.debug(f"Will update config from file: {key} = {value}")
                     else:
                         logger.debug(f"Skipping file value for {key}, environment variable takes precedence")
                 else:
                     logger.warning(f"Unknown configuration key: {key}")
             
-            # Re-apply environment variable overrides to ensure they take precedence
-            for field_name, env_value in env_overrides.items():
-                # Use pydantic's model reconstruction to apply proper validation
-                current_value = getattr(self, field_name)
-                logger.debug(f"Preserving environment override: {field_name} (keeping current value from env)")
+            # Use pydantic's model reconstruction to apply proper validation
+            if valid_config_data:
+                # Get current values
+                current_values = {field_name: getattr(self, field_name) 
+                                for field_name in self.__class__.model_fields.keys()}
+                
+                # Update with file values
+                current_values.update(valid_config_data)
+                
+                # Reconstruct the model to trigger validation
+                updated_config = self.__class__(**current_values)
+                
+                # Copy validated values back
+                for field_name, validated_value in updated_config:
+                    setattr(self, field_name, validated_value)
+                    logger.debug(f"Updated config with validation: {field_name} = {validated_value}")
             
             logger.info(f"Configuration loaded from: {config_file}")
             return True
@@ -228,7 +240,7 @@ class EliteConfig(BaseSettings):
             
             # Convert configuration to dict for JSON serialization
             config_dict = {}
-            for field_name, field_info in self.model_fields.items():
+            for field_name, field_info in self.__class__.model_fields.items():
                 value = getattr(self, field_name)
                 if isinstance(value, Path):
                     config_dict[field_name] = str(value)
