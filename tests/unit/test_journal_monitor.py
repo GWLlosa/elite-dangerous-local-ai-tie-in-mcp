@@ -820,6 +820,9 @@ class TestJournalMonitorEdgeCases:
         try:
             await monitor.start_monitoring()
             
+            # Allow initial status processing
+            await asyncio.sleep(0.2)
+            
             status_file = temp_journal_dir / "Status.json"
             
             # Create a large status file with lots of data
@@ -841,10 +844,19 @@ class TestJournalMonitorEdgeCases:
             
             # Should handle large status files
             assert len(status_events) > 0
-            if status_events:
-                status_data = status_events[0][0]  # First status update
-                assert status_data["Flags"] == 12345
-                assert "large_data" in status_data
+            
+            # Look for the status update with Flags: 12345 (the new large status)
+            found_large_status = False
+            for status_data_list in status_events:
+                for status_data in status_data_list:
+                    if status_data.get("Flags") == 12345:
+                        assert "large_data" in status_data
+                        found_large_status = True
+                        break
+                if found_large_status:
+                    break
+            
+            assert found_large_status, f"Expected to find status with Flags=12345, but got: {status_events}"
             
         finally:
             await monitor.stop_monitoring()
