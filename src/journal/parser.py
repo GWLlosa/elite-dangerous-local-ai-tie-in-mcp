@@ -66,20 +66,52 @@ class JournalParser:
                 found_files = glob.glob(str(search_path))
                 journal_files.extend([Path(f) for f in found_files])
             
-            # Sort by timestamp extracted from filename (newest first)
-            journal_files.sort(key=self._extract_timestamp_from_filename, reverse=True)
+            # Filter files to only include those with valid journal filename patterns
+            valid_journal_files = []
+            for file_path in journal_files:
+                if self._is_valid_journal_filename(file_path):
+                    valid_journal_files.append(file_path)
+                else:
+                    logger.debug(f"Skipping file with invalid journal pattern: {file_path.name}")
             
-            logger.debug(f"Found {len(journal_files)} journal files")
-            return journal_files
+            # Sort by timestamp extracted from filename (newest first)
+            valid_journal_files.sort(key=self._extract_timestamp_from_filename, reverse=True)
+            
+            logger.debug(f"Found {len(valid_journal_files)} valid journal files")
+            return valid_journal_files
             
         except Exception as e:
             logger.error(f"Error finding journal files: {e}")
             return []
     
+    def _is_valid_journal_filename(self, file_path: Path) -> bool:
+        """
+        Check if filename matches valid journal pattern.
+        
+        Args:
+            file_path: Path to check
+            
+        Returns:
+            bool: True if filename is valid journal pattern
+        """
+        filename = file_path.name
+        
+        # Valid patterns: Journal.YYYYMMDDHHMMSS.NN.log[.backup]
+        patterns = [
+            r'^Journal\.\d{14}\.\d{2}\.log$',
+            r'^Journal\.\d{14}\.\d{2}\.log\.backup$'
+        ]
+        
+        for pattern in patterns:
+            if re.match(pattern, filename):
+                return True
+        
+        return False
+    
     def get_latest_journal(self, include_backups: bool = False) -> Optional[Path]:
         """
         Get the most recent journal file.
-        
+
         Args:
             include_backups: Whether to consider backup files
             
@@ -101,10 +133,36 @@ class JournalParser:
             logger.error(f"Error getting latest journal: {e}")
             return None
     
+    def _is_valid_timestamp(self, timestamp_value) -> bool:
+        """
+        Validate that timestamp is a properly formatted string.
+        
+        Args:
+            timestamp_value: The timestamp value to validate
+            
+        Returns:
+            bool: True if timestamp is valid format
+        """
+        # Must be a string
+        if not isinstance(timestamp_value, str):
+            return False
+        
+        # Must not be empty
+        if not timestamp_value.strip():
+            return False
+        
+        # Must match basic ISO 8601 pattern (simplified check)
+        # Elite Dangerous uses: YYYY-MM-DDTHH:MM:SSZ format
+        iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$'
+        if not re.match(iso_pattern, timestamp_value):
+            return False
+        
+        return True
+    
     def parse_journal_entry(self, line: str) -> Optional[Dict]:
         """
         Parse a single journal entry using orjson for performance.
-        
+
         Args:
             line: Raw JSON line from journal file
             
@@ -125,9 +183,13 @@ class JournalParser:
                 logger.warning(f"Journal entry is not a dictionary: {type(entry)}")
                 return None
             
-            # Ensure timestamp exists
+            # Ensure timestamp exists and is valid
             if 'timestamp' not in entry:
                 logger.warning("Journal entry missing timestamp")
+                return None
+            
+            if not self._is_valid_timestamp(entry['timestamp']):
+                logger.warning(f"Journal entry has invalid timestamp format: {entry.get('timestamp')}")
                 return None
             
             # Ensure event type exists
@@ -147,7 +209,7 @@ class JournalParser:
     def read_journal_file(self, file_path: Path, start_position: int = 0) -> Tuple[List[Dict], int]:
         """
         Read and parse entire journal file from specified position.
-        
+
         Args:
             file_path: Path to journal file
             start_position: File position to start reading from (for incremental reads)
@@ -190,7 +252,7 @@ class JournalParser:
     def read_journal_file_incremental(self, file_path: Path, last_position: int) -> Tuple[List[Dict], int]:
         """
         Read only new entries from journal file since last position.
-        
+
         Args:
             file_path: Path to journal file
             last_position: Last known file position
@@ -222,7 +284,7 @@ class JournalParser:
     def get_status_file_path(self) -> Path:
         """
         Get path to Status.json file in journal directory.
-        
+
         Returns:
             Path: Path to Status.json file
         """
@@ -231,7 +293,7 @@ class JournalParser:
     def read_status_file(self) -> Optional[Dict]:
         """
         Read and parse the current Status.json file.
-        
+
         Returns:
             Optional[Dict]: Current status data, or None if not available
         """
@@ -266,7 +328,7 @@ class JournalParser:
     def _extract_timestamp_from_filename(self, file_path: Path) -> datetime:
         """
         Extract timestamp from journal filename for sorting.
-        
+
         Args:
             file_path: Path to journal file
             
@@ -295,7 +357,7 @@ class JournalParser:
     def get_file_info(self, file_path: Path) -> Dict:
         """
         Get detailed information about a journal file.
-        
+
         Args:
             file_path: Path to journal file
             
@@ -326,7 +388,7 @@ class JournalParser:
     def validate_journal_directory(self) -> Dict:
         """
         Validate journal directory and provide detailed status.
-        
+
         Returns:
             Dict: Validation results and directory information
         """
