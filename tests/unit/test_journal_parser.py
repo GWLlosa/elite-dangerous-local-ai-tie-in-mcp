@@ -4,13 +4,35 @@ import json
 import os
 import tempfile
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from src.journal.parser import JournalParser
+
+
+def generate_valid_timestamp(base_timestamp: str, index: int) -> str:
+    """
+    Generate a valid timestamp for test entries.
+    
+    Args:
+        base_timestamp: Base timestamp in format "2024-09-06T15:00:00Z"
+        index: Entry index (can be any positive integer)
+        
+    Returns:
+        str: Valid timestamp spread across hours/days as needed
+    """
+    # Parse base timestamp
+    base_dt = datetime.fromisoformat(base_timestamp.replace('Z', '+00:00'))
+    
+    # Add seconds equal to index to spread across time
+    # This automatically handles minute/hour/day rollovers
+    new_dt = base_dt + timedelta(seconds=index)
+    
+    # Format back to Elite Dangerous timestamp format
+    return new_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 @pytest.fixture
@@ -324,8 +346,10 @@ class TestJournalParserEdgeCases:
         
         with open(large_journal, 'w', encoding='utf-8') as f:
             for i in range(entries_count):
+                # Use helper function to generate valid timestamps
+                timestamp = generate_valid_timestamp("2024-09-06T15:00:00Z", i)
                 entry = {
-                    "timestamp": f"2024-09-06T15:{i:02d}:00Z",
+                    "timestamp": timestamp,
                     "event": f"TestEvent{i}",
                     "data": f"large_data_payload_{'x' * 100}_{i}"
                 }
@@ -685,8 +709,12 @@ class TestJournalParserPerformance:
             
             with open(large_journal, 'w', encoding='utf-8') as f:
                 for j in range(entries_per_file):
+                    # Use helper function to generate valid timestamps
+                    # Start each file at a different base time to avoid conflicts
+                    base_time = f"2024-09-06T{23 + i}:00:00Z"
+                    timestamp = generate_valid_timestamp(base_time, j)
                     entry = {
-                        "timestamp": f"2024-09-06T23:{j:02d}:00Z",
+                        "timestamp": timestamp,
                         "event": f"MemoryTest{j}",
                         "data": f"payload_{'x' * 200}_{j}"  # ~200 char payload
                     }
