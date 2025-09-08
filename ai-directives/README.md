@@ -158,6 +158,7 @@ When the user indicates "we are nearing the end of a session" OR when proactive 
    - Include: new rules discovered, technical corrections, process improvements, work completed, next steps
    - **SAVE TO GIT**: Commit the session report to the repository for future reference
    - This creates a permanent record that future AI assistants can reference
+   - Do not report "tests are passing" unless you have seen output confirming tests are passing.  Sometimes an AI assistant believes it has fixed the last problem and reports tests are passing, but we uncover new problems masked by that problem.  
 
 5. **Verification Checklist**
    - Confirm all user corrections have been captured
