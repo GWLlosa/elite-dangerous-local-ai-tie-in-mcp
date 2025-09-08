@@ -53,7 +53,7 @@ class EliteDangerousServer:
             logger.error(f"Failed to load configuration: {e}")
             raise
         
-        # Initialize MCP server - Fixed: Remove version parameter
+        # Initialize MCP server
         self.app = FastMCP("Elite Dangerous MCP Server")
         
         # Initialize components
@@ -81,27 +81,32 @@ class EliteDangerousServer:
         try:
             logger.info("Starting journal monitoring...")
             
-            # Initialize journal monitor
-            self.journal_monitor = JournalMonitor()
-            
             # Set up event callback to process and store events
-            def on_journal_event(event_data: Dict[str, Any]):
+            def on_journal_event(event_data_list, event_type: str):
                 try:
-                    # Process the event
-                    processed_event = self.event_processor.process_event(event_data)
-                    
-                    # Store in data store
-                    self.data_store.store_event(processed_event)
-                    
-                    logger.debug(f"Processed and stored event: {processed_event.event_type}")
-                    
+                    for event_data in event_data_list:
+                        # Process the event
+                        processed_event = self.event_processor.process_event(event_data)
+                        
+                        # Store in data store
+                        self.data_store.store_event(processed_event)
+                        
+                        logger.debug(f"Processed and stored event: {processed_event.event_type}")
+                        
                 except Exception as e:
                     logger.error(f"Error processing journal event: {e}")
             
-            self.journal_monitor.set_event_callback(on_journal_event)
+            # Initialize journal monitor with required parameters
+            self.journal_monitor = JournalMonitor(
+                journal_path=self.config.journal_path,
+                event_callback=on_journal_event
+            )
             
             # Start monitoring
-            await self.journal_monitor.start()
+            started = await self.journal_monitor.start_monitoring()
+            if not started:
+                raise Exception("Journal monitoring failed to start")
+                
             logger.info("Journal monitoring started successfully")
             
         except Exception as e:
@@ -113,7 +118,7 @@ class EliteDangerousServer:
         if self.journal_monitor:
             try:
                 logger.info("Stopping journal monitoring...")
-                await self.journal_monitor.stop()
+                await self.journal_monitor.stop_monitoring()
                 logger.info("Journal monitoring stopped")
             except Exception as e:
                 logger.error(f"Error stopping journal monitoring: {e}")
