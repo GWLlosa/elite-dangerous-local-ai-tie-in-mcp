@@ -197,12 +197,14 @@ def main():
         "src/journal/__init__.py", 
         "src/journal/parser.py",
         "src/journal/monitor.py",
+        "src/journal/events.py",
         "src/utils/__init__.py",
         "src/utils/config.py",
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
-        "tests/unit/test_journal_monitor.py"
+        "tests/unit/test_journal_monitor.py",
+        "tests/unit/test_events.py"
     ]
     
     all_paths_exist = True
@@ -226,6 +228,7 @@ def main():
         ("src.journal", "Journal package"),
         ("src.journal.parser", "Journal parser"),
         ("src.journal.monitor", "Journal monitor"),
+        ("src.journal.events", "Event processing"),
         ("src.utils.config", "Configuration system")
     ]
     
@@ -268,6 +271,22 @@ with tempfile.TemporaryDirectory() as temp_dir:
     else:
         print(f"  [FAILED] JournalParser test failed: {error.strip()}")
     
+    print_substep("Testing Event Processing functionality")
+    events_test = '''
+from src.journal.events import EventProcessor
+processor = EventProcessor()
+event = {"timestamp": "2024-01-15T10:00:00Z", "event": "FSDJump", "StarSystem": "Sol"}
+processed = processor.process_event(event)
+print(f"EventProcessor: Processed {processed.event_type} event, category={processed.category.value}")
+'''
+    
+    success, output, error = run_command([venv_python, "-c", events_test],
+                                        "EventProcessor test", capture_output=True)
+    if success:
+        print(f"  [SUCCESS] {output.strip()}")
+    else:
+        print(f"  [FAILED] EventProcessor test failed: {error.strip()}")
+    
     print_substep("Testing Configuration system")
     config_test = '''
 from src.utils.config import EliteConfig
@@ -293,14 +312,15 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
         print("  [FAILED] Journal parser tests failed")
         sys.exit(1)
     
-    # Step 7: Unit Test Suite - Monitor  
-    print_step(7, total_steps, "Journal Monitor Unit Tests",
-               "Running comprehensive tests for real-time monitoring functionality")
+    # Step 7: Unit Test Suite - Monitor and Events  
+    print_step(7, total_steps, "Core Component Unit Tests",
+               "Running comprehensive tests for monitoring and event processing")
     
-    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_journal_monitor.py", "-v"],
-                               "Journal monitor tests")
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_journal_monitor.py", 
+                                "tests/unit/test_events.py", "tests/unit/test_events_extended.py", "-v"],
+                               "Monitor and events tests")
     if not success:
-        print("  [FAILED] Journal monitor tests failed")
+        print("  [FAILED] Monitor and events tests failed")
         sys.exit(1)
     
     # Step 8: Full Test Suite with Coverage
@@ -326,8 +346,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     print("="*60)
     print(f"Total execution time: {duration:.2f} seconds")
     print(f"Coverage report generated in: htmlcov/index.html")
-    print(f"All milestones 1-4 functionality verified")
-    print("\nReady for Milestone 5: Event Processing and Classification")
+    print(f"All implemented functionality verified and working")
     print("="*60)
 
 
