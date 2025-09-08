@@ -48,12 +48,12 @@ class TestDataStore:
             timestamp = datetime.utcnow()
             
         return ProcessedEvent(
-            timestamp=timestamp,
+            raw_event={"event": event_type, "timestamp": timestamp.isoformat(), "StarSystem": system_name},
             event_type=event_type,
+            timestamp=timestamp,
             category=category,
             summary=f"Test {event_type} event",
-            raw_data={"event": event_type, "timestamp": timestamp.isoformat(), "StarSystem": system_name},
-            extracted_data={"system_name": system_name, "event_type": event_type}
+            key_data={"system_name": system_name, "event_type": event_type}
         )
     
     def test_store_single_event(self):
@@ -212,7 +212,7 @@ class TestDataStore:
         filtered_events = self.data_store.query_events(filter_criteria)
         
         assert len(filtered_events) == 2
-        assert all(e.extracted_data.get('system_name') == "Sol" for e in filtered_events)
+        assert all(e.key_data.get('system_name') == "Sol" for e in filtered_events)
     
     def test_query_sorting(self):
         """Test event sorting options."""
@@ -269,12 +269,12 @@ class TestDataStore:
     def test_game_state_tracking_fsd_jump(self):
         """Test game state updates for FSD jump events."""
         event = ProcessedEvent(
-            timestamp=datetime.utcnow(),
+            raw_event={"event": "FSDJump", "StarSystem": "Alpha Centauri"},
             event_type="FSDJump",
+            timestamp=datetime.utcnow(),
             category=EventCategory.NAVIGATION,
             summary="Jumped to Alpha Centauri",
-            raw_data={"event": "FSDJump", "StarSystem": "Alpha Centauri"},
-            extracted_data={
+            key_data={
                 "system_name": "Alpha Centauri",
                 "star_pos_x": 1.0,
                 "star_pos_y": 2.0,
@@ -294,12 +294,12 @@ class TestDataStore:
     def test_game_state_tracking_docking(self):
         """Test game state updates for docking events."""
         event = ProcessedEvent(
-            timestamp=datetime.utcnow(),
+            raw_event={"event": "Docked", "StationName": "Jameson Memorial"},
             event_type="Docked",
+            timestamp=datetime.utcnow(),
             category=EventCategory.SHIP,
             summary="Docked at Jameson Memorial",
-            raw_data={"event": "Docked", "StationName": "Jameson Memorial"},
-            extracted_data={"station_name": "Jameson Memorial"}
+            key_data={"station_name": "Jameson Memorial"}
         )
         
         self.data_store.store_event(event)
@@ -491,12 +491,12 @@ class TestGlobalDataStore:
         
         # Store an event
         event = ProcessedEvent(
-            timestamp=datetime.utcnow(),
+            raw_event={"event": "TestEvent"},
             event_type="TestEvent",
+            timestamp=datetime.utcnow(),
             category=EventCategory.SYSTEM,
             summary="Test event",
-            raw_data={"event": "TestEvent"},
-            extracted_data={}
+            key_data={}
         )
         store1.store_event(event)
         
