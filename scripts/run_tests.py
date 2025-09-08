@@ -135,7 +135,7 @@ def check_virtual_environment():
 def main():
     """Main test runner function."""
     start_time = time.time()
-    total_steps = 8
+    total_steps = 9  # Updated to include data store tests
     
     print("Elite Dangerous MCP Server - Test Suite Runner")
     print(f"Started at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -200,11 +200,13 @@ def main():
         "src/journal/events.py",
         "src/utils/__init__.py",
         "src/utils/config.py",
+        "src/utils/data_store.py",  # Milestone 6 addition
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
         "tests/unit/test_journal_monitor.py",
-        "tests/unit/test_events.py"
+        "tests/unit/test_events.py",
+        "tests/unit/test_data_store.py"  # Milestone 6 addition
     ]
     
     all_paths_exist = True
@@ -229,7 +231,8 @@ def main():
         ("src.journal.parser", "Journal parser"),
         ("src.journal.monitor", "Journal monitor"),
         ("src.journal.events", "Event processing"),
-        ("src.utils.config", "Configuration system")
+        ("src.utils.config", "Configuration system"),
+        ("src.utils.data_store", "Data storage system")  # Milestone 6 addition
     ]
     
     all_imports_successful = True
@@ -302,6 +305,41 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     else:
         print(f"  [FAILED] Configuration test failed: {error.strip()}")
     
+    # Milestone 6: Data Store functionality test
+    print_substep("Testing Data Storage system")
+    data_store_test = '''
+from src.utils.data_store import DataStore, EventFilter, get_data_store
+from src.journal.events import ProcessedEvent, EventCategory
+from datetime import datetime
+
+# Test basic data store functionality
+store = DataStore(max_events=10)
+event = ProcessedEvent(
+    timestamp=datetime.utcnow(),
+    event_type="FSDJump",
+    category=EventCategory.NAVIGATION,
+    summary="Test jump",
+    raw_data={"event": "FSDJump"},
+    extracted_data={"system_name": "Sol"}
+)
+store.store_event(event)
+events = store.query_events()
+game_state = store.get_game_state()
+stats = store.get_statistics()
+print(f"DataStore: Stored {len(events)} events, game state updated, {stats['total_processed']} processed")
+
+# Test global store
+global_store = get_data_store()
+print(f"Global store: {type(global_store).__name__} instance created")
+'''
+    
+    success, output, error = run_command([venv_python, "-c", data_store_test],
+                                        "DataStore test", capture_output=True)
+    if success:
+        print(f"  [SUCCESS] {output.strip()}")
+    else:
+        print(f"  [FAILED] DataStore test failed: {error.strip()}")
+    
     # Step 6: Unit Test Suite - Parser
     print_step(6, total_steps, "Journal Parser Unit Tests",
                "Running comprehensive tests for journal parsing functionality")
@@ -323,8 +361,18 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
         print("  [FAILED] Monitor and events tests failed")
         sys.exit(1)
     
-    # Step 8: Full Test Suite with Coverage
-    print_step(8, total_steps, "Complete Test Suite with Coverage",
+    # Step 8: Unit Test Suite - Data Store (Milestone 6)
+    print_step(8, total_steps, "Data Storage Unit Tests",
+               "Running comprehensive tests for data storage and retrieval system")
+    
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_data_store.py", "-v"],
+                               "Data store tests")
+    if not success:
+        print("  [FAILED] Data store tests failed")
+        sys.exit(1)
+    
+    # Step 9: Full Test Suite with Coverage
+    print_step(9, total_steps, "Complete Test Suite with Coverage",
                "Running all tests together and generating coverage report")
     
     print_substep("Running complete test suite")
@@ -347,6 +395,7 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     print(f"Total execution time: {duration:.2f} seconds")
     print(f"Coverage report generated in: htmlcov/index.html")
     print(f"All implemented functionality verified and working")
+    print("\nMilestone 6: Data Storage and Retrieval - COMPLETED")
     print("="*60)
 
 
