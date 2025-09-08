@@ -135,7 +135,7 @@ def check_virtual_environment():
 def main():
     """Main test runner function."""
     start_time = time.time()
-    total_steps = 9  # Updated to include data store tests
+    total_steps = 10  # Updated to include MCP server tests
     
     print("Elite Dangerous MCP Server - Test Suite Runner")
     print(f"Started at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -167,7 +167,7 @@ def main():
     
     required_packages = [
         "pytest", "pytest-asyncio", "pytest-cov", 
-        "orjson", "watchdog", "pydantic", "aiofiles"
+        "orjson", "watchdog", "pydantic", "aiofiles", "mcp"
     ]
     
     missing_packages = []
@@ -200,13 +200,15 @@ def main():
         "src/journal/events.py",
         "src/utils/__init__.py",
         "src/utils/config.py",
-        "src/utils/data_store.py",  # Milestone 6 addition
+        "src/utils/data_store.py",
+        "src/server.py",  # Milestone 7 addition
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
         "tests/unit/test_journal_monitor.py",
         "tests/unit/test_events.py",
-        "tests/unit/test_data_store.py"  # Milestone 6 addition
+        "tests/unit/test_data_store.py",
+        "tests/unit/test_server.py"  # Milestone 7 addition
     ]
     
     all_paths_exist = True
@@ -232,7 +234,8 @@ def main():
         ("src.journal.monitor", "Journal monitor"),
         ("src.journal.events", "Event processing"),
         ("src.utils.config", "Configuration system"),
-        ("src.utils.data_store", "Data storage system")  # Milestone 6 addition
+        ("src.utils.data_store", "Data storage system"),
+        ("src.server", "MCP server framework")  # Milestone 7 addition
     ]
     
     all_imports_successful = True
@@ -305,7 +308,6 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     else:
         print(f"  [FAILED] Configuration test failed: {error.strip()}")
     
-    # Milestone 6: Data Store functionality test
     print_substep("Testing Data Storage system")
     data_store_test = '''
 from src.utils.data_store import DataStore, EventFilter, get_data_store
@@ -340,6 +342,44 @@ print(f"Global store: {type(global_store).__name__} instance created")
     else:
         print(f"  [FAILED] DataStore test failed: {error.strip()}")
     
+    # Milestone 7: MCP Server functionality test
+    print_substep("Testing MCP Server framework")
+    server_test = '''
+from src.server import EliteDangerousServer, create_server
+import asyncio
+from unittest.mock import patch, Mock
+
+# Test server creation
+async def test_server():
+    with patch('src.server.EliteConfig') as mock_config:
+        mock_config_instance = Mock()
+        mock_config_instance.journal_path = "/tmp/test"
+        mock_config_instance.validate_paths.return_value = True
+        mock_config.return_value = mock_config_instance
+        
+        server = EliteDangerousServer()
+        print(f"MCPServer: Server created successfully, FastMCP app configured")
+        
+        # Test basic handler setup
+        server.setup_basic_mcp_handlers()
+        tools = list(server.app.tools.keys())
+        print(f"MCP Tools: {len(tools)} tools registered: {', '.join(tools)}")
+        
+        return True
+
+# Run the test
+result = asyncio.run(test_server())
+if result:
+    print("MCP Server framework: All tests passed")
+'''
+    
+    success, output, error = run_command([venv_python, "-c", server_test],
+                                        "MCP Server test", capture_output=True)
+    if success:
+        print(f"  [SUCCESS] {output.strip()}")
+    else:
+        print(f"  [FAILED] MCP Server test failed: {error.strip()}")
+    
     # Step 6: Unit Test Suite - Parser
     print_step(6, total_steps, "Journal Parser Unit Tests",
                "Running comprehensive tests for journal parsing functionality")
@@ -371,8 +411,18 @@ print(f"Global store: {type(global_store).__name__} instance created")
         print("  [FAILED] Data store tests failed")
         sys.exit(1)
     
-    # Step 9: Full Test Suite with Coverage
-    print_step(9, total_steps, "Complete Test Suite with Coverage",
+    # Step 9: Unit Test Suite - MCP Server (Milestone 7)
+    print_step(9, total_steps, "MCP Server Unit Tests",
+               "Running comprehensive tests for MCP server framework")
+    
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_server.py", "-v"],
+                               "MCP server tests")
+    if not success:
+        print("  [FAILED] MCP server tests failed")
+        sys.exit(1)
+    
+    # Step 10: Full Test Suite with Coverage
+    print_step(10, total_steps, "Complete Test Suite with Coverage",
                "Running all tests together and generating coverage report")
     
     print_substep("Running complete test suite")
@@ -395,7 +445,7 @@ print(f"Global store: {type(global_store).__name__} instance created")
     print(f"Total execution time: {duration:.2f} seconds")
     print(f"Coverage report generated in: htmlcov/index.html")
     print(f"All implemented functionality verified and working")
-    print("\nMilestone 6: Data Storage and Retrieval - COMPLETED")
+    print("\nMilestone 7: Basic MCP Server Framework - COMPLETED")
     print("="*60)
 
 
