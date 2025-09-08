@@ -271,6 +271,9 @@ class EventProcessor:
         "TransferMicroResources": EventCategory.SUIT,
         "UpgradeWeapon": EventCategory.SUIT,
         "UpgradeSuit": EventCategory.SUIT,
+        
+        # Other/Unknown events - ensure this category has at least one mapping
+        "Unknown": EventCategory.OTHER,
     }
     
     def __init__(self):
@@ -363,15 +366,20 @@ class EventProcessor:
         """
         errors = []
         
-        # Check required fields
+        # Check required fields existence and validity
         if "event" not in event:
             errors.append("Missing required field: 'event'")
+        elif event["event"] is None or event["event"] == "":
+            errors.append("Event field cannot be None or empty string")
+        elif not isinstance(event["event"], str):
+            errors.append(f"Event field must be string, got {type(event['event']).__name__}")
         
         if "timestamp" not in event:
             errors.append("Missing required field: 'timestamp'")
-        
-        # Validate timestamp format
-        if "timestamp" in event:
+        elif event["timestamp"] is None or event["timestamp"] == "":
+            errors.append("Timestamp field cannot be None or empty string")
+        else:
+            # Validate timestamp format
             try:
                 self._parse_timestamp(event["timestamp"])
             except Exception:
