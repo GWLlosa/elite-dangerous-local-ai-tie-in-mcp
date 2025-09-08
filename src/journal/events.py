@@ -6,7 +6,7 @@ and data extraction for all major Elite Dangerous journal event types.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
@@ -287,8 +287,8 @@ class EventProcessor:
         Returns:
             ProcessedEvent with categorization and summary
         """
-        # Extract basic info
-        event_type = event.get("event", "Unknown")
+        # Extract basic info - handle None event type
+        event_type = event.get("event") or "Unknown"
         timestamp = self._parse_timestamp(event.get("timestamp", ""))
         
         # Validate event
@@ -328,19 +328,24 @@ class EventProcessor:
             timestamp_str: ISO format timestamp string
             
         Returns:
-            Parsed datetime object
+            Parsed datetime object (timezone-aware)
         """
         if not timestamp_str:
-            return datetime.now()
+            return datetime.now(timezone.utc)
         
         try:
             # Handle both with and without timezone
             if timestamp_str.endswith('Z'):
                 timestamp_str = timestamp_str[:-1] + '+00:00'
-            return datetime.fromisoformat(timestamp_str)
+            
+            # Parse and ensure timezone-aware
+            dt = datetime.fromisoformat(timestamp_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except (ValueError, AttributeError):
             logger.warning(f"Failed to parse timestamp: {timestamp_str}")
-            return datetime.now()
+            return datetime.now(timezone.utc)
     
     def _validate_event(self, event: Dict[str, Any]) -> List[str]:
         """
@@ -497,8 +502,11 @@ class EventProcessor:
         # Navigation summaries
         if event_type == "FSDJump":
             system = key_data.get("system", "unknown system")
-            distance = key_data.get("distance", 0)
-            return f"Jumped to {system} ({distance:.2f}ly)"
+            distance = key_data.get("distance")
+            if distance is not None:
+                return f"Jumped to {system} ({distance:.2f}ly)"
+            else:
+                return f"Jumped to {system}"
             
         elif event_type == "Docked":
             station = key_data.get("station", "unknown station")
@@ -521,7 +529,7 @@ class EventProcessor:
             extra_str = f" ({', '.join(extras)})" if extras else ""
             return f"Scanned {body} - {body_type}{extra_str}"
             
-        elif event_type == "SellExplorationData":
+        elif event_type in ["SellExplorationData", "MultiSellExplorationData"]:
             value = key_data.get("value", 0)
             return f"Sold exploration data for {value:,} credits"
             
@@ -693,9 +701,9 @@ def get_event_statistics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not processed.is_valid:
             stats["invalid_events"] += 1
     
-    # Get time range
+    # Get time range - normalize all timestamps to remove timezone info for consistency
     if processed_events:
-        timestamps = [e.timestamp for e in processed_events]
+        timestamps = [e.timestamp.replace(tzinfo=None) for e in processed_events]
         stats["time_range"] = {
             "start": min(timestamps).isoformat(),
             "end": max(timestamps).isoformat()
