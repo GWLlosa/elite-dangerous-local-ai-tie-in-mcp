@@ -657,9 +657,9 @@ class TestServerIntegration:
         mock_monitor_class.assert_called_once()
         mock_monitor.start_monitoring.assert_called_once()
         
-        # Simulate journal event processing
+        # Simulate journal event processing - Fixed: Use timezone-naive timestamp
         test_event = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.utcnow().isoformat(),  # Removed "Z" to avoid timezone issues
             "event": "FSDJump",
             "StarSystem": "Sol",
             "StarPos": [0.0, 0.0, 0.0]
@@ -689,6 +689,11 @@ class TestServerIntegration:
         
         get_recent_events_tool = registered_tools['get_recent_events']
         result = await get_recent_events_tool(minutes=5)
+        
+        # Check for error response first to provide better debugging
+        if "error" in result:
+            assert False, f"Tool returned error: {result['error']}"
+        
         assert result["event_count"] >= 1
         
         # Cleanup
