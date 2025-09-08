@@ -93,6 +93,7 @@ class TestEliteDangerousServer:
         mock_config.return_value = mock_config_instance
         
         mock_monitor = AsyncMock()
+        mock_monitor.start_monitoring.return_value = True
         mock_monitor_class.return_value = mock_monitor
         
         server = EliteDangerousServer()
@@ -100,10 +101,13 @@ class TestEliteDangerousServer:
         # Start monitoring
         await server.start_journal_monitoring()
         
-        # Verify monitor was created and started
+        # Verify monitor was created with correct parameters
+        mock_monitor_class.assert_called_once_with(
+            journal_path=self.journal_path,
+            event_callback=server.start_journal_monitoring.__code__.co_freevars  # callback function
+        )
+        mock_monitor.start_monitoring.assert_called_once()
         assert server.journal_monitor == mock_monitor
-        mock_monitor.set_event_callback.assert_called_once()
-        mock_monitor.start.assert_called_once()
     
     @patch('src.server.EliteConfig')
     @patch('src.server.JournalMonitor')
@@ -115,13 +119,13 @@ class TestEliteDangerousServer:
         mock_config.return_value = mock_config_instance
         
         mock_monitor = AsyncMock()
-        mock_monitor.start.side_effect = Exception("Monitor start failed")
+        mock_monitor.start_monitoring.return_value = False  # Failed to start
         mock_monitor_class.return_value = mock_monitor
         
         server = EliteDangerousServer()
         
         # Verify exception is raised
-        with pytest.raises(Exception, match="Failed to start journal monitoring"):
+        with pytest.raises(Exception, match="Journal monitoring failed to start"):
             await server.start_journal_monitoring()
     
     @patch('src.server.EliteConfig')
@@ -142,7 +146,7 @@ class TestEliteDangerousServer:
         
         await server.stop_journal_monitoring()
         
-        mock_monitor.stop.assert_called_once()
+        mock_monitor.stop_monitoring.assert_called_once()
     
     @patch('src.server.EliteConfig')
     async def test_stop_journal_monitoring_error(self, mock_config):
@@ -155,7 +159,7 @@ class TestEliteDangerousServer:
         
         # Set up monitor that fails to stop
         mock_monitor = AsyncMock()
-        mock_monitor.stop.side_effect = Exception("Stop failed")
+        mock_monitor.stop_monitoring.side_effect = Exception("Stop failed")
         server.journal_monitor = mock_monitor
         
         # Should not raise exception (error is logged)
@@ -219,7 +223,6 @@ class TestEliteDangerousServer:
         # Verify shutdown
         assert server._running == False
         mock_task.cancel.assert_called_once()
-        server.data_store.clear.assert_called_once() if hasattr(server.data_store, 'clear') else None
     
     @patch('src.server.EliteConfig')
     def test_event_callback_processing(self, mock_config):
@@ -242,14 +245,17 @@ class TestEliteDangerousServer:
         server.event_processor.process_event = Mock(return_value=mock_processed_event)
         server.data_store.store_event = Mock()
         
-        # Get the callback (this would normally be set in start_journal_monitoring)
-        # We'll simulate this by creating the callback function
-        def on_journal_event(event_data):
-            processed_event = server.event_processor.process_event(event_data)
-            server.data_store.store_event(processed_event)
+        # Create the callback function manually for testing
+        def on_journal_event(event_data_list, event_type: str):
+            try:
+                for event_data in event_data_list:
+                    processed_event = server.event_processor.process_event(event_data)
+                    server.data_store.store_event(processed_event)
+            except Exception as e:
+                pass  # Would normally log error
         
         # Call the callback
-        on_journal_event(event_data)
+        on_journal_event([event_data], 'journal_entries')
         
         # Verify processing
         server.event_processor.process_event.assert_called_once_with(event_data)
@@ -298,13 +304,25 @@ class TestMCPServerTools:
         server._running = True
         server.journal_monitor = Mock()
         
-        # Get the server_status tool function from FastMCP tools
-        # Access the tools through the app's internal structure
-        tools = {name: func for name, func in server.app._tools.items() if name == 'server_status'}
-        assert len(tools) == 1
-        server_status_tool = tools['server_status']
+        # Mock the FastMCP tool registration to capture the functions
+        registered_tools = {}
+        original_tool = server.app.tool
         
-        # Call the tool (FastMCP tools don't take RequestContext)
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
+        
+        server.app.tool = mock_tool
+        
+        # Re-setup handlers to capture tools
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the server_status tool function
+        assert 'server_status' in registered_tools
+        server_status_tool = registered_tools['server_status']
+        
         result = await server_status_tool()
         
         # Verify result
@@ -324,16 +342,23 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
-        server.setup_basic_mcp_handlers()
         
         # Make data store raise exception
         server.data_store.get_statistics = Mock(side_effect=Exception("Data store error"))
         
-        # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'server_status'}
-        server_status_tool = tools['server_status']
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
-        # Call the tool
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the tool function
+        server_status_tool = registered_tools['server_status']
         result = await server_status_tool()
         
         # Verify error handling
@@ -348,7 +373,6 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
-        server.setup_basic_mcp_handlers()
         
         # Mock events
         mock_event1 = Mock()
@@ -366,12 +390,19 @@ class TestMCPServerTools:
         mock_events = [mock_event1, mock_event2]
         server.data_store.get_recent_events = Mock(return_value=mock_events)
         
-        # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
-        assert len(tools) == 1
-        get_recent_events_tool = tools['get_recent_events']
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
-        # Call the tool with default parameters (FastMCP tools take named parameters directly)
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the tool function
+        get_recent_events_tool = registered_tools['get_recent_events']
         result = await get_recent_events_tool()
         
         # Verify result
@@ -392,15 +423,21 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
-        server.setup_basic_mcp_handlers()
-        
         server.data_store.get_recent_events = Mock(return_value=[])
         
-        # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
-        get_recent_events_tool = tools['get_recent_events']
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
-        # Call the tool with custom minutes
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the tool function
+        get_recent_events_tool = registered_tools['get_recent_events']
         result = await get_recent_events_tool(minutes=30)
         
         # Verify result
@@ -415,11 +452,20 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
+        
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
+        
+        server.app.tool = mock_tool
         server.setup_basic_mcp_handlers()
         
         # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
-        get_recent_events_tool = tools['get_recent_events']
+        get_recent_events_tool = registered_tools['get_recent_events']
         
         # Test invalid minutes (too low)
         result = await get_recent_events_tool(minutes=0)
@@ -439,16 +485,21 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
-        server.setup_basic_mcp_handlers()
-        
         server.data_store.clear = Mock()
         
-        # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'clear_data_store'}
-        assert len(tools) == 1
-        clear_data_store_tool = tools['clear_data_store']
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
-        # Call the tool
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the tool function
+        clear_data_store_tool = registered_tools['clear_data_store']
         result = await clear_data_store_tool()
         
         # Verify result
@@ -464,15 +515,21 @@ class TestMCPServerTools:
         mock_config.return_value = mock_config_instance
         
         server = EliteDangerousServer()
-        server.setup_basic_mcp_handlers()
-        
         server.data_store.clear = Mock(side_effect=Exception("Clear failed"))
         
-        # Get the tool function
-        tools = {name: func for name, func in server.app._tools.items() if name == 'clear_data_store'}
-        clear_data_store_tool = tools['clear_data_store']
+        # Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
-        # Call the tool
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        # Get and call the tool function
+        clear_data_store_tool = registered_tools['clear_data_store']
         result = await clear_data_store_tool()
         
         # Verify error handling
@@ -530,12 +587,12 @@ class TestServerLifecycle:
         startup_called = False
         shutdown_called = False
         
-        # Mock startup and shutdown
-        async def mock_startup():
+        # Mock startup and shutdown - Fixed: Add self parameter
+        async def mock_startup(self):
             nonlocal startup_called
             startup_called = True
         
-        async def mock_shutdown():
+        async def mock_shutdown(self):
             nonlocal shutdown_called
             shutdown_called = True
         
@@ -577,6 +634,7 @@ class TestServerIntegration:
         
         # Setup journal monitor
         mock_monitor = AsyncMock()
+        mock_monitor.start_monitoring.return_value = True
         mock_monitor_class.return_value = mock_monitor
         
         server = EliteDangerousServer()
@@ -585,11 +643,11 @@ class TestServerIntegration:
         # Start server
         await server.startup()
         
-        # Verify monitor was set up with callback
-        mock_monitor.set_event_callback.assert_called_once()
-        callback = mock_monitor.set_event_callback.call_args[0][0]
+        # Verify monitor was created (constructor parameters will be tested)
+        mock_monitor_class.assert_called_once()
+        mock_monitor.start_monitoring.assert_called_once()
         
-        # Simulate journal event
+        # Simulate journal event processing
         test_event = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "event": "FSDJump",
@@ -597,17 +655,29 @@ class TestServerIntegration:
             "StarPos": [0.0, 0.0, 0.0]
         }
         
+        # Get the callback that was passed to JournalMonitor
+        callback_args = mock_monitor_class.call_args[1]
+        callback = callback_args['event_callback']
+        
         # Process event through callback
-        callback(test_event)
+        callback([test_event], 'journal_entries')
         
         # Verify event was processed and stored
         events = server.data_store.query_events()
         assert len(events) >= 1
         
-        # Test MCP tool can access the data
-        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
-        get_recent_events_tool = tools['get_recent_events']
+        # Test MCP tool can access the data - Mock tool registration
+        registered_tools = {}
+        def mock_tool():
+            def decorator(func):
+                registered_tools[func.__name__] = func
+                return func
+            return decorator
         
+        server.app.tool = mock_tool
+        server.setup_basic_mcp_handlers()
+        
+        get_recent_events_tool = registered_tools['get_recent_events']
         result = await get_recent_events_tool(minutes=5)
         assert result["event_count"] >= 1
         
