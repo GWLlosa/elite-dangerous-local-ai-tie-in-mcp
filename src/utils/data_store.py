@@ -159,7 +159,7 @@ class DataStore:
     def store_event(self, event: ProcessedEvent) -> None:
         """
         Store a processed event and update game state.
-        
+
         Args:
             event: The processed event to store
             
@@ -360,26 +360,26 @@ class DataStore:
         if filter_criteria.end_time:
             filtered_events = [e for e in filtered_events if e.timestamp <= filter_criteria.end_time]
         
-        # Filter by system names
+        # Filter by system names - FIXED: use key_data instead of extracted_data
         if filter_criteria.system_names:
             filtered_events = [
                 e for e in filtered_events 
-                if hasattr(e, 'extracted_data') and e.extracted_data.get('system_name') in filter_criteria.system_names
+                if hasattr(e, 'key_data') and e.key_data.get('system_name') in filter_criteria.system_names
             ]
         
-        # Filter by ship types
+        # Filter by ship types - FIXED: use key_data instead of extracted_data
         if filter_criteria.ship_types:
             filtered_events = [
                 e for e in filtered_events 
-                if hasattr(e, 'extracted_data') and e.extracted_data.get('ship_type') in filter_criteria.ship_types
+                if hasattr(e, 'key_data') and e.key_data.get('ship_type') in filter_criteria.ship_types
             ]
         
-        # Filter by text content
+        # Filter by text content - FIXED: use raw_event instead of raw_data
         if filter_criteria.contains_text:
             text_lower = filter_criteria.contains_text.lower()
             filtered_events = [
                 e for e in filtered_events 
-                if text_lower in e.summary.lower() or text_lower in str(e.raw_data).lower()
+                if text_lower in e.summary.lower() or text_lower in str(e.raw_event).lower()
             ]
         
         # Filter by importance
@@ -415,7 +415,8 @@ class DataStore:
     
     def _handle_fsd_jump(self, event: ProcessedEvent) -> None:
         """Handle FSD jump events."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_system = data.get('system_name')
         self._game_state.coordinates = {
             'x': data.get('star_pos_x'),
@@ -436,7 +437,8 @@ class DataStore:
     def _handle_supercruise_exit(self, event: ProcessedEvent) -> None:
         """Handle supercruise exit."""
         self._game_state.supercruise = False
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_body = data.get('body_name')
     
     def _handle_docked(self, event: ProcessedEvent) -> None:
@@ -444,7 +446,8 @@ class DataStore:
         self._game_state.docked = True
         self._game_state.landed = False
         self._game_state.supercruise = False
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_station = data.get('station_name')
     
     def _handle_undocked(self, event: ProcessedEvent) -> None:
@@ -464,7 +467,8 @@ class DataStore:
     
     def _handle_load_game(self, event: ProcessedEvent) -> None:
         """Handle game load events."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_ship = data.get('ship_type')
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
@@ -475,7 +479,8 @@ class DataStore:
     
     def _handle_loadout(self, event: ProcessedEvent) -> None:
         """Handle ship loadout events."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_ship = data.get('ship_type')
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
@@ -484,7 +489,8 @@ class DataStore:
     
     def _handle_ship_purchase(self, event: ProcessedEvent) -> None:
         """Handle ship purchase events."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_ship = data.get('ship_type')
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
@@ -496,14 +502,16 @@ class DataStore:
     
     def _handle_ship_swap(self, event: ProcessedEvent) -> None:
         """Handle ship swap events."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_ship = data.get('ship_type')
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
     
     def _handle_status_update(self, event: ProcessedEvent) -> None:
         """Handle status file updates."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         
         # Update various status flags
         flags = data.get('flags', 0)
@@ -526,7 +534,8 @@ class DataStore:
     
     def _handle_location_update(self, event: ProcessedEvent) -> None:
         """Handle location updates."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.current_system = data.get('system_name')
         self._game_state.current_station = data.get('station_name')
         self._game_state.current_body = data.get('body_name')
@@ -536,7 +545,8 @@ class DataStore:
     
     def _handle_statistics_update(self, event: ProcessedEvent) -> None:
         """Handle statistics updates."""
-        data = event.extracted_data
+        # FIXED: use key_data instead of extracted_data
+        data = event.key_data
         self._game_state.credits = data.get('credits', self._game_state.credits)
     
     def _cleanup_if_needed(self) -> None:
