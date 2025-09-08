@@ -20,7 +20,6 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 
 from src.server import EliteDangerousServer, create_server, lifespan_manager
 from src.utils.data_store import reset_data_store
-from mcp.server.session import RequestContext
 
 
 class TestEliteDangerousServer:
@@ -299,16 +298,14 @@ class TestMCPServerTools:
         server._running = True
         server.journal_monitor = Mock()
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
-        # Get the server_status tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'server_status']
+        # Get the server_status tool function from FastMCP tools
+        # Access the tools through the app's internal structure
+        tools = {name: func for name, func in server.app._tools.items() if name == 'server_status'}
         assert len(tools) == 1
-        server_status_tool = tools[0]
+        server_status_tool = tools['server_status']
         
-        # Call the tool
-        result = await server_status_tool(ctx)
+        # Call the tool (FastMCP tools don't take RequestContext)
+        result = await server_status_tool()
         
         # Verify result
         assert result["server_running"] == True
@@ -332,15 +329,12 @@ class TestMCPServerTools:
         # Make data store raise exception
         server.data_store.get_statistics = Mock(side_effect=Exception("Data store error"))
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
-        # Get the server_status tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'server_status']
-        server_status_tool = tools[0]
+        # Get the tool function
+        tools = {name: func for name, func in server.app._tools.items() if name == 'server_status'}
+        server_status_tool = tools['server_status']
         
         # Call the tool
-        result = await server_status_tool(ctx)
+        result = await server_status_tool()
         
         # Verify error handling
         assert "error" in result
@@ -372,16 +366,13 @@ class TestMCPServerTools:
         mock_events = [mock_event1, mock_event2]
         server.data_store.get_recent_events = Mock(return_value=mock_events)
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
-        # Get the get_recent_events tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'get_recent_events']
+        # Get the tool function
+        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
         assert len(tools) == 1
-        get_recent_events_tool = tools[0]
+        get_recent_events_tool = tools['get_recent_events']
         
-        # Call the tool with default parameters
-        result = await get_recent_events_tool(ctx)
+        # Call the tool with default parameters (FastMCP tools take named parameters directly)
+        result = await get_recent_events_tool()
         
         # Verify result
         assert result["event_count"] == 2
@@ -405,15 +396,12 @@ class TestMCPServerTools:
         
         server.data_store.get_recent_events = Mock(return_value=[])
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
         # Get the tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'get_recent_events']
-        get_recent_events_tool = tools[0]
+        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
+        get_recent_events_tool = tools['get_recent_events']
         
         # Call the tool with custom minutes
-        result = await get_recent_events_tool(ctx, minutes=30)
+        result = await get_recent_events_tool(minutes=30)
         
         # Verify result
         assert result["time_period_minutes"] == 30
@@ -429,20 +417,17 @@ class TestMCPServerTools:
         server = EliteDangerousServer()
         server.setup_basic_mcp_handlers()
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
         # Get the tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'get_recent_events']
-        get_recent_events_tool = tools[0]
+        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
+        get_recent_events_tool = tools['get_recent_events']
         
         # Test invalid minutes (too low)
-        result = await get_recent_events_tool(ctx, minutes=0)
+        result = await get_recent_events_tool(minutes=0)
         assert "error" in result
         assert "Invalid minutes parameter" in result["error"]
         
         # Test invalid minutes (too high)
-        result = await get_recent_events_tool(ctx, minutes=2000)
+        result = await get_recent_events_tool(minutes=2000)
         assert "error" in result
         assert "Invalid minutes parameter" in result["error"]
     
@@ -458,16 +443,13 @@ class TestMCPServerTools:
         
         server.data_store.clear = Mock()
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
         # Get the tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'clear_data_store']
+        tools = {name: func for name, func in server.app._tools.items() if name == 'clear_data_store'}
         assert len(tools) == 1
-        clear_data_store_tool = tools[0]
+        clear_data_store_tool = tools['clear_data_store']
         
         # Call the tool
-        result = await clear_data_store_tool(ctx)
+        result = await clear_data_store_tool()
         
         # Verify result
         assert result["status"] == "success"
@@ -486,15 +468,12 @@ class TestMCPServerTools:
         
         server.data_store.clear = Mock(side_effect=Exception("Clear failed"))
         
-        # Create mock request context
-        ctx = Mock(spec=RequestContext)
-        
         # Get the tool function
-        tools = [func for name, func in server.app.tools.items() if name == 'clear_data_store']
-        clear_data_store_tool = tools[0]
+        tools = {name: func for name, func in server.app._tools.items() if name == 'clear_data_store'}
+        clear_data_store_tool = tools['clear_data_store']
         
         # Call the tool
-        result = await clear_data_store_tool(ctx)
+        result = await clear_data_store_tool()
         
         # Verify error handling
         assert result["status"] == "error"
@@ -626,11 +605,10 @@ class TestServerIntegration:
         assert len(events) >= 1
         
         # Test MCP tool can access the data
-        ctx = Mock(spec=RequestContext)
-        tools = [func for name, func in server.app.tools.items() if name == 'get_recent_events']
-        get_recent_events_tool = tools[0]
+        tools = {name: func for name, func in server.app._tools.items() if name == 'get_recent_events'}
+        get_recent_events_tool = tools['get_recent_events']
         
-        result = await get_recent_events_tool(ctx, minutes=5)
+        result = await get_recent_events_tool(minutes=5)
         assert result["event_count"] >= 1
         
         # Cleanup
