@@ -295,6 +295,10 @@ class EventProcessor:
         validation_errors = self._validate_event(event)
         is_valid = len(validation_errors) == 0
         
+        # Force invalid events to be classified as "Unknown"
+        if not is_valid:
+            event_type = "Unknown"
+        
         # Categorize event
         category = self._categorize_event(event_type)
         
@@ -530,13 +534,13 @@ class EventProcessor:
             return f"Scanned {body} - {body_type}{extra_str}"
             
         elif event_type in ["SellExplorationData", "MultiSellExplorationData"]:
-            value = key_data.get("value", 0)
+            value = key_data.get("value") or 0
             return f"Sold exploration data for {value:,} credits"
             
         # Combat summaries
         elif event_type == "Bounty":
             target = key_data.get("target", "target")
-            reward = key_data.get("reward", 0)
+            reward = key_data.get("reward") or 0
             return f"Collected bounty on {target} for {reward:,} credits"
             
         elif event_type == "Died":
@@ -548,32 +552,32 @@ class EventProcessor:
         # Trading summaries
         elif event_type == "MarketBuy":
             commodity = key_data.get("commodity", "commodity")
-            count = key_data.get("count", 0)
-            total = key_data.get("total", 0)
+            count = key_data.get("count") or 0
+            total = key_data.get("total") or 0
             return f"Bought {count}t of {commodity} for {total:,} credits"
             
         elif event_type == "MarketSell":
             commodity = key_data.get("commodity", "commodity")
-            count = key_data.get("count", 0)
-            total = key_data.get("total", 0)
+            count = key_data.get("count") or 0
+            total = key_data.get("total") or 0
             return f"Sold {count}t of {commodity} for {total:,} credits"
             
         # Mission summaries
         elif event_type == "MissionAccepted":
             name = key_data.get("name", "mission")
             faction = key_data.get("faction", "faction")
-            reward = key_data.get("reward", 0)
+            reward = key_data.get("reward") or 0
             return f"Accepted mission from {faction} for {reward:,} credits"
             
         elif event_type == "MissionCompleted":
             faction = key_data.get("faction", "faction")
-            reward = key_data.get("reward", 0)
+            reward = key_data.get("reward") or 0
             return f"Completed mission for {faction}, earned {reward:,} credits"
             
         # Ship summaries
         elif event_type in ["ShipyardBuy", "ShipyardNew"]:
             ship = key_data.get("ship", "ship")
-            price = key_data.get("price", 0)
+            price = key_data.get("price") or 0
             return f"Purchased {ship} for {price:,} credits"
             
         elif event_type == "Loadout":
@@ -587,7 +591,7 @@ class EventProcessor:
             engineer = key_data.get("engineer", "engineer")
             module = key_data.get("module", "module")
             blueprint = key_data.get("blueprint", "modification")
-            level = key_data.get("level", 0)
+            level = key_data.get("level") or 0
             return f"{engineer} applied {blueprint} level {level} to {module}"
             
         # System events
