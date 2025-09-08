@@ -53,8 +53,8 @@ class EliteDangerousServer:
             logger.error(f"Failed to load configuration: {e}")
             raise
         
-        # Initialize MCP server
-        self.app = FastMCP("Elite Dangerous MCP Server", version="1.0.0")
+        # Initialize MCP server - Fixed: Remove version parameter
+        self.app = FastMCP("Elite Dangerous MCP Server")
         
         # Initialize components
         self.journal_monitor: Optional[JournalMonitor] = None
