@@ -12,10 +12,25 @@ Modules:
 # Package version
 __version__ = "0.1.0"
 
-# Future exports - will be implemented in later milestones
-# from .config import EliteConfig
-# from .data_store import EventStore
+# Import main classes
+from .config import EliteConfig
+from .data_store import (
+    DataStore, 
+    EventFilter, 
+    GameState, 
+    QuerySortOrder, 
+    EventStorageError,
+    get_data_store,
+    reset_data_store
+)
 
 __all__ = [
-    # Will be populated as classes are implemented
+    "EliteConfig",
+    "DataStore",
+    "EventFilter", 
+    "GameState",
+    "QuerySortOrder",
+    "EventStorageError",
+    "get_data_store",
+    "reset_data_store"
 ]
