@@ -150,6 +150,7 @@ When the user indicates "we are nearing the end of a session" OR when proactive 
 - **Test Failure Analysis**: Systematic approach to identifying and fixing validation issues
 - **Event Validation Logic**: Enhanced validation must detect malformed events comprehensively
 - **Category Mapping Requirements**: All EventCategory enum values must have mapped event types
+- **Milestone Status Management**: Avoid hardcoded milestone references in automation scripts
 
 #### **Session Handoff Protocol**
 
@@ -329,6 +330,7 @@ When working on this project:
 - [SUCCESS] **Test Infrastructure Cleanup**: Removed obsolete imports and functions
 - [SUCCESS] **Event Processing Test Fixes**: Fixed EventCategory.OTHER mapping and enhanced validation logic
 - [SUCCESS] **Malformed Event Detection**: Enhanced validation to detect 5+ invalid events in stress tests
+- [SUCCESS] **Automation Script Updates**: Removed hardcoded milestone references for maintainability
 
 **Current Setup Status:**
 - [SUCCESS] **requirements.txt** includes all necessary dependencies including `pydantic-settings>=2.5.2`
@@ -338,8 +340,72 @@ When working on this project:
 - [SUCCESS] **Cross-platform compatibility** ensured with ASCII-only characters in all script output
 - [SUCCESS] **All automation scripts** use consistent package import name mapping
 - [SUCCESS] **Event processing system** with 130+ event types, 17 categories, enhanced validation
+- [SUCCESS] **Generic status messages** in automation scripts prevent outdated milestone references
 
 **Next Milestone:** 6 - Journal Data Storage and Retrieval
+
+## 📋 Milestone Status Management Rule
+
+### **CRITICAL: Avoid Hardcoded Milestone References in Code**
+
+**NEW RULE: Never include hardcoded milestone numbers or "ready for milestone X" messages in automation scripts, tests, or code output.**
+
+#### **Why This Rule Is Important**
+- **Maintenance Burden**: Hardcoded references become outdated and require manual updates
+- **Consistency Issues**: Different scripts may report different milestone statuses
+- **User Confusion**: Outdated status messages mislead users about project progress
+- **Development Friction**: Forces updates to non-functional code when milestones advance
+
+#### **Implementation Standards**
+
+1. **Use Generic Status Messages**
+   ```python
+   # [FAILED] WRONG - hardcoded milestone reference
+   print("All milestones 1-4 functionality verified")
+   print("Ready for Milestone 5: Event Processing")
+   
+   # [SUCCESS] CORRECT - generic status messages
+   print("All implemented functionality verified and working")
+   print("Development environment ready for continued work")
+   ```
+
+2. **Dynamic Status from Configuration**
+   ```python
+   # [SUCCESS] CORRECT - read status from external source
+   from src.utils.config import get_current_milestone
+   milestone = get_current_milestone()
+   print(f"Current development phase: {milestone}")
+   ```
+
+3. **Test-Based Status Reporting**
+   ```python
+   # [SUCCESS] CORRECT - derive status from what actually works
+   components = test_all_components()
+   working_components = [c for c in components if c.status == 'working']
+   print(f"{len(working_components)} components verified and operational")
+   ```
+
+#### **Approved Milestone Reference Locations**
+- **AI Directives Documentation**: Project implementation plan and status tracking
+- **Session Reports**: Historical records of milestone completion
+- **README Files**: High-level project status (updated manually)
+- **Release Notes**: Formal milestone completion announcements
+
+#### **Enforcement Checklist**
+- ✅ **Scripts Output**: No hardcoded "milestone X" or "ready for milestone Y" messages
+- ✅ **Test Descriptions**: Focus on functionality, not milestone numbers
+- ✅ **Error Messages**: Provide actionable guidance, not milestone context
+- ✅ **Status Reports**: Derive from actual working functionality
+- ✅ **Documentation**: Keep project status in designated tracking files only
+
+#### **Migration Strategy for Existing Code**
+When updating existing scripts:
+1. Replace milestone-specific messages with functionality-based status
+2. Remove "ready for milestone X" statements
+3. Use generic success/completion messages
+4. Test actual working components rather than assuming milestone status
+
+This rule ensures automation scripts remain accurate and useful throughout the project lifecycle without requiring constant maintenance updates.
 
 ## 🔄 Continuous Improvement
 
