@@ -13,7 +13,6 @@ from typing import Optional, Any, Dict
 from contextlib import asynccontextmanager
 
 from mcp.server.fastmcp import FastMCP
-from mcp.server.session import RequestContext
 
 from .utils.config import EliteConfig
 from .journal.monitor import JournalMonitor
@@ -191,7 +190,7 @@ class EliteDangerousServer:
         """Set up basic MCP handlers for server functionality."""
         
         @self.app.tool()
-        async def server_status(ctx: RequestContext) -> Dict[str, Any]:
+        async def server_status() -> Dict[str, Any]:
             """Get current server status and statistics."""
             try:
                 stats = self.data_store.get_statistics()
@@ -211,7 +210,7 @@ class EliteDangerousServer:
                 return {"error": str(e)}
         
         @self.app.tool()
-        async def get_recent_events(ctx: RequestContext, minutes: int = 60) -> Dict[str, Any]:
+        async def get_recent_events(minutes: int = 60) -> Dict[str, Any]:
             """Get recent journal events from the specified time period."""
             try:
                 if minutes <= 0 or minutes > 1440:  # Max 24 hours
@@ -237,7 +236,7 @@ class EliteDangerousServer:
                 return {"error": str(e)}
         
         @self.app.tool()
-        async def clear_data_store(ctx: RequestContext) -> Dict[str, str]:
+        async def clear_data_store() -> Dict[str, str]:
             """Clear all stored journal events and reset game state."""
             try:
                 self.data_store.clear()
