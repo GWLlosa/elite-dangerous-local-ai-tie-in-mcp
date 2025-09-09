@@ -13,7 +13,7 @@ Tests cover:
 import pytest
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 
 from src.utils.data_store import (
@@ -45,7 +45,7 @@ class TestDataStore:
                          category: EventCategory = EventCategory.NAVIGATION) -> ProcessedEvent:
         """Create a test event for testing."""
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
             
         return ProcessedEvent(
             raw_event={"event": event_type, "timestamp": timestamp.isoformat(), "StarSystem": system_name},
@@ -164,7 +164,7 @@ class TestDataStore:
     
     def test_query_by_time_range(self):
         """Test filtering events by time range."""
-        base_time = datetime.utcnow()
+        base_time = datetime.now(timezone.utc)
         events = [
             self.create_test_event("Event1", timestamp=base_time - timedelta(hours=2)),
             self.create_test_event("Event2", timestamp=base_time - timedelta(hours=1)),
@@ -216,7 +216,7 @@ class TestDataStore:
     
     def test_query_sorting(self):
         """Test event sorting options."""
-        base_time = datetime.utcnow()
+        base_time = datetime.now(timezone.utc)
         events = [
             self.create_test_event("Event1", timestamp=base_time),
             self.create_test_event("Event2", timestamp=base_time + timedelta(minutes=1)),
@@ -250,7 +250,7 @@ class TestDataStore:
     
     def test_get_recent_events(self):
         """Test getting events from recent time period."""
-        base_time = datetime.utcnow()
+        base_time = datetime.now(timezone.utc)
         events = [
             self.create_test_event("Old", timestamp=base_time - timedelta(hours=2)),
             self.create_test_event("Recent1", timestamp=base_time - timedelta(minutes=30)),
@@ -271,7 +271,7 @@ class TestDataStore:
         event = ProcessedEvent(
             raw_event={"event": "FSDJump", "StarSystem": "Alpha Centauri"},
             event_type="FSDJump",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.NAVIGATION,
             summary="Jumped to Alpha Centauri",
             key_data={
@@ -296,7 +296,7 @@ class TestDataStore:
         event = ProcessedEvent(
             raw_event={"event": "Docked", "StationName": "Jameson Memorial"},
             event_type="Docked",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.SHIP,
             summary="Docked at Jameson Memorial",
             key_data={"station_name": "Jameson Memorial"}
@@ -327,7 +327,7 @@ class TestDataStore:
     
     def test_cleanup_old_events(self):
         """Test cleanup of old events."""
-        base_time = datetime.utcnow()
+        base_time = datetime.now(timezone.utc)
         events = [
             self.create_test_event("Old1", timestamp=base_time - timedelta(hours=25)),
             self.create_test_event("Old2", timestamp=base_time - timedelta(hours=30)),
@@ -499,7 +499,7 @@ class TestGlobalDataStore:
         event = ProcessedEvent(
             raw_event={"event": "TestEvent"},
             event_type="TestEvent",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.SYSTEM,
             summary="Test event",
             key_data={}
