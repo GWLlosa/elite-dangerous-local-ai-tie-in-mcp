@@ -28,8 +28,8 @@ cd elite-dangerous-local-ai-tie-in-mcp
 # 2. Set up all dependencies automatically
 python scripts/setup_dependencies.py
 
-# 3. Activate virtual environment (Windows)
-.\venv\Scripts\Activate.ps1
+# 3. Verify environment setup
+python scripts/check_environment.py
 
 # 4. Run tests to verify everything works
 python scripts/run_tests.py
@@ -67,7 +67,7 @@ If you prefer manual setup:
 
 4. **Verify installation**:
    ```bash
-   python scripts/check_dependencies.py
+   python scripts/check_environment.py
    ```
 
 See the [Testing Guide](docs/TESTING_GUIDE.md) for detailed setup and verification instructions.
@@ -75,22 +75,34 @@ See the [Testing Guide](docs/TESTING_GUIDE.md) for detailed setup and verificati
 ## 🧪 Testing and Development
 
 ### Available Scripts
-- **`scripts/setup_dependencies.py`** - Automated environment setup
-- **`scripts/check_dependencies.py`** - Verify environment and dependencies
-- **`scripts/run_tests.py`** - Run complete test suite with progress reporting
+- **`scripts/setup_dependencies.py`** - Automated environment setup with package verification
+- **`scripts/check_environment.py`** - Comprehensive environment validation
+- **`scripts/run_tests.py`** - Run complete test suite with coverage reporting
 
 ### Running Tests
 ```bash
-# Quick test run
+# Quick test run with coverage
 python scripts/run_tests.py
 
 # Manual test execution
-pytest tests/unit/ -v --cov=src
+pytest tests/ -v --cov=src --cov-report=html
+
+# Run specific test categories
+pytest tests/unit/ -v          # Unit tests only
+pytest tests/integration/ -v   # Integration tests only
 ```
+
+### Test Coverage
+- **194+ tests** passing with **86% code coverage**
+- **Real-time monitoring** validated with mock journal events
+- **Event processing** tested with 130+ event types
+- **Data storage** verified with concurrent access patterns
+- **MCP server** tested with comprehensive unit tests
 
 ### Documentation
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
 - **[Scripts Documentation](scripts/README.md)** - Automation script details
+- **[AI Directives](ai-directives/README.md)** - Development guidelines for AI assistants
 
 ## Configuration
 
@@ -118,47 +130,82 @@ Add the following to your Claude Desktop configuration file:
 ```
 
 ### Environment Variables
-- `ELITE_JOURNAL_PATH` - Path to Elite Dangerous journal directory
+- `ELITE_JOURNAL_PATH` - Path to Elite Dangerous journal directory (auto-detected if not set)
 - `ELITE_EDCOPILOT_PATH` - Path to EDCoPilot custom files directory
 - `ELITE_DEBUG` - Enable debug logging (true/false)
-- `ELITE_MAX_RECENT_EVENTS` - Maximum recent events to store (default: 1000)
+- `ELITE_MAX_RECENT_EVENTS` - Maximum recent events to store (default: 10000)
 
 ## 📊 Project Status
 
-**Current Status**: Active development - Milestones 1-4 completed
+**Current Status**: Active development - Milestones 1-7 completed ✅
 
 ### ✅ Completed Milestones:
 1. **Project Structure** - Complete foundation and build system
 2. **Configuration Management** - Environment variables and path validation
-3. **Journal File Discovery** - File parsing and discovery with comprehensive tests  
+3. **Journal File Discovery** - File parsing with comprehensive tests  
 4. **Real-time Monitoring** - File system watching with position tracking
+5. **Event Processing** - 130+ event types across 17 categories
+6. **Data Storage** - In-memory storage with thread safety and game state tracking
+7. **MCP Server Framework** - FastMCP integration with background monitoring
 
-### 🔄 Next Milestones:
-5. **Event Processing** - Journal event classification and summarization
-6. **Data Storage** - In-memory event storage and retrieval
-7. **MCP Server Framework** - Core MCP tools, resources, and prompts
+### 🔄 In Progress:
+8. **Core MCP Tools** - Implementation of primary MCP tools for game queries
+9. **MCP Resources** - Dynamic resource exposure based on game state
+10. **MCP Prompts** - Context-aware prompts for gameplay scenarios
 
-### Test Coverage:
-- **47+ unit tests** with >96% code coverage
-- **Real-time monitoring** tested with file system operations
-- **Configuration system** validated across platforms
-- **Journal parsing** tested with mock Elite Dangerous data
+### 🎯 Upcoming Milestones:
+11. **EDCoPilot Integration** - Dynamic custom chatter generation
+12. **Analytics Dashboard** - Comprehensive gameplay statistics
+13. **Performance Optimization** - Caching and efficiency improvements
+14. **Documentation & Polish** - User guides and API documentation
+15. **Release Preparation** - Final testing and deployment packaging
 
-## 🎯 Usage Example
+## 🛠️ MCP Server Features
 
-Once fully implemented, the system will provide:
+### Available Tools
+- **`server_status`** - Get current server status and statistics
+- **`get_recent_events`** - Retrieve recent journal events with filtering
+- **`clear_data_store`** - Clear stored events and reset game state
 
+### Background Services
+- **Journal Monitoring** - Automatic real-time journal file watching
+- **Event Processing** - Classification and summarization of game events
+- **State Tracking** - Current ship, location, and game mode tracking
+- **Automatic Cleanup** - Memory management for long-running sessions
+
+## 🎯 Usage Examples
+
+### Starting the MCP Server
+```bash
+# Direct server startup
+python src/server.py
+
+# Or configure in Claude Desktop (see Configuration section)
+```
+
+### Querying Game State (via Claude Desktop)
+Once the server is running and connected to Claude Desktop, you can ask:
+- "What's my current location in Elite Dangerous?"
+- "Show me my recent exploration discoveries"
+- "Summarize my trading activity from the last hour"
+- "What happened in my last combat encounter?"
+
+### Development API Example
 ```python
-# Real-time journal monitoring
-monitor = JournalMonitor(journal_path, callback)
-await monitor.start_monitoring()
+from src.server import EliteDangerousServer
+from src.journal.monitor import JournalMonitor
 
-# Event processing and analysis  
-events = processor.get_recent_events('exploration', hours=24)
-summary = processor.generate_summary(events)
+# Server automatically starts monitoring on initialization
+server = EliteDangerousServer()
 
-# EDCoPilot integration
-generator.create_contextual_chatter(current_location, recent_events)
+# Access server tools
+status = await server.server_status()
+events = await server.get_recent_events(minutes=60, category="exploration")
+
+# Get current game state
+state = server.data_store.get_game_state()
+print(f"Current System: {state.current_system}")
+print(f"Ship: {state.current_ship}")
 ```
 
 ## Contributing
@@ -166,7 +213,7 @@ generator.create_contextual_chatter(current_location, recent_events)
 1. **Check Tests**: Run `python scripts/run_tests.py` to verify functionality
 2. **Fork the repository**
 3. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-4. **Add tests** for new functionality
+4. **Add tests** for new functionality (maintain >90% coverage)
 5. **Ensure tests pass**: All tests must pass before submitting
 6. **Commit changes**: `git commit -m 'Add amazing feature'`
 7. **Push to branch**: `git push origin feature/amazing-feature`
@@ -175,8 +222,9 @@ generator.create_contextual_chatter(current_location, recent_events)
 ### Development Workflow
 - Use the automation scripts for setup: `scripts/setup_dependencies.py`
 - Run tests frequently: `python scripts/run_tests.py`
-- Check dependencies: `python scripts/check_dependencies.py`
-- Follow the [Testing Guide](docs/TESTING_GUIDE.md) for detailed procedures
+- Check environment: `python scripts/check_environment.py`
+- Follow the [AI Directives](ai-directives/README.md) for consistency
+- Create session reports for knowledge preservation
 
 ## License
 
