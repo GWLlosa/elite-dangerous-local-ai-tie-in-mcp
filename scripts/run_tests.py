@@ -135,7 +135,7 @@ def check_virtual_environment():
 def main():
     """Main test runner function."""
     start_time = time.time()
-    total_steps = 10  # Updated to include MCP server tests
+    total_steps = 11  # Updated to include MCP tools tests
     
     print("Elite Dangerous MCP Server - Test Suite Runner")
     print(f"Started at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -202,13 +202,16 @@ def main():
         "src/utils/config.py",
         "src/utils/data_store.py",
         "src/server.py",  # Milestone 7 addition
+        "src/mcp/__init__.py",  # Milestone 8 addition
+        "src/mcp/mcp_tools.py",  # Milestone 8 addition
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
         "tests/unit/test_journal_monitor.py",
         "tests/unit/test_events.py",
         "tests/unit/test_data_store.py",
-        "tests/unit/test_server.py"  # Milestone 7 addition
+        "tests/unit/test_server.py",  # Milestone 7 addition
+        "tests/unit/test_mcp_tools.py"  # Milestone 8 addition
     ]
     
     all_paths_exist = True
@@ -235,7 +238,9 @@ def main():
         ("src.journal.events", "Event processing"),
         ("src.utils.config", "Configuration system"),
         ("src.utils.data_store", "Data storage system"),
-        ("src.server", "MCP server framework")  # Milestone 7 addition
+        ("src.server", "MCP server framework"),  # Milestone 7 addition
+        ("src.mcp", "MCP tools package"),  # Milestone 8 addition
+        ("src.mcp.mcp_tools", "MCP tools implementation")  # Milestone 8 addition
     ]
     
     all_imports_successful = True
@@ -312,17 +317,17 @@ print(f"Configuration: Journal path={config.journal_path.name}, validation compl
     data_store_test = '''
 from src.utils.data_store import DataStore, EventFilter, get_data_store
 from src.journal.events import ProcessedEvent, EventCategory
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Test basic data store functionality
 store = DataStore(max_events=10)
 event = ProcessedEvent(
-    timestamp=datetime.utcnow(),
+    timestamp=datetime.now(timezone.utc),
     event_type="FSDJump",
     category=EventCategory.NAVIGATION,
     summary="Test jump",
-    raw_data={"event": "FSDJump"},
-    extracted_data={"system_name": "Sol"}
+    raw_event={"event": "FSDJump"},
+    key_data={"system": "Sol"}
 )
 store.store_event(event)
 events = store.query_events()
@@ -362,8 +367,9 @@ async def test_server():
         
         # Test basic handler setup
         server.setup_basic_mcp_handlers()
+        server.setup_core_mcp_handlers()  # Milestone 8 addition
         tools = list(server.app.tools.keys())
-        print(f"MCP Tools: {len(tools)} tools registered: {', '.join(tools)}")
+        print(f"MCP Tools: {len(tools)} tools registered including core tools")
         
         return True
 
@@ -379,6 +385,39 @@ if result:
         print(f"  [SUCCESS] {output.strip()}")
     else:
         print(f"  [FAILED] MCP Server test failed: {error.strip()}")
+    
+    # Milestone 8: MCP Tools functionality test
+    print_substep("Testing MCP Tools functionality")
+    mcp_tools_test = '''
+from src.mcp.mcp_tools import MCPTools, ActivityType
+from src.utils.data_store import DataStore
+import asyncio
+
+# Test MCP tools creation
+store = DataStore()
+tools = MCPTools(store)
+print(f"MCPTools: Instance created successfully")
+
+# Test activity type enum
+activities = [ActivityType.EXPLORATION, ActivityType.TRADING, ActivityType.COMBAT]
+print(f"ActivityTypes: {len(activities)} activity types available")
+
+# Test async tool method
+async def test_tool():
+    result = await tools.get_current_location()
+    return "current_system" in result
+
+result = asyncio.run(test_tool())
+if result:
+    print("MCP Tools: Location tool working correctly")
+'''
+    
+    success, output, error = run_command([venv_python, "-c", mcp_tools_test],
+                                        "MCP Tools test", capture_output=True)
+    if success:
+        print(f"  [SUCCESS] {output.strip()}")
+    else:
+        print(f"  [FAILED] MCP Tools test failed: {error.strip()}")
     
     # Step 6: Unit Test Suite - Parser
     print_step(6, total_steps, "Journal Parser Unit Tests",
@@ -421,8 +460,18 @@ if result:
         print("  [FAILED] MCP server tests failed")
         sys.exit(1)
     
-    # Step 10: Full Test Suite with Coverage
-    print_step(10, total_steps, "Complete Test Suite with Coverage",
+    # Step 10: Unit Test Suite - MCP Tools (Milestone 8)
+    print_step(10, total_steps, "MCP Tools Unit Tests",
+               "Running comprehensive tests for MCP tools functionality")
+    
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/unit/test_mcp_tools.py", "-v"],
+                               "MCP tools tests")
+    if not success:
+        print("  [FAILED] MCP tools tests failed")
+        sys.exit(1)
+    
+    # Step 11: Full Test Suite with Coverage
+    print_step(11, total_steps, "Complete Test Suite with Coverage",
                "Running all tests together and generating coverage report")
     
     print_substep("Running complete test suite")
@@ -445,7 +494,16 @@ if result:
     print(f"Total execution time: {duration:.2f} seconds")
     print(f"Coverage report generated in: htmlcov/index.html")
     print(f"All implemented functionality verified and working")
-    print("\nMilestone 7: Basic MCP Server Framework - COMPLETED")
+    print("\nCompleted Milestones:")
+    print("  - Milestone 1: Project Structure")
+    print("  - Milestone 2: Configuration Management")
+    print("  - Milestone 3: Journal File Discovery")
+    print("  - Milestone 4: Real-time Monitoring")
+    print("  - Milestone 5: Event Processing")
+    print("  - Milestone 6: Data Storage")
+    print("  - Milestone 7: MCP Server Framework")
+    print("  - Milestone 8: Core MCP Tools Implementation")
+    print("\nReady for Milestone 9: MCP Resources Implementation")
     print("="*60)
 
 
