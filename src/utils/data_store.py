@@ -8,7 +8,7 @@ time-based filtering, and efficient querying for Elite Dangerous journal events.
 import threading
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Set, Any, Callable, Union
 from dataclasses import dataclass, field
@@ -238,7 +238,8 @@ class DataStore:
     
     def get_recent_events(self, minutes: int = 60) -> List[ProcessedEvent]:
         """Get events from the last N minutes."""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        # Fixed: Use timezone-aware datetime to match event timestamps
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         filter_criteria = EventFilter(start_time=cutoff_time)
         return self.query_events(filter_criteria)
     
@@ -306,7 +307,8 @@ class DataStore:
         Returns:
             Number of events removed
         """
-        cutoff_time = datetime.utcnow() - timedelta(hours=max_age_hours)
+        # Fixed: Use timezone-aware datetime for consistency
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
         
         with self._lock:
             initial_count = len(self._events)
