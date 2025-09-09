@@ -9,7 +9,7 @@ import asyncio
 import logging
 import sys
 import signal
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from contextlib import asynccontextmanager
 
 from mcp.server.fastmcp import FastMCP
@@ -18,6 +18,7 @@ from .utils.config import EliteConfig
 from .journal.monitor import JournalMonitor
 from .journal.events import EventProcessor
 from .utils.data_store import get_data_store, reset_data_store
+from .mcp.mcp_tools import MCPTools
 
 
 # Configure logging
@@ -60,6 +61,7 @@ class EliteDangerousServer:
         self.journal_monitor: Optional[JournalMonitor] = None
         self.event_processor = EventProcessor()
         self.data_store = get_data_store()
+        self.mcp_tools = MCPTools(self.data_store)
         
         # Server state
         self._running = False
@@ -151,6 +153,7 @@ class EliteDangerousServer:
             # Clear any existing data store state
             reset_data_store()
             self.data_store = get_data_store()
+            self.mcp_tools = MCPTools(self.data_store)
             
             # Set running flag
             self._running = True
@@ -250,6 +253,135 @@ class EliteDangerousServer:
             except Exception as e:
                 logger.error(f"Error clearing data store: {e}")
                 return {"status": "error", "message": str(e)}
+    
+    def setup_core_mcp_handlers(self):
+        """Set up core MCP handlers for comprehensive data access."""
+        
+        # ==================== Location and Status Tools ====================
+        
+        @self.app.tool()
+        async def get_current_location() -> Dict[str, Any]:
+            """Get comprehensive current location information including system, station, and nearby systems."""
+            return await self.mcp_tools.get_current_location()
+        
+        @self.app.tool()
+        async def get_ship_status() -> Dict[str, Any]:
+            """Get comprehensive ship status including type, modules, and condition."""
+            return await self.mcp_tools.get_ship_status()
+        
+        # ==================== Event Search Tools ====================
+        
+        @self.app.tool()
+        async def search_events(
+            event_types: Optional[List[str]] = None,
+            categories: Optional[List[str]] = None,
+            time_range_minutes: Optional[int] = None,
+            system_names: Optional[List[str]] = None,
+            contains_text: Optional[str] = None,
+            max_results: int = 100
+        ) -> Dict[str, Any]:
+            """
+            Search for events with flexible filtering criteria.
+            
+            Args:
+                event_types: List of event types to filter (e.g., ["FSDJump", "Docked"])
+                categories: List of categories to filter (e.g., ["exploration", "combat"])
+                time_range_minutes: Time range in minutes from now (e.g., 60 for last hour)
+                system_names: Filter by system names (e.g., ["Sol", "Alpha Centauri"])
+                contains_text: Text search in event data
+                max_results: Maximum number of results to return (default 100)
+            """
+            return await self.mcp_tools.search_events(
+                event_types=event_types,
+                categories=categories,
+                time_range_minutes=time_range_minutes,
+                system_names=system_names,
+                contains_text=contains_text,
+                max_results=max_results
+            )
+        
+        # ==================== Activity Summary Tools ====================
+        
+        @self.app.tool()
+        async def get_activity_summary(
+            activity_type: str,
+            time_range_hours: int = 24
+        ) -> Dict[str, Any]:
+            """
+            Get comprehensive summary of specific activity type.
+            
+            Args:
+                activity_type: Type of activity - exploration, trading, combat, mining, missions, or engineering
+                time_range_hours: Time range to analyze in hours (default 24)
+            """
+            return await self.mcp_tools.get_activity_summary(
+                activity_type=activity_type,
+                time_range_hours=time_range_hours
+            )
+        
+        @self.app.tool()
+        async def get_exploration_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed exploration activity summary including scans, discoveries, and earnings."""
+            return await self.mcp_tools.get_activity_summary("exploration", time_range_hours)
+        
+        @self.app.tool()
+        async def get_trading_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed trading activity summary including profits, commodities, and best trades."""
+            return await self.mcp_tools.get_activity_summary("trading", time_range_hours)
+        
+        @self.app.tool()
+        async def get_combat_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed combat activity summary including bounties, kills, and combat bonds."""
+            return await self.mcp_tools.get_activity_summary("combat", time_range_hours)
+        
+        @self.app.tool()
+        async def get_mining_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed mining activity summary including materials mined and asteroids cracked."""
+            return await self.mcp_tools.get_activity_summary("mining", time_range_hours)
+        
+        @self.app.tool()
+        async def get_mission_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed mission activity summary including active and completed missions."""
+            return await self.mcp_tools.get_activity_summary("missions", time_range_hours)
+        
+        @self.app.tool()
+        async def get_engineering_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Get detailed engineering activity summary including modifications and engineers visited."""
+            return await self.mcp_tools.get_activity_summary("engineering", time_range_hours)
+        
+        # ==================== Journey and Navigation Tools ====================
+        
+        @self.app.tool()
+        async def get_journey_summary(time_range_hours: int = 24) -> Dict[str, Any]:
+            """
+            Get comprehensive journey and navigation summary.
+            
+            Includes total jumps, distance traveled, systems visited, and route map.
+            """
+            return await self.mcp_tools.get_journey_summary(time_range_hours)
+        
+        # ==================== Performance and Statistics Tools ====================
+        
+        @self.app.tool()
+        async def get_performance_metrics(time_range_hours: int = 24) -> Dict[str, Any]:
+            """
+            Get comprehensive performance metrics across all activities.
+            
+            Includes credits earned/spent, efficiency metrics, and achievements.
+            """
+            return await self.mcp_tools.get_performance_metrics(time_range_hours)
+        
+        # ==================== Specialized Query Tools ====================
+        
+        @self.app.tool()
+        async def get_faction_standings() -> Dict[str, Any]:
+            """Get current faction standings and reputation changes."""
+            return await self.mcp_tools.get_faction_standings()
+        
+        @self.app.tool()
+        async def get_material_inventory() -> Dict[str, Any]:
+            """Get current material and cargo inventory with recent changes."""
+            return await self.mcp_tools.get_material_inventory()
 
 
 # Global server instance
@@ -263,6 +395,7 @@ async def create_server() -> EliteDangerousServer:
     if _server is None:
         _server = EliteDangerousServer()
         _server.setup_basic_mcp_handlers()
+        _server.setup_core_mcp_handlers()  # Add core MCP tools
         _server.setup_signal_handlers()
     
     return _server
