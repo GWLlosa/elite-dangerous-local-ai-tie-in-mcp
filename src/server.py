@@ -19,6 +19,7 @@ from .journal.monitor import JournalMonitor
 from .journal.events import EventProcessor
 from .utils.data_store import get_data_store, reset_data_store
 from .mcp.mcp_tools import MCPTools
+from .mcp.mcp_resources import MCPResources
 
 
 # Configure logging
@@ -62,6 +63,7 @@ class EliteDangerousServer:
         self.event_processor = EventProcessor()
         self.data_store = get_data_store()
         self.mcp_tools = MCPTools(self.data_store)
+        self.mcp_resources = MCPResources(self.data_store)
         
         # Server state
         self._running = False
@@ -154,6 +156,7 @@ class EliteDangerousServer:
             reset_data_store()
             self.data_store = get_data_store()
             self.mcp_tools = MCPTools(self.data_store)
+            self.mcp_resources = MCPResources(self.data_store)
             
             # Set running flag
             self._running = True
@@ -185,6 +188,9 @@ class EliteDangerousServer:
             
             # Stop journal monitoring
             await self.stop_journal_monitoring()
+            
+            # Clear resource cache
+            await self.mcp_resources.clear_cache()
             
             # Clear data store
             self.data_store.clear()
@@ -382,6 +388,39 @@ class EliteDangerousServer:
         async def get_material_inventory() -> Dict[str, Any]:
             """Get current material and cargo inventory with recent changes."""
             return await self.mcp_tools.get_material_inventory()
+    
+    def setup_mcp_resources(self):
+        """Set up MCP resource handlers for structured data access."""
+        
+        @self.app.resource()
+        async def list_resources() -> List[Dict[str, Any]]:
+            """List all available MCP resources with metadata."""
+            return self.mcp_resources.list_resources()
+        
+        @self.app.resource()
+        async def get_resource(uri: str) -> Optional[Dict[str, Any]]:
+            """
+            Get resource data for the specified URI.
+            
+            Args:
+                uri: Resource URI with optional query parameters
+                
+            Returns:
+                Resource data or None if invalid URI
+            """
+            return await self.mcp_resources.get_resource(uri)
+        
+        @self.app.tool()
+        async def refresh_resource_cache() -> Dict[str, str]:
+            """Clear the resource cache to force fresh data retrieval."""
+            try:
+                await self.mcp_resources.clear_cache()
+                return {"status": "success", "message": "Resource cache cleared successfully"}
+            except Exception as e:
+                logger.error(f"Error clearing resource cache: {e}")
+                return {"status": "error", "message": str(e)}
+        
+        logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources")
 
 
 # Global server instance
@@ -396,6 +435,7 @@ async def create_server() -> EliteDangerousServer:
         _server = EliteDangerousServer()
         _server.setup_basic_mcp_handlers()
         _server.setup_core_mcp_handlers()  # Add core MCP tools
+        _server.setup_mcp_resources()  # Add MCP resources
         _server.setup_signal_handlers()
     
     return _server
