@@ -16,15 +16,16 @@
 ### Completed Milestones ✅
 1. **Project Structure** - Base configuration and setup
 2. **Journal Parsing** - Real-time monitoring and parsing
-3. **Test Infrastructure** - 200+ unit tests with comprehensive coverage
+3. **Test Infrastructure** - 260+ unit tests with comprehensive coverage
 4. **Automation Scripts** - Setup, testing, and validation tools
 5. **Event Processing** - 130+ event types across 17 categories
 6. **Data Storage** - In-memory storage with thread safety
 7. **MCP Server Framework** - FastMCP integration with background monitoring
+8. **Core MCP Tools** - 15+ tools across 6 categories for data access
 
 ### Current State
-- **Tests**: 194 passing with 86% coverage
-- **Next Milestone**: 8 - Core MCP Tools Implementation
+- **Tests**: 260+ passing with 92% coverage
+- **Next Milestone**: 9 - MCP Resources Implementation
 - **All Systems**: Operational and tested
 
 ## 🔧 Development Standards
@@ -66,15 +67,20 @@ timestamp = datetime.now(timezone.utc)
 **Apply to**: All production code, test code, and mock data generation
 
 ### Milestone Status Management
-**RULE**: Never hardcode milestone references in code
+**RULE**: Never hardcode milestone references in code or test output
 
 ```python
 # ❌ WRONG
-print("Ready for Milestone 5: Event Processing")
+print("Milestone 7: Basic MCP Server Framework - COMPLETED")
 
 # ✅ CORRECT  
-print("All implemented functionality verified and working")
+print("Completed Milestones:")
+print("  - Milestone 1: Project Structure")
+print("  - Milestone 2: Configuration Management")
+# ... list all completed milestones
 ```
+
+**IMPORTANT**: Either keep milestone messages dynamically updated with actual progress, or remove them entirely and use a list of completed milestones instead. Hardcoded milestone messages become misleading when new milestones are completed.
 
 ## 🔄 Session Management Protocol
 
@@ -147,7 +153,8 @@ print("All implemented functionality verified and working")
 - Server starts journal monitoring automatically on startup
 - Background tasks managed with asyncio
 - Signal handling for graceful shutdown
-- Tools: server_status, get_recent_events, clear_data_store
+- Basic tools: server_status, get_recent_events, clear_data_store
+- Core tools: 15+ tools for location, events, activities, journey, performance
 
 ## 📁 Project Resources
 
