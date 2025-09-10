@@ -20,6 +20,7 @@ from .journal.events import EventProcessor
 from .utils.data_store import get_data_store, reset_data_store
 from .mcp.mcp_tools import MCPTools
 from .mcp.mcp_resources import MCPResources
+from .mcp.mcp_prompts import MCPPrompts, PromptType
 
 
 # Configure logging
@@ -64,6 +65,7 @@ class EliteDangerousServer:
         self.data_store = get_data_store()
         self.mcp_tools = MCPTools(self.data_store)
         self.mcp_resources = MCPResources(self.data_store)
+        self.mcp_prompts = MCPPrompts(self.data_store)
         
         # Server state
         self._running = False
@@ -157,6 +159,7 @@ class EliteDangerousServer:
             self.data_store = get_data_store()
             self.mcp_tools = MCPTools(self.data_store)
             self.mcp_resources = MCPResources(self.data_store)
+            self.mcp_prompts = MCPPrompts(self.data_store)
             
             # Set running flag
             self._running = True
@@ -421,6 +424,101 @@ class EliteDangerousServer:
                 return {"status": "error", "message": str(e)}
         
         logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources")
+    
+    def setup_mcp_prompts(self):
+        """Set up MCP prompt handlers for context-aware AI assistance."""
+        
+        @self.app.prompt()
+        async def list_prompts() -> List[Dict[str, Any]]:
+            """List all available prompt templates with metadata."""
+            return self.mcp_prompts.list_prompts()
+        
+        @self.app.prompt()
+        async def generate_prompt(
+            prompt_name: str,
+            custom_context: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+            """
+            Generate a specific prompt with current game context.
+            
+            Args:
+                prompt_name: Name of the prompt template
+                custom_context: Optional custom context values to override defaults
+                
+            Returns:
+                Generated prompt with metadata and context
+            """
+            return self.mcp_prompts.generate_prompt(prompt_name, custom_context)
+        
+        @self.app.prompt()
+        async def generate_contextual_prompt(
+            prompt_type: str,
+            time_range_hours: int = 24
+        ) -> Dict[str, Any]:
+            """
+            Generate the most relevant prompt for the specified type based on current context.
+            
+            Args:
+                prompt_type: Type of prompt (exploration, trading, combat, mining, navigation, 
+                           engineering, missions, performance, strategy, roleplay)
+                time_range_hours: Time range for activity analysis (default 24)
+                
+            Returns:
+                Generated prompt adapted to recent activity
+            """
+            try:
+                # Convert string to PromptType enum
+                prompt_type_enum = PromptType(prompt_type.lower())
+                return self.mcp_prompts.generate_contextual_prompt(prompt_type_enum, time_range_hours)
+            except ValueError:
+                return {
+                    "error": f"Invalid prompt type: {prompt_type}",
+                    "valid_types": [t.value for t in PromptType]
+                }
+        
+        @self.app.prompt()
+        async def generate_adaptive_prompts(count: int = 3) -> List[Dict[str, Any]]:
+            """
+            Generate multiple adaptive prompts based on current game state and recent activity.
+            
+            Args:
+                count: Number of prompts to generate (default 3)
+                
+            Returns:
+                List of contextually relevant prompts
+            """
+            return self.mcp_prompts.generate_adaptive_prompts(count)
+        
+        @self.app.tool()
+        async def analyze_activity_for_prompts() -> Dict[str, Any]:
+            """
+            Analyze recent activity to determine which prompt types would be most relevant.
+            
+            Returns:
+                Analysis of recent activity with recommended prompt types
+            """
+            try:
+                # Get activity analysis
+                prompt_types = self.mcp_prompts._analyze_recent_activity()
+                
+                # Get recent event distribution
+                recent_events = self.data_store.get_recent_events(minutes=120)
+                category_counts = {}
+                for event in recent_events:
+                    cat = event.category.value
+                    category_counts[cat] = category_counts.get(cat, 0) + 1
+                
+                return {
+                    "recommended_prompt_types": [pt.value for pt in prompt_types[:5]],
+                    "recent_activity_distribution": category_counts,
+                    "total_recent_events": len(recent_events),
+                    "analysis_time_range_minutes": 120
+                }
+            except Exception as e:
+                logger.error(f"Error analyzing activity: {e}")
+                return {"error": str(e)}
+        
+        logger.info(f"Registered {len(self.mcp_prompts.templates)} prompt templates")
 
 
 # Global server instance
@@ -436,6 +534,7 @@ async def create_server() -> EliteDangerousServer:
         _server.setup_basic_mcp_handlers()
         _server.setup_core_mcp_handlers()  # Add core MCP tools
         _server.setup_mcp_resources()  # Add MCP resources
+        _server.setup_mcp_prompts()  # Add MCP prompts
         _server.setup_signal_handlers()
     
     return _server
