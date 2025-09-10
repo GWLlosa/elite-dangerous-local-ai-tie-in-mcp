@@ -395,18 +395,24 @@ class EliteDangerousServer:
     def setup_mcp_resources(self):
         """Set up MCP resource handlers for structured data access."""
         
-        @self.app.resource()
+        # Resources are accessed through tools in FastMCP
+        @self.app.tool()
         async def list_resources() -> List[Dict[str, Any]]:
             """List all available MCP resources with metadata."""
             return self.mcp_resources.list_resources()
         
-        @self.app.resource()
+        @self.app.tool()
         async def get_resource(uri: str) -> Optional[Dict[str, Any]]:
             """
             Get resource data for the specified URI.
             
             Args:
                 uri: Resource URI with optional query parameters
+                     Examples:
+                     - elite://status/current
+                     - elite://journal/recent?minutes=30
+                     - elite://events/search?type=FSDJump&category=navigation
+                     - elite://summary/exploration?hours=24
                 
             Returns:
                 Resource data or None if invalid URI
@@ -428,12 +434,13 @@ class EliteDangerousServer:
     def setup_mcp_prompts(self):
         """Set up MCP prompt handlers for context-aware AI assistance."""
         
-        @self.app.prompt()
+        # Prompts are also accessed through tools in FastMCP
+        @self.app.tool()
         async def list_prompts() -> List[Dict[str, Any]]:
             """List all available prompt templates with metadata."""
             return self.mcp_prompts.list_prompts()
         
-        @self.app.prompt()
+        @self.app.tool()
         async def generate_prompt(
             prompt_name: str,
             custom_context: Optional[Dict[str, Any]] = None
@@ -443,6 +450,8 @@ class EliteDangerousServer:
             
             Args:
                 prompt_name: Name of the prompt template
+                            Options: exploration_analysis, trading_analysis, combat_review,
+                                   mining_optimization, route_planning, daily_goals, etc.
                 custom_context: Optional custom context values to override defaults
                 
             Returns:
@@ -450,7 +459,7 @@ class EliteDangerousServer:
             """
             return self.mcp_prompts.generate_prompt(prompt_name, custom_context)
         
-        @self.app.prompt()
+        @self.app.tool()
         async def generate_contextual_prompt(
             prompt_type: str,
             time_range_hours: int = 24
@@ -476,7 +485,7 @@ class EliteDangerousServer:
                     "valid_types": [t.value for t in PromptType]
                 }
         
-        @self.app.prompt()
+        @self.app.tool()
         async def generate_adaptive_prompts(count: int = 3) -> List[Dict[str, Any]]:
             """
             Generate multiple adaptive prompts based on current game state and recent activity.
