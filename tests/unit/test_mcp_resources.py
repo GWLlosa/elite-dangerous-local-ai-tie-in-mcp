@@ -105,11 +105,12 @@ class TestMCPResources:
         
         # Mock events
         mock_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "FSDJump", "timestamp": datetime.now(timezone.utc).isoformat(), "StarSystem": "Alpha Centauri", "JumpDist": 4.37},
             event_type="FSDJump",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.NAVIGATION,
-            data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
-            summary="Jumped to Alpha Centauri"
+            summary="Jumped to Alpha Centauri",
+            key_data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37}
         )
         store.get_all_events.return_value = [mock_event]
         store.get_recent_events.return_value = [mock_event]
