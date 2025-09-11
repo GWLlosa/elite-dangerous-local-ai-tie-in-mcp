@@ -89,7 +89,7 @@ class TestMCPPrompts:
             summary="Jumped to Alpha Centauri",
             key_data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37}
         )
-        store.get_all_events.return_value = [mock_event]
+        store.query_events.return_value = [mock_event]
         store.get_recent_events.return_value = [mock_event]
         store.get_events_by_type.return_value = [mock_event]
         store.get_events_by_category.return_value = [mock_event]
@@ -292,7 +292,7 @@ class TestMCPPrompts:
             ) for _ in range(5)
         ]
         
-        mock_data_store.get_all_events.return_value = exploration_events
+        mock_data_store.query_events.return_value = exploration_events
         
         template_names = ["exploration_analysis", "exploration_route"]
         best = prompts._select_best_template(template_names, 24)
