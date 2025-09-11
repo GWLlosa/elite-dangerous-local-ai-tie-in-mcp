@@ -22,11 +22,52 @@
 6. **Data Storage** - In-memory storage with thread safety
 7. **MCP Server Framework** - FastMCP integration with background monitoring
 8. **Core MCP Tools** - 15+ tools across 6 categories for data access
+9. **MCP Resources** - 17+ structured data endpoints with caching
+10. **MCP Prompts** - 16 intelligent prompt templates (PR #5 pending)
 
 ### Current State
-- **Tests**: 260+ passing with 92% coverage
-- **Next Milestone**: 9 - MCP Resources Implementation
-- **All Systems**: Operational and tested
+- **Tests**: 335+ total (some failing due to ProcessedEvent parameter issue)
+- **Next Milestone**: 11 - EDCoPilot File Templates
+- **All Systems**: Core functionality operational
+
+## 🔄 Development Workflow Standard
+
+### Pull Request Workflow (MANDATORY)
+**This is the standard workflow for all development going forward:**
+
+1. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/milestone-name
+   ```
+
+2. **Implement Changes**
+   - Write code following all quality standards
+   - Create/update tests alongside implementation
+   - Update documentation as needed
+
+3. **Create Pull Request**
+   - Push branch to GitHub
+   - Create PR with comprehensive description
+   - List all changes and features implemented
+
+4. **Test Verification Phase**
+   - Run tests on the feature branch
+   - Share test results with user
+   - **WAIT FOR USER CONFIRMATION** - Do not merge until user confirms tests pass
+   - Fix any issues identified
+
+5. **Merge Only After Approval**
+   - User must explicitly state "tests pass" or "merge approved"
+   - Only then merge PR to main
+   - Document completion in milestone status file
+
+### Example Workflow Communication
+```
+AI: "I've created PR #X for Milestone Y. The tests are showing [results]. 
+     Please review and let me know when tests pass so I can merge."
+User: "Tests pass, you can merge."
+AI: "Merging PR #X now..."
+```
 
 ## 🔧 Development Standards
 
@@ -64,23 +105,28 @@ from datetime import datetime, timezone
 timestamp = datetime.now(timezone.utc)
 ```
 
-**Apply to**: All production code, test code, and mock data generation
-
-### Milestone Status Management
-**RULE**: Never hardcode milestone references in code or test output
+### ProcessedEvent Data Structure
+**IMPORTANT**: ProcessedEvent uses `raw_data` parameter, not `data`
 
 ```python
 # ❌ WRONG
-print("Milestone 7: Basic MCP Server Framework - COMPLETED")
+ProcessedEvent(data={"key": "value"})
 
-# ✅ CORRECT  
-print("Completed Milestones:")
-print("  - Milestone 1: Project Structure")
-print("  - Milestone 2: Configuration Management")
-# ... list all completed milestones
+# ✅ CORRECT
+ProcessedEvent(raw_data={"key": "value"})
 ```
 
-**IMPORTANT**: Either keep milestone messages dynamically updated with actual progress, or remove them entirely and use a list of completed milestones instead. Hardcoded milestone messages become misleading when new milestones are completed.
+### FastMCP Decorator Usage
+**CRITICAL**: FastMCP only supports `@app.tool()` decorator
+
+```python
+# ❌ WRONG
+@app.resource()  # Does not exist
+@app.prompt()    # Does not exist
+
+# ✅ CORRECT
+@app.tool()  # All handlers use tool decorator
+```
 
 ## 🔄 Session Management Protocol
 
@@ -91,13 +137,15 @@ print("  - Milestone 2: Configuration Management")
 - More than 2 major tasks completed in session
 - Conversation has >30 total interactions
 - Any milestone implementation completed
+- PR created and awaiting test verification
 
 **If ANY threshold reached**: 
 1. Announce: "Conversation capacity threshold reached. Executing mandatory knowledge preservation protocol."
 2. Create session report in `ai-directives/session-reports/`
 3. Update ai-directives with new discoveries
 4. Commit all changes to Git
-5. Offer to continue in fresh session
+5. Note any pending PRs awaiting test results
+6. Offer to continue in fresh session
 
 ### Session Report Template
 ```markdown
@@ -105,6 +153,7 @@ print("  - Milestone 2: Configuration Management")
 
 ## Session Summary
 - Duration, Focus, Status
+- PRs created and their status
 
 ## New Rules Discovered
 - Technical Corrections
@@ -113,6 +162,11 @@ print("  - Milestone 2: Configuration Management")
 
 ## Work Completed
 - Tasks, Commits, Milestones
+- Test results and issues found
+
+## Pending Items
+- PRs awaiting test verification
+- Issues to be fixed
 
 ## Next Steps
 - Recommendations for future sessions
@@ -122,15 +176,6 @@ print("  - Milestone 2: Configuration Management")
 - Successful patterns
 - Things to avoid
 ```
-
-### Between-Milestone Protocol
-
-**MANDATORY when completing any milestone**:
-1. Run comprehensive test suite
-2. Create session report
-3. Commit all changes
-4. Ask: "Should we pause here for testing and start fresh for the next milestone?"
-5. Recommend: "I suggest testing this milestone thoroughly before proceeding"
 
 ## 📚 Technical Rules & Patterns
 
@@ -148,13 +193,14 @@ print("  - Milestone 2: Configuration Management")
 - Use same datetime patterns in tests as production
 - Mock data must match production data structures
 - Integration tests verify cross-component functionality
+- Always run tests before merging PRs
 
 ### MCP Server Specifics
 - Server starts journal monitoring automatically on startup
 - Background tasks managed with asyncio
 - Signal handling for graceful shutdown
-- Basic tools: server_status, get_recent_events, clear_data_store
-- Core tools: 15+ tools for location, events, activities, journey, performance
+- All handlers use @app.tool() decorator (no resource/prompt decorators)
+- Resources and prompts accessed via tool functions
 
 ## 📁 Project Resources
 
@@ -175,12 +221,17 @@ print("  - Milestone 2: Configuration Management")
 1. **Plan**: Review relevant milestone requirements
 2. **Implement**: Follow coding standards
 3. **Test**: Write tests alongside code
-4. **Validate**: Run test suite
-5. **Document**: Update relevant documentation
-6. **Commit**: Clear, descriptive commit messages
+4. **Create PR**: Push to feature branch
+5. **Verify**: Run tests and share results
+6. **Wait**: Get user confirmation before merge
+7. **Document**: Update relevant documentation
+8. **Commit**: Clear, descriptive commit messages
 
 ### Quality Checklist
-- [ ] Tests pass with required coverage
+- [ ] Tests written and passing
+- [ ] PR created with description
+- [ ] Test results shared with user
+- [ ] User approval received before merge
 - [ ] Documentation updated
 - [ ] Cross-platform compatibility verified
 - [ ] No hardcoded milestone references
@@ -194,6 +245,8 @@ print("  - Milestone 2: Configuration Management")
 Each milestone must demonstrate:
 - Functional implementation meeting requirements
 - Comprehensive testing with >90% coverage
+- PR created and reviewed before merge
+- Test verification by user
 - Updated documentation
 - Working automation scripts
 - Integration with existing components
@@ -212,4 +265,4 @@ This document should be:
 
 ---
 
-**Remember**: Quality over speed. Test thoroughly. Document everything. Preserve knowledge for future sessions.
+**Remember**: Quality over speed. Test thoroughly. Wait for approval. Document everything. Preserve knowledge for future sessions.
