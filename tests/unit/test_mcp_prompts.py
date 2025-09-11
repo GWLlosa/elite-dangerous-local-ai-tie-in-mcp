@@ -82,11 +82,12 @@ class TestMCPPrompts:
         
         # Mock events
         mock_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "FSDJump", "timestamp": datetime.now(timezone.utc).isoformat(), "StarSystem": "Alpha Centauri", "JumpDist": 4.37},
             event_type="FSDJump",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.NAVIGATION,
-            data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
-            summary="Jumped to Alpha Centauri"
+            summary="Jumped to Alpha Centauri",
+            key_data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37}
         )
         store.get_all_events.return_value = [mock_event]
         store.get_recent_events.return_value = [mock_event]
@@ -176,18 +177,20 @@ class TestMCPPrompts:
         """Test exploration context building."""
         # Set up exploration events
         scan_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "Scan", "timestamp": datetime.now(timezone.utc).isoformat(), "BodyName": "Earth-like World", "TerraformState": "Terraformable"},
             event_type="Scan",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.EXPLORATION,
-            data={"BodyName": "Earth-like World", "TerraformState": "Terraformable"},
-            summary="Scanned Earth-like World"
+            summary="Scanned Earth-like World",
+            key_data={"BodyName": "Earth-like World", "TerraformState": "Terraformable"}
         )
         jump_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "FSDJump", "timestamp": datetime.now(timezone.utc).isoformat(), "StarSystem": "System A", "JumpDist": 50.0},
             event_type="FSDJump",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.NAVIGATION,
-            data={"StarSystem": "System A", "JumpDist": 50.0},
-            summary="Jumped to System A"
+            summary="Jumped to System A",
+            key_data={"StarSystem": "System A", "JumpDist": 50.0}
         )
         
         mock_data_store.get_events_by_type.side_effect = lambda t, **kwargs: {
@@ -205,18 +208,20 @@ class TestMCPPrompts:
     def test_build_trading_context(self, prompts, mock_data_store):
         """Test trading context building."""
         buy_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "MarketBuy", "timestamp": datetime.now(timezone.utc).isoformat(), "Type": "Gold", "Count": 10, "TotalCost": 100000},
             event_type="MarketBuy",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.TRADING,
-            data={"Type": "Gold", "Count": 10, "TotalCost": 100000},
-            summary="Bought Gold"
+            summary="Bought Gold",
+            key_data={"Type": "Gold", "Count": 10, "TotalCost": 100000}
         )
         sell_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "MarketSell", "timestamp": datetime.now(timezone.utc).isoformat(), "Type": "Gold", "Count": 10, "TotalSale": 150000, "Profit": 50000},
             event_type="MarketSell",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.TRADING,
-            data={"Type": "Gold", "Count": 10, "TotalSale": 150000, "Profit": 50000},
-            summary="Sold Gold"
+            summary="Sold Gold",
+            key_data={"Type": "Gold", "Count": 10, "TotalSale": 150000, "Profit": 50000}
         )
         
         mock_data_store.get_events_by_type.side_effect = lambda t, **kwargs: {
@@ -233,11 +238,12 @@ class TestMCPPrompts:
     def test_build_combat_context(self, prompts, mock_data_store):
         """Test combat context building."""
         bounty_event = ProcessedEvent(
-            timestamp=datetime.now(timezone.utc),
+            raw_event={"event": "Bounty", "timestamp": datetime.now(timezone.utc).isoformat(), "Target": "Pirate", "Reward": 50000},
             event_type="Bounty",
+            timestamp=datetime.now(timezone.utc),
             category=EventCategory.COMBAT,
-            data={"Target": "Pirate", "Reward": 50000},
-            summary="Collected bounty"
+            summary="Collected bounty",
+            key_data={"Target": "Pirate", "Reward": 50000}
         )
         
         mock_data_store.get_events_by_type.side_effect = lambda t, **kwargs: {
@@ -277,11 +283,12 @@ class TestMCPPrompts:
         # Set up recent exploration events
         exploration_events = [
             ProcessedEvent(
-                timestamp=datetime.now(timezone.utc),
+                raw_event={"event": "Scan", "timestamp": datetime.now(timezone.utc).isoformat()},
                 event_type="Scan",
+                timestamp=datetime.now(timezone.utc),
                 category=EventCategory.EXPLORATION,
-                data={},
-                summary="Scan"
+                summary="Scan",
+                key_data={}
             ) for _ in range(5)
         ]
         
@@ -298,25 +305,28 @@ class TestMCPPrompts:
         # Create events with different categories
         events = [
             ProcessedEvent(
-                timestamp=datetime.now(timezone.utc),
+                raw_event={"event": "FSDJump", "timestamp": datetime.now(timezone.utc).isoformat()},
                 event_type="FSDJump",
+                timestamp=datetime.now(timezone.utc),
                 category=EventCategory.NAVIGATION,
-                data={},
-                summary="Jump"
+                summary="Jump",
+                key_data={}
             ),
             ProcessedEvent(
-                timestamp=datetime.now(timezone.utc),
+                raw_event={"event": "Scan", "timestamp": datetime.now(timezone.utc).isoformat()},
                 event_type="Scan",
+                timestamp=datetime.now(timezone.utc),
                 category=EventCategory.EXPLORATION,
-                data={},
-                summary="Scan"
+                summary="Scan",
+                key_data={}
             ),
             ProcessedEvent(
-                timestamp=datetime.now(timezone.utc),
+                raw_event={"event": "MarketBuy", "timestamp": datetime.now(timezone.utc).isoformat()},
                 event_type="MarketBuy",
+                timestamp=datetime.now(timezone.utc),
                 category=EventCategory.TRADING,
-                data={},
-                summary="Buy"
+                summary="Buy",
+                key_data={}
             )
         ]
         
