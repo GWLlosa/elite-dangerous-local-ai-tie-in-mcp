@@ -112,7 +112,7 @@ class TestMCPResources:
             summary="Jumped to Alpha Centauri",
             key_data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37}
         )
-        store.get_all_events.return_value = [mock_event]
+        store.query_events.return_value = [mock_event]
         store.get_recent_events.return_value = [mock_event]
         store.get_events_by_type.return_value = [mock_event]
         store.get_events_by_category.return_value = [mock_event]
