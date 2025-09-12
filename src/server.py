@@ -395,23 +395,43 @@ class EliteDangerousServer:
     def setup_mcp_resources(self):
         """Set up MCP resource handlers for structured data access."""
         
-        @self.app.resource()
-        async def list_resources() -> List[Dict[str, Any]]:
+        @self.app.tool()
+        async def list_available_resources() -> Dict[str, Any]:
             """List all available MCP resources with metadata."""
-            return self.mcp_resources.list_resources()
+            try:
+                resources = self.mcp_resources.list_resources()
+                return {
+                    "available_resources": resources,
+                    "total_count": len(resources),
+                    "resource_types": list(set(r.get("type", "unknown") for r in resources))
+                }
+            except Exception as e:
+                logger.error(f"Error listing resources: {e}")
+                return {"error": str(e)}
         
-        @self.app.resource()
-        async def get_resource(uri: str) -> Optional[Dict[str, Any]]:
+        @self.app.tool()
+        async def get_resource_data(uri: str) -> Dict[str, Any]:
             """
             Get resource data for the specified URI.
             
             Args:
-                uri: Resource URI with optional query parameters
+                uri: Resource URI with optional query parameters (e.g., 'elite://status/current')
                 
             Returns:
-                Resource data or None if invalid URI
+                Resource data or error message
             """
-            return await self.mcp_resources.get_resource(uri)
+            try:
+                resource_data = await self.mcp_resources.get_resource(uri)
+                if resource_data is None:
+                    return {"error": f"Resource not found: {uri}"}
+                return {
+                    "uri": uri,
+                    "data": resource_data,
+                    "timestamp": resource_data.get("timestamp") if isinstance(resource_data, dict) else None
+                }
+            except Exception as e:
+                logger.error(f"Error getting resource {uri}: {e}")
+                return {"error": str(e)}
         
         @self.app.tool()
         async def refresh_resource_cache() -> Dict[str, str]:
@@ -423,7 +443,7 @@ class EliteDangerousServer:
                 logger.error(f"Error clearing resource cache: {e}")
                 return {"status": "error", "message": str(e)}
         
-        logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources")
+        logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources as tools")
 
     def setup_mcp_prompts(self):
         """Set up MCP prompt handlers for context-aware AI assistance."""
