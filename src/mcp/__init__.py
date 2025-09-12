@@ -1,10 +1,20 @@
 """
-MCP (Model Context Protocol) tools for Elite Dangerous integration.
+MCP (Model Context Protocol) package for Elite Dangerous integration.
 
-This package provides comprehensive MCP tools for querying and analyzing
-Elite Dangerous journal data through AI assistant integration.
+Provides tools, resources, and prompts for AI assistant integration
+with Elite Dangerous game data through the MCP protocol.
 """
 
-from .mcp_tools import MCPTools, ActivityType
+from .mcp_tools import MCPTools
+from .mcp_resources import MCPResources, ResourceCache, ResourceType
+from .mcp_prompts import MCPPrompts, PromptTemplate, PromptType
 
-__all__ = ["MCPTools", "ActivityType"]
+__all__ = [
+    'MCPTools',
+    'MCPResources', 
+    'ResourceCache',
+    'ResourceType',
+    'MCPPrompts',
+    'PromptTemplate',
+    'PromptType'
+]
