@@ -1,85 +1,83 @@
 """
-MCP Prompts for Elite Dangerous AI Assistant
+MCP Prompts for Elite Dangerous Context-Aware AI Assistance
 
-Provides intelligent, context-aware prompts for common Elite Dangerous tasks.
-Prompts adapt to current game state and recent player activities, generating
-comprehensive instructions for AI analysis and assistance.
+Provides intelligent prompts for common Elite Dangerous tasks with context-aware
+content generation based on current game state and recent activities.
 """
 
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from enum import Enum
-import json
 
 from ..utils.data_store import DataStore
 from ..journal.events import EventCategory
-
 
 logger = logging.getLogger(__name__)
 
 
 class PromptType(Enum):
-    """Types of prompts available."""
+    """Types of MCP prompts available."""
     EXPLORATION = "exploration"
     TRADING = "trading"
     COMBAT = "combat"
     MINING = "mining"
-    NAVIGATION = "navigation"
-    ENGINEERING = "engineering"
     MISSIONS = "missions"
+    ENGINEERING = "engineering"
+    JOURNEY = "journey"
     PERFORMANCE = "performance"
     STRATEGY = "strategy"
-    ROLEPLAY = "roleplay"
 
 
 class PromptTemplate:
-    """Template for generating dynamic prompts."""
+    """Template for dynamic prompt generation."""
     
-    def __init__(self, template: str, variables: List[str], description: str):
+    def __init__(self, name: str, description: str, template: str, variables: List[str]):
         """
         Initialize prompt template.
         
         Args:
+            name: Template name
+            description: Template description
             template: Template string with {variable} placeholders
-            variables: List of required variables
-            description: Description of the prompt
+            variables: List of required variable names
         """
+        self.name = name
+        self.description = description
         self.template = template
         self.variables = variables
-        self.description = description
     
     def render(self, context: Dict[str, Any]) -> str:
         """
-        Render the template with provided context.
+        Render template with provided context variables.
         
         Args:
-            context: Dictionary of variable values
+            context: Dictionary containing variable values
             
         Returns:
             Rendered prompt string
         """
         try:
-            # Check all required variables are present
-            missing = [v for v in self.variables if v not in context]
-            if missing:
-                logger.warning(f"Missing template variables: {missing}")
-                # Use defaults for missing variables
-                for var in missing:
-                    context[var] = "[Unknown]"
+            # Ensure all required variables are present
+            missing_vars = [var for var in self.variables if var not in context]
+            if missing_vars:
+                logger.warning(f"Missing variables for template {self.name}: {missing_vars}")
+                # Fill missing variables with placeholders
+                for var in missing_vars:
+                    context[var] = f"[{var.upper()}_NOT_AVAILABLE]"
             
             return self.template.format(**context)
         except Exception as e:
-            logger.error(f"Error rendering template: {e}")
-            return self.template
+            logger.error(f"Error rendering template {self.name}: {e}")
+            return f"Error rendering prompt template: {e}"
 
 
 class MCPPrompts:
     """
-    MCP Prompts provider for Elite Dangerous AI assistance.
+    MCP Prompts provider for Elite Dangerous context-aware assistance.
     
-    Generates context-aware prompts that adapt to current game state
-    and recent player activities for comprehensive AI analysis.
+    Generates intelligent prompts based on current game state, recent activities,
+    and player context to provide relevant AI assistance.
     """
     
     def __init__(self, data_store: DataStore):
@@ -90,746 +88,788 @@ class MCPPrompts:
             data_store: DataStore instance for accessing game data
         """
         self.data_store = data_store
-        
-        # Define prompt templates
-        self._init_templates()
+        self._initialize_templates()
     
-    def _init_templates(self):
-        """Initialize prompt templates."""
+    def _initialize_templates(self):
+        """Initialize prompt templates for different activities."""
+        
         self.templates = {
-            # Exploration prompts
             "exploration_analysis": PromptTemplate(
-                "Analyze my exploration progress in {current_system}. "
-                "I've scanned {bodies_scanned} bodies in the last {hours} hours "
-                "and visited {systems_visited} systems. My exploration rank is {exploration_rank}. "
-                "What valuable discoveries should I prioritize? "
-                "Consider stellar phenomena, terraformable worlds, and undiscovered systems.",
-                ["current_system", "bodies_scanned", "hours", "systems_visited", "exploration_rank"],
-                "Comprehensive exploration analysis with recommendations"
+                name="Exploration Analysis",
+                description="Analyze recent exploration activities and suggest next steps",
+                template="""Analyze my recent Elite Dangerous exploration activities:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Exploration Rank: {exploration_rank}
+
+Recent Exploration (Last {time_range} hours):
+- Systems Visited: {systems_visited}
+- Bodies Scanned: {bodies_scanned}
+- Distance Traveled: {distance_ly:.1f} LY
+- Exploration Earnings: {exploration_earnings:,} CR
+
+Recent Systems:
+{recent_systems}
+
+Scan Summary:
+{scan_summary}
+
+Please provide:
+1. Analysis of my exploration efficiency and patterns
+2. Recommendations for valuable scanning targets
+3. Suggestions for profitable exploration routes
+4. Tips for optimizing my exploration strategy
+5. Assessment of my current exploration equipment and ship loadout""",
+                variables=["current_system", "current_ship", "credits", "exploration_rank", 
+                          "time_range", "systems_visited", "bodies_scanned", "distance_ly",
+                          "exploration_earnings", "recent_systems", "scan_summary"]
             ),
             
-            "exploration_route": PromptTemplate(
-                "Plan an exploration route from {current_system} considering: "
-                "- My ship's jump range: {jump_range} LY\n"
-                "- Fuel capacity: {fuel_capacity} tons\n"
-                "- Recent discoveries: {recent_discoveries}\n"
-                "Suggest unexplored regions with high value targets and neutron star highways.",
-                ["current_system", "jump_range", "fuel_capacity", "recent_discoveries"],
-                "Exploration route planning with efficiency optimization"
+            "trading_strategy": PromptTemplate(
+                name="Trading Strategy",
+                description="Analyze trading performance and suggest profitable opportunities",
+                template="""Analyze my Elite Dangerous trading activities and suggest improvements:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Trade Rank: {trade_rank}
+- Cargo Capacity: {cargo_capacity}
+
+Recent Trading (Last {time_range} hours):
+- Total Profit: {total_profit:,} CR
+- Number of Trades: {trade_count}
+- Average Profit per Trade: {avg_profit_per_trade:,} CR
+- Profit per Hour: {profit_per_hour:,} CR/hr
+
+Best Recent Trades:
+{best_trades}
+
+Current Market Opportunities:
+{market_opportunities}
+
+Please provide:
+1. Analysis of my trading efficiency and profit margins
+2. Recommendations for improving trade routes
+3. Suggestions for high-value commodities to focus on
+4. Tips for optimizing cargo space and trade timing
+5. Assessment of my trading ship setup and potential upgrades""",
+                variables=["current_system", "current_ship", "credits", "trade_rank", "cargo_capacity",
+                          "time_range", "total_profit", "trade_count", "avg_profit_per_trade",
+                          "profit_per_hour", "best_trades", "market_opportunities"]
             ),
             
-            # Trading prompts
-            "trading_analysis": PromptTemplate(
-                "Analyze my trading performance. Current location: {current_station} in {current_system}. "
-                "Credits: {credits}. Recent profits: {recent_profit} CR from {trade_count} trades. "
-                "Top commodities traded: {top_commodities}. "
-                "Suggest profitable trade routes and commodity opportunities based on my trading history.",
-                ["current_station", "current_system", "credits", "recent_profit", "trade_count", "top_commodities"],
-                "Trading performance analysis with route suggestions"
+            "combat_assessment": PromptTemplate(
+                name="Combat Assessment",
+                description="Analyze combat performance and suggest tactical improvements",
+                template="""Analyze my Elite Dangerous combat performance:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Combat Rank: {combat_rank}
+- Hull Health: {hull_health}%
+
+Recent Combat (Last {time_range} hours):
+- Bounties Earned: {bounties_earned:,} CR
+- Combat Bonds: {combat_bonds:,} CR
+- Ships Destroyed: {ships_destroyed}
+- Deaths: {deaths}
+- Survival Rate: {survival_rate:.1f}%
+
+Combat Summary:
+{combat_events}
+
+Current Loadout:
+{ship_loadout}
+
+Please provide:
+1. Analysis of my combat effectiveness and tactics
+2. Recommendations for ship loadout improvements
+3. Suggestions for profitable combat activities
+4. Tips for improving survival and kill rates
+5. Assessment of optimal combat zones and targets""",
+                variables=["current_system", "current_ship", "credits", "combat_rank", "hull_health",
+                          "time_range", "bounties_earned", "combat_bonds", "ships_destroyed", 
+                          "deaths", "survival_rate", "combat_events", "ship_loadout"]
             ),
             
-            "market_opportunity": PromptTemplate(
-                "Identify market opportunities near {current_system} within {jump_range} LY. "
-                "I have {cargo_capacity} tons cargo capacity and {credits} credits available. "
-                "Recent market activity: {market_events}. "
-                "Find high-profit trade loops considering supply/demand fluctuations.",
-                ["current_system", "jump_range", "cargo_capacity", "credits", "market_events"],
-                "Market opportunity identification for immediate profit"
-            ),
-            
-            # Combat prompts
-            "combat_review": PromptTemplate(
-                "Review my combat performance. Ship: {ship_type} with {ship_modules}. "
-                "Combat rank: {combat_rank}. Recent combat: {kills} kills, {deaths} deaths. "
-                "Bounties earned: {bounties} CR. Combat zones visited: {combat_zones}. "
-                "Analyze my combat effectiveness and suggest improvements to loadout and tactics.",
-                ["ship_type", "ship_modules", "combat_rank", "kills", "deaths", "bounties", "combat_zones"],
-                "Combat performance review with tactical recommendations"
-            ),
-            
-            "threat_assessment": PromptTemplate(
-                "Assess threats in {current_system}. Security level: {security_level}. "
-                "Recent hostile encounters: {hostile_events}. "
-                "My combat rating: {combat_rank}, Ship: {ship_type}. "
-                "Evaluate system danger level and recommend defensive strategies.",
-                ["current_system", "security_level", "hostile_events", "combat_rank", "ship_type"],
-                "System threat assessment for safety planning"
-            ),
-            
-            # Mining prompts
             "mining_optimization": PromptTemplate(
-                "Optimize my mining operations. Current location: {current_system}. "
-                "Mining equipment: {mining_modules}. Materials collected: {materials_collected}. "
-                "Asteroids prospected: {asteroids_prospected}. Time spent: {mining_time} hours. "
-                "Suggest optimal mining locations and techniques for rare materials.",
-                ["current_system", "mining_modules", "materials_collected", "asteroids_prospected", "mining_time"],
-                "Mining operation optimization for maximum yield"
+                name="Mining Optimization",
+                description="Analyze mining activities and suggest efficiency improvements",
+                template="""Analyze my Elite Dangerous mining operations:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Cargo Hold: {cargo_used}/{cargo_capacity}
+
+Recent Mining (Last {time_range} hours):
+- Materials Collected: {materials_collected}
+- Asteroids Mined: {asteroids_mined}
+- Mining Earnings: {mining_earnings:,} CR
+- Average Value per Ton: {avg_value_per_ton:,} CR
+
+Materials Summary:
+{materials_summary}
+
+Mining Equipment:
+{mining_equipment}
+
+Please provide:
+1. Analysis of my mining efficiency and profitability
+2. Recommendations for valuable mining targets
+3. Suggestions for optimal mining locations
+4. Tips for improving mining equipment and techniques
+5. Assessment of market opportunities for mined materials""",
+                variables=["current_system", "current_ship", "credits", "cargo_used", "cargo_capacity",
+                          "time_range", "materials_collected", "asteroids_mined", "mining_earnings",
+                          "avg_value_per_ton", "materials_summary", "mining_equipment"]
             ),
             
-            # Navigation prompts
-            "route_planning": PromptTemplate(
-                "Plan optimal route from {current_system} to {destination_system}. "
-                "Ship jump range: {jump_range} LY. Fuel: {fuel_level}/{fuel_capacity} tons. "
-                "Cargo: {cargo_weight} tons. Preferences: {route_preferences}. "
-                "Calculate fastest/most efficient route considering fuel stops and neutron boosts.",
-                ["current_system", "destination_system", "jump_range", "fuel_level", "fuel_capacity", "cargo_weight", "route_preferences"],
-                "Advanced route planning with optimization"
+            "mission_guidance": PromptTemplate(
+                name="Mission Guidance",
+                description="Analyze mission performance and suggest strategic choices",
+                template="""Analyze my Elite Dangerous mission activities:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Reputation: {faction_reputation}
+
+Active Missions:
+{active_missions}
+
+Recent Mission Performance (Last {time_range} hours):
+- Missions Completed: {missions_completed}
+- Missions Failed: {missions_failed}
+- Success Rate: {success_rate:.1f}%
+- Total Rewards: {total_rewards:,} CR
+
+Mission Types:
+{mission_types_summary}
+
+Faction Standing:
+{faction_standings}
+
+Please provide:
+1. Analysis of my mission performance and strategy
+2. Recommendations for profitable mission types
+3. Suggestions for improving success rates
+4. Tips for building faction reputation efficiently
+5. Assessment of risk vs reward for different mission categories""",
+                variables=["current_system", "current_ship", "credits", "faction_reputation",
+                          "active_missions", "time_range", "missions_completed", "missions_failed",
+                          "success_rate", "total_rewards", "mission_types_summary", "faction_standings"]
+            ),
+            
+            "engineering_progress": PromptTemplate(
+                name="Engineering Progress",
+                description="Analyze engineering activities and suggest upgrade priorities",
+                template="""Analyze my Elite Dangerous engineering progress:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+
+Engineering Status:
+{engineer_standings}
+
+Recent Engineering (Last {time_range} hours):
+- Engineers Visited: {engineers_visited}
+- Modifications Applied: {modifications_applied}
+- Materials Used: {materials_used}
+
+Current Ship Modifications:
+{ship_modifications}
+
+Material Inventory:
+{material_inventory}
+
+Blueprint Progress:
+{blueprint_progress}
+
+Please provide:
+1. Analysis of my engineering progress and priorities
+2. Recommendations for next engineering upgrades
+3. Suggestions for efficient material gathering
+4. Tips for unlocking and progressing with engineers
+5. Assessment of optimal upgrade paths for my ship and playstyle""",
+                variables=["current_system", "current_ship", "credits", "engineer_standings",
+                          "time_range", "engineers_visited", "modifications_applied", "materials_used",
+                          "ship_modifications", "material_inventory", "blueprint_progress"]
             ),
             
             "journey_review": PromptTemplate(
-                "Review my journey over the last {hours} hours. "
-                "Systems visited: {systems_visited}. Total distance: {total_distance} LY. "
-                "Jumps made: {jump_count}. Fuel used: {fuel_used} tons. "
-                "Notable discoveries: {discoveries}. "
-                "Analyze travel efficiency and highlight interesting findings.",
-                ["hours", "systems_visited", "total_distance", "jump_count", "fuel_used", "discoveries"],
-                "Journey review with efficiency analysis"
+                name="Journey Review",
+                description="Comprehensive review of recent journey and travel patterns",
+                template="""Review my recent Elite Dangerous journey:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Jump Range: {jump_range:.1f} LY
+- Fuel: {fuel_level}%
+
+Journey Summary (Last {time_range} hours):
+- Total Jumps: {total_jumps}
+- Distance Traveled: {total_distance:.1f} LY
+- Systems Visited: {systems_visited}
+- Stations Visited: {stations_visited}
+
+Route Analysis:
+{route_analysis}
+
+Notable Events:
+{notable_events}
+
+Navigation Efficiency:
+- Average Jump Distance: {avg_jump_distance:.1f} LY
+- Fuel Efficiency: {fuel_efficiency}
+- Navigation Time: {navigation_time}
+
+Please provide:
+1. Analysis of my travel patterns and route efficiency
+2. Recommendations for optimizing jump range and fuel usage
+3. Suggestions for discovering interesting locations
+4. Tips for planning efficient long-distance routes
+5. Assessment of exploration opportunities along my journey""",
+                variables=["current_system", "current_ship", "jump_range", "fuel_level",
+                          "time_range", "total_jumps", "total_distance", "systems_visited",
+                          "stations_visited", "route_analysis", "notable_events", "avg_jump_distance",
+                          "fuel_efficiency", "navigation_time"]
             ),
             
-            # Engineering prompts
-            "engineering_priorities": PromptTemplate(
-                "Analyze engineering priorities for {ship_type}. "
-                "Current modifications: {current_mods}. "
-                "Available materials: {engineering_materials}. "
-                "Engineers unlocked: {engineers_unlocked}. "
-                "Recommend modification priority order for {primary_activity} activities.",
-                ["ship_type", "current_mods", "engineering_materials", "engineers_unlocked", "primary_activity"],
-                "Engineering priority analysis for ship optimization"
+            "performance_review": PromptTemplate(
+                name="Performance Review",
+                description="Comprehensive performance analysis across all activities",
+                template="""Comprehensive Elite Dangerous performance review:
+
+Current Status:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Total Assets: {total_assets:,} CR
+
+Overall Performance (Last {time_range} hours):
+- Total Credits Earned: {credits_earned:,} CR
+- Total Credits Spent: {credits_spent:,} CR
+- Net Profit: {net_profit:,} CR
+- Credits per Hour: {credits_per_hour:,} CR/hr
+
+Activity Breakdown:
+{activity_breakdown}
+
+Efficiency Metrics:
+{efficiency_metrics}
+
+Progress Indicators:
+{progress_indicators}
+
+Goals and Achievements:
+{achievements}
+
+Please provide:
+1. Analysis of my overall performance and progress
+2. Recommendations for improving credit earning efficiency
+3. Suggestions for balancing different activities
+4. Tips for achieving specific goals and milestones
+5. Assessment of my Elite Dangerous career trajectory""",
+                variables=["current_system", "current_ship", "credits", "total_assets",
+                          "time_range", "credits_earned", "credits_spent", "net_profit",
+                          "credits_per_hour", "activity_breakdown", "efficiency_metrics",
+                          "progress_indicators", "achievements"]
             ),
             
-            # Mission prompts
-            "mission_strategy": PromptTemplate(
-                "Develop mission strategy. Active missions: {active_missions}. "
-                "Mission types: {mission_types}. Time remaining: {time_remaining}. "
-                "Current location: {current_system}. Reputation goals: {reputation_goals}. "
-                "Prioritize mission completion for maximum reputation and credit gain.",
-                ["active_missions", "mission_types", "time_remaining", "current_system", "reputation_goals"],
-                "Mission prioritization and completion strategy"
-            ),
-            
-            # Performance prompts
-            "performance_analysis": PromptTemplate(
-                "Comprehensive performance analysis for the last {days} days. "
-                "Credits earned: {credits_earned}. Credits spent: {credits_spent}. "
-                "Activities: {activity_breakdown}. Ranks gained: {rank_progress}. "
-                "Ships acquired: {new_ships}. Major achievements: {achievements}. "
-                "Evaluate overall progress and suggest focus areas for improvement.",
-                ["days", "credits_earned", "credits_spent", "activity_breakdown", "rank_progress", "new_ships", "achievements"],
-                "Comprehensive performance analysis with recommendations"
-            ),
-            
-            # Strategy prompts
-            "daily_goals": PromptTemplate(
-                "Set daily goals based on current status. Location: {current_system}. "
-                "Ship: {ship_type}. Credits: {credits}. "
-                "Recent activities: {recent_activities}. "
-                "Active goals: {active_goals}. "
-                "Suggest achievable daily objectives for progression.",
-                ["current_system", "ship_type", "credits", "recent_activities", "active_goals"],
-                "Daily goal setting based on current progress"
-            ),
-            
-            "career_advice": PromptTemplate(
-                "Provide career advice. Current ranks: Combat {combat_rank}, Trade {trade_rank}, Exploration {exploration_rank}. "
-                "Credits: {credits}. Ships owned: {ships_owned}. "
-                "Preferred activities: {preferred_activities}. "
-                "Time available: {play_time} hours per week. "
-                "Recommend career path and long-term goals.",
-                ["combat_rank", "trade_rank", "exploration_rank", "credits", "ships_owned", "preferred_activities", "play_time"],
-                "Career path advice for long-term progression"
-            ),
-            
-            # Roleplay prompts
-            "commander_log": PromptTemplate(
-                "Create commander's log entry. Stardate: {stardate}. "
-                "Location: {current_system}, {current_station}. "
-                "Recent events: {recent_events}. "
-                "Ship status: {ship_status}. "
-                "Mission: {current_mission}. "
-                "Write immersive log entry from commander's perspective.",
-                ["stardate", "current_system", "current_station", "recent_events", "ship_status", "current_mission"],
-                "Immersive commander's log generation"
-            ),
-            
-            "situation_report": PromptTemplate(
-                "Generate situation report. System: {current_system}. "
-                "Threat level: {threat_level}. Faction states: {faction_states}. "
-                "Economic status: {economic_status}. "
-                "Notable events: {system_events}. "
-                "Create detailed sitrep for tactical planning.",
-                ["current_system", "threat_level", "faction_states", "economic_status", "system_events"],
-                "Tactical situation report for system analysis"
+            "strategic_planning": PromptTemplate(
+                name="Strategic Planning",
+                description="Strategic planning based on current state and goals",
+                template="""Strategic planning for my Elite Dangerous career:
+
+Current State Assessment:
+- Location: {current_system}
+- Ship: {current_ship}
+- Credits: {credits:,}
+- Combat Rank: {combat_rank}
+- Trade Rank: {trade_rank}
+- Exploration Rank: {exploration_rank}
+
+Recent Activity Focus:
+{activity_focus}
+
+Current Objectives:
+{current_objectives}
+
+Available Opportunities:
+{opportunities}
+
+Resource Assessment:
+{resource_assessment}
+
+Market Conditions:
+{market_conditions}
+
+Risk Factors:
+{risk_factors}
+
+Please provide:
+1. Strategic recommendations for my next steps
+2. Suggestions for short-term and long-term goals
+3. Analysis of optimal activities for my current situation
+4. Tips for resource allocation and time management
+5. Assessment of market opportunities and timing""",
+                variables=["current_system", "current_ship", "credits", "combat_rank", "trade_rank",
+                          "exploration_rank", "activity_focus", "current_objectives", "opportunities",
+                          "resource_assessment", "market_conditions", "risk_factors"]
             )
         }
     
-    def list_prompts(self) -> List[Dict[str, Any]]:
+    def list_available_prompts(self) -> List[Dict[str, Any]]:
         """
-        List all available prompts with metadata.
+        List all available prompt templates.
         
         Returns:
-            List of prompt definitions with names and descriptions
+            List of prompt templates with metadata
         """
-        prompts_list = []
-        for name, template in self.templates.items():
-            prompts_list.append({
-                "name": name,
+        prompts = []
+        for template_id, template in self.templates.items():
+            prompts.append({
+                "id": template_id,
+                "name": template.name,
                 "description": template.description,
                 "variables": template.variables,
-                "type": self._get_prompt_type(name).value
+                "type": self._get_prompt_type(template_id)
             })
-        
-        return prompts_list
+        return prompts
     
-    def _get_prompt_type(self, prompt_name: str) -> PromptType:
-        """Get prompt type from prompt name."""
-        if "exploration" in prompt_name:
-            return PromptType.EXPLORATION
-        elif "trading" in prompt_name or "market" in prompt_name:
-            return PromptType.TRADING
-        elif "combat" in prompt_name or "threat" in prompt_name:
-            return PromptType.COMBAT
-        elif "mining" in prompt_name:
-            return PromptType.MINING
-        elif "route" in prompt_name or "journey" in prompt_name or "navigation" in prompt_name:
-            return PromptType.NAVIGATION
-        elif "engineering" in prompt_name:
-            return PromptType.ENGINEERING
-        elif "mission" in prompt_name:
-            return PromptType.MISSIONS
-        elif "performance" in prompt_name:
-            return PromptType.PERFORMANCE
-        elif "strategy" in prompt_name or "goals" in prompt_name or "career" in prompt_name:
-            return PromptType.STRATEGY
-        elif "roleplay" in prompt_name or "log" in prompt_name or "report" in prompt_name:
-            return PromptType.ROLEPLAY
+    def _get_prompt_type(self, template_id: str) -> str:
+        """Get prompt type from template ID."""
+        if "exploration" in template_id:
+            return PromptType.EXPLORATION.value
+        elif "trading" in template_id:
+            return PromptType.TRADING.value
+        elif "combat" in template_id:
+            return PromptType.COMBAT.value
+        elif "mining" in template_id:
+            return PromptType.MINING.value
+        elif "mission" in template_id:
+            return PromptType.MISSIONS.value
+        elif "engineering" in template_id:
+            return PromptType.ENGINEERING.value
+        elif "journey" in template_id:
+            return PromptType.JOURNEY.value
+        elif "performance" in template_id:
+            return PromptType.PERFORMANCE.value
+        elif "strategic" in template_id:
+            return PromptType.STRATEGY.value
         else:
-            return PromptType.STRATEGY
+            return "general"
     
-    def generate_prompt(self, prompt_name: str, custom_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def generate_prompt(self, template_id: str, time_range_hours: int = 24) -> str:
         """
-        Generate a specific prompt with current game context.
+        Generate a context-aware prompt based on current game state.
         
         Args:
-            prompt_name: Name of the prompt template
-            custom_context: Optional custom context values
+            template_id: ID of the template to use
+            time_range_hours: Time range for analyzing recent activities
             
         Returns:
-            Generated prompt with metadata
+            Generated prompt string
         """
         try:
-            if prompt_name not in self.templates:
-                return {
-                    "error": f"Unknown prompt: {prompt_name}",
-                    "available_prompts": list(self.templates.keys())
-                }
+            if template_id not in self.templates:
+                available = ", ".join(self.templates.keys())
+                return f"Invalid template ID: {template_id}. Available templates: {available}"
             
-            template = self.templates[prompt_name]
+            template = self.templates[template_id]
+            context = await self._build_context(template_id, time_range_hours)
             
-            # Build context from game state
-            context = self._build_context(prompt_name)
+            return template.render(context)
             
-            # Override with custom context if provided
-            if custom_context:
-                context.update(custom_context)
+        except Exception as e:
+            logger.error(f"Error generating prompt {template_id}: {e}")
+            return f"Error generating prompt: {e}"
+    
+    async def _build_context(self, template_id: str, time_range_hours: int) -> Dict[str, Any]:
+        """Build context variables for prompt generation."""
+        try:
+            # Get basic game state
+            game_state = self.data_store.get_game_state()
             
-            # Render the prompt
-            rendered_prompt = template.render(context)
+            # Get recent events for analysis
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
+            all_events = self.data_store.get_all_events()
+            recent_events = [e for e in all_events if e.timestamp >= cutoff_time]
             
-            return {
-                "prompt": rendered_prompt,
-                "name": prompt_name,
-                "type": self._get_prompt_type(prompt_name).value,
-                "description": template.description,
-                "context": context,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+            # Build base context
+            context = {
+                "current_system": game_state.current_system or "Unknown",
+                "current_ship": game_state.current_ship or "Unknown",
+                "credits": game_state.credits,
+                "hull_health": game_state.hull_health,
+                "fuel_level": game_state.fuel_level,
+                "time_range": time_range_hours,
+                "combat_rank": game_state.ranks.get("Combat", "Unknown"),
+                "trade_rank": game_state.ranks.get("Trade", "Unknown"),
+                "exploration_rank": game_state.ranks.get("Explore", "Unknown")
             }
             
+            # Add template-specific context
+            if template_id == "exploration_analysis":
+                context.update(await self._build_exploration_context(recent_events, time_range_hours))
+            elif template_id == "trading_strategy":
+                context.update(await self._build_trading_context(recent_events, time_range_hours))
+            elif template_id == "combat_assessment":
+                context.update(await self._build_combat_context(recent_events, time_range_hours))
+            elif template_id == "mining_optimization":
+                context.update(await self._build_mining_context(recent_events, time_range_hours))
+            elif template_id == "mission_guidance":
+                context.update(await self._build_mission_context(recent_events, time_range_hours))
+            elif template_id == "engineering_progress":
+                context.update(await self._build_engineering_context(recent_events, time_range_hours))
+            elif template_id == "journey_review":
+                context.update(await self._build_journey_context(recent_events, time_range_hours))
+            elif template_id == "performance_review":
+                context.update(await self._build_performance_context(recent_events, time_range_hours))
+            elif template_id == "strategic_planning":
+                context.update(await self._build_strategic_context(recent_events, time_range_hours))
+            
+            return context
+            
         except Exception as e:
-            logger.error(f"Error generating prompt {prompt_name}: {e}")
+            logger.error(f"Error building context for {template_id}: {e}")
             return {"error": str(e)}
     
-    def _build_context(self, prompt_name: str) -> Dict[str, Any]:
-        """
-        Build context for prompt generation from game state.
+    async def _build_exploration_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for exploration analysis."""
+        exploration_events = [e for e in recent_events if e.category == EventCategory.EXPLORATION]
+        jump_events = [e for e in recent_events if e.event_type == "FSDJump"]
+        scan_events = [e for e in recent_events if "Scan" in e.event_type]
         
-        Args:
-            prompt_name: Name of the prompt being generated
-            
-        Returns:
-            Context dictionary with game state values
-        """
-        context = {}
-        game_state = self.data_store.get_game_state()
+        # Calculate exploration metrics
+        systems_visited = len(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
+        bodies_scanned = len(scan_events)
+        distance_ly = sum(e.data.get("JumpDist", 0) for e in jump_events)
+        exploration_earnings = sum(e.data.get("Reward", 0) for e in exploration_events)
         
-        # Basic game state
-        context["current_system"] = game_state.current_system or "Unknown"
-        context["current_station"] = game_state.current_station or "Deep Space"
-        context["ship_type"] = game_state.current_ship or "Unknown"
-        context["credits"] = f"{game_state.credits:,}" if game_state.credits else "0"
-        context["fuel_level"] = game_state.fuel_level or 0
-        context["fuel_capacity"] = 32  # Default, should be from ship data
+        # Recent systems list
+        recent_systems_list = list({e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data})[-10:]
+        recent_systems = "\n".join(f"- {system}" for system in recent_systems_list) or "No recent jumps"
         
-        # Ranks
-        context["combat_rank"] = game_state.ranks.get("Combat", "Harmless")
-        context["trade_rank"] = game_state.ranks.get("Trade", "Penniless")
-        context["exploration_rank"] = game_state.ranks.get("Explore", "Aimless")
+        # Scan summary
+        scan_types = {}
+        for event in scan_events:
+            scan_type = event.data.get("ScanType", "Unknown")
+            scan_types[scan_type] = scan_types.get(scan_type, 0) + 1
         
-        # Time-based context
-        context["hours"] = 24  # Default time range
-        context["days"] = 7
-        context["stardate"] = datetime.now(timezone.utc).strftime("%Y.%m.%d %H:%M")
+        scan_summary = "\n".join(f"- {scan_type}: {count}" for scan_type, count in scan_types.items()) or "No scans performed"
         
-        # Activity-specific context based on prompt type
-        prompt_type = self._get_prompt_type(prompt_name)
-        
-        if prompt_type == PromptType.EXPLORATION:
-            context.update(self._build_exploration_context())
-        elif prompt_type == PromptType.TRADING:
-            context.update(self._build_trading_context())
-        elif prompt_type == PromptType.COMBAT:
-            context.update(self._build_combat_context())
-        elif prompt_type == PromptType.MINING:
-            context.update(self._build_mining_context())
-        elif prompt_type == PromptType.NAVIGATION:
-            context.update(self._build_navigation_context())
-        elif prompt_type == PromptType.MISSIONS:
-            context.update(self._build_mission_context())
-        elif prompt_type == PromptType.PERFORMANCE:
-            context.update(self._build_performance_context())
-        
-        # Add recent events summary
-        recent_events = self.data_store.get_recent_events(minutes=60)
-        if recent_events:
-            event_summaries = [e.summary for e in recent_events[:5]]
-            context["recent_events"] = "; ".join(event_summaries)
-        else:
-            context["recent_events"] = "No recent activity"
-        
-        return context
+        return {
+            "systems_visited": systems_visited,
+            "bodies_scanned": bodies_scanned,
+            "distance_ly": distance_ly,
+            "exploration_earnings": exploration_earnings,
+            "recent_systems": recent_systems,
+            "scan_summary": scan_summary
+        }
     
-    def _build_exploration_context(self) -> Dict[str, Any]:
-        """Build exploration-specific context."""
-        context = {}
+    async def _build_trading_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for trading strategy."""
+        trading_events = [e for e in recent_events if e.category == EventCategory.TRADING]
+        buy_events = [e for e in trading_events if e.event_type == "MarketBuy"]
+        sell_events = [e for e in trading_events if e.event_type == "MarketSell"]
         
-        # Get exploration events
-        scan_events = self.data_store.get_events_by_type("Scan", limit=100)
-        jump_events = self.data_store.get_events_by_type("FSDJump", limit=100)
-        
-        context["bodies_scanned"] = len(scan_events)
-        context["systems_visited"] = len(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
-        
-        # Recent discoveries
-        valuable_scans = [e for e in scan_events if e.data.get("TerraformState") or e.data.get("WasDiscovered") == False]
-        if valuable_scans:
-            discoveries = [f"{e.data.get('BodyName', 'Unknown')}" for e in valuable_scans[:3]]
-            context["recent_discoveries"] = ", ".join(discoveries)
-        else:
-            context["recent_discoveries"] = "None recently"
-        
-        # Jump range (estimate from recent jumps)
-        if jump_events:
-            max_jump = max([e.data.get("JumpDist", 0) for e in jump_events])
-            context["jump_range"] = f"{max_jump:.2f}"
-        else:
-            context["jump_range"] = "30"  # Default
-        
-        return context
-    
-    def _build_trading_context(self) -> Dict[str, Any]:
-        """Build trading-specific context."""
-        context = {}
-        
-        # Get trading events
-        buy_events = self.data_store.get_events_by_type("MarketBuy", limit=50)
-        sell_events = self.data_store.get_events_by_type("MarketSell", limit=50)
-        
-        context["trade_count"] = len(buy_events) + len(sell_events)
-        
-        # Calculate profits
+        # Calculate trading metrics
         total_profit = sum(e.data.get("Profit", 0) for e in sell_events)
-        context["recent_profit"] = f"{total_profit:,}"
+        trade_count = len(buy_events) + len(sell_events)
+        avg_profit_per_trade = total_profit / max(len(sell_events), 1)
+        profit_per_hour = total_profit / max(time_range_hours, 1)
         
-        # Top commodities
-        commodities = {}
-        for event in buy_events + sell_events:
-            commodity = event.data.get("Type", "Unknown")
-            commodities[commodity] = commodities.get(commodity, 0) + 1
+        # Get ship cargo capacity
+        loadout_events = self.data_store.get_events_by_type("Loadout", limit=1)
+        cargo_capacity = loadout_events[0].data.get("CargoCapacity", 0) if loadout_events else 0
         
-        if commodities:
-            top_3 = sorted(commodities.items(), key=lambda x: x[1], reverse=True)[:3]
-            context["top_commodities"] = ", ".join([c[0] for c in top_3])
-        else:
-            context["top_commodities"] = "None recently"
+        # Best trades
+        best_trades_list = sorted(sell_events, key=lambda x: x.data.get("Profit", 0), reverse=True)[:5]
+        best_trades = "\n".join(
+            f"- {e.data.get('Type', 'Unknown')}: {e.data.get('Profit', 0):,} CR profit"
+            for e in best_trades_list
+        ) or "No profitable trades found"
         
-        # Market events
-        market_events = buy_events + sell_events
-        if market_events:
-            recent_markets = [f"{e.event_type} {e.data.get('Type', '')}" for e in market_events[:3]]
-            context["market_events"] = "; ".join(recent_markets)
-        else:
-            context["market_events"] = "No recent market activity"
+        # Market opportunities (placeholder)
+        market_opportunities = "Check local market data for current opportunities"
         
-        # Cargo capacity (estimate)
-        context["cargo_capacity"] = 100  # Default, should be from ship data
-        
-        return context
+        return {
+            "cargo_capacity": cargo_capacity,
+            "total_profit": total_profit,
+            "trade_count": trade_count,
+            "avg_profit_per_trade": avg_profit_per_trade,
+            "profit_per_hour": profit_per_hour,
+            "best_trades": best_trades,
+            "market_opportunities": market_opportunities
+        }
     
-    def _build_combat_context(self) -> Dict[str, Any]:
-        """Build combat-specific context."""
-        context = {}
+    async def _build_combat_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for combat assessment."""
+        combat_events = [e for e in recent_events if e.category == EventCategory.COMBAT]
+        bounty_events = [e for e in combat_events if e.event_type == "Bounty"]
+        bond_events = [e for e in combat_events if e.event_type == "FactionKillBond"]
+        death_events = [e for e in combat_events if e.event_type == "Died"]
         
-        # Get combat events
-        bounty_events = self.data_store.get_events_by_type("Bounty", limit=50)
-        death_events = self.data_store.get_events_by_type("Died", limit=10)
-        interdiction_events = self.data_store.get_events_by_type("Interdicted", limit=20)
+        # Calculate combat metrics
+        bounties_earned = sum(e.data.get("Reward", 0) for e in bounty_events)
+        combat_bonds = sum(e.data.get("Reward", 0) for e in bond_events)
+        ships_destroyed = len(bounty_events) + len(bond_events)
+        deaths = len(death_events)
+        survival_rate = ((ships_destroyed - deaths) / max(ships_destroyed, 1)) * 100
         
-        context["kills"] = len(bounty_events)
-        context["deaths"] = len(death_events)
+        # Combat events summary
+        combat_events_summary = f"Bounties: {len(bounty_events)}, Bonds: {len(bond_events)}, Deaths: {deaths}"
         
-        # Calculate bounties
-        total_bounties = sum(e.data.get("Reward", 0) for e in bounty_events)
-        context["bounties"] = f"{total_bounties:,}"
+        # Ship loadout (placeholder)
+        ship_loadout = "Check current ship loadout for detailed analysis"
         
-        # Combat zones
-        combat_zone_events = self.data_store.get_events_by_category(EventCategory.COMBAT, limit=100)
-        unique_systems = set(e.data.get("StarSystem") for e in combat_zone_events if "StarSystem" in e.data)
-        context["combat_zones"] = len(unique_systems)
-        
-        # Hostile events
-        hostile_events = bounty_events + death_events + interdiction_events
-        if hostile_events:
-            recent_hostiles = [e.summary for e in hostile_events[:3]]
-            context["hostile_events"] = "; ".join(recent_hostiles)
-        else:
-            context["hostile_events"] = "No recent hostile encounters"
-        
-        # Ship modules (placeholder)
-        context["ship_modules"] = "Multi-cannons, Shield boosters, Hull reinforcement"
-        
-        # Security level (estimate from current system)
-        context["security_level"] = "Medium"  # Should be from system data
-        
-        # Threat level
-        if len(death_events) > 2:
-            context["threat_level"] = "High"
-        elif len(interdiction_events) > 5:
-            context["threat_level"] = "Medium"
-        else:
-            context["threat_level"] = "Low"
-        
-        return context
+        return {
+            "bounties_earned": bounties_earned,
+            "combat_bonds": combat_bonds,
+            "ships_destroyed": ships_destroyed,
+            "deaths": deaths,
+            "survival_rate": survival_rate,
+            "combat_events": combat_events_summary,
+            "ship_loadout": ship_loadout
+        }
     
-    def _build_mining_context(self) -> Dict[str, Any]:
-        """Build mining-specific context."""
-        context = {}
+    async def _build_mining_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for mining optimization."""
+        mining_events = [e for e in recent_events if e.category == EventCategory.MINING]
+        collection_events = [e for e in mining_events if e.event_type == "MaterialCollected"]
         
-        # Get mining events
-        mining_events = self.data_store.get_events_by_category(EventCategory.MINING, limit=100)
-        material_events = self.data_store.get_events_by_type("MaterialCollected", limit=50)
-        prospect_events = self.data_store.get_events_by_type("ProspectedAsteroid", limit=50)
+        # Calculate mining metrics
+        materials_collected = len(collection_events)
+        asteroids_mined = len([e for e in mining_events if e.event_type == "AsteroidCracked"])
+        mining_earnings = sum(e.data.get("MarketValue", 0) for e in collection_events)
+        avg_value_per_ton = mining_earnings / max(materials_collected, 1)
         
-        context["materials_collected"] = len(material_events)
-        context["asteroids_prospected"] = len(prospect_events)
+        # Get cargo info
+        cargo_events = self.data_store.get_events_by_type("Cargo", limit=1)
+        cargo_data = cargo_events[0].data if cargo_events else {}
+        inventory = cargo_data.get("Inventory", [])
+        cargo_used = sum(item.get("Count", 0) for item in inventory)
         
-        # Mining time (estimate)
-        if mining_events:
-            first_event = min(mining_events, key=lambda e: e.timestamp)
-            last_event = max(mining_events, key=lambda e: e.timestamp)
-            time_diff = last_event.timestamp - first_event.timestamp
-            context["mining_time"] = f"{time_diff.total_seconds() / 3600:.1f}"
-        else:
-            context["mining_time"] = "0"
+        # Get ship cargo capacity
+        loadout_events = self.data_store.get_events_by_type("Loadout", limit=1)
+        cargo_capacity = loadout_events[0].data.get("CargoCapacity", 0) if loadout_events else 0
         
-        # Mining modules (placeholder)
-        context["mining_modules"] = "Mining lasers, Refinery, Collector limpets"
+        # Materials summary
+        material_types = {}
+        for event in collection_events:
+            material = event.data.get("Name", "Unknown")
+            material_types[material] = material_types.get(material, 0) + 1
         
-        return context
+        materials_summary = "\n".join(f"- {material}: {count}" for material, count in material_types.items()) or "No materials collected"
+        
+        # Mining equipment (placeholder)
+        mining_equipment = "Check current ship modules for mining equipment analysis"
+        
+        return {
+            "cargo_used": cargo_used,
+            "cargo_capacity": cargo_capacity,
+            "materials_collected": materials_collected,
+            "asteroids_mined": asteroids_mined,
+            "mining_earnings": mining_earnings,
+            "avg_value_per_ton": avg_value_per_ton,
+            "materials_summary": materials_summary,
+            "mining_equipment": mining_equipment
+        }
     
-    def _build_navigation_context(self) -> Dict[str, Any]:
-        """Build navigation-specific context."""
-        context = {}
+    async def _build_mission_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for mission guidance."""
+        mission_events = [e for e in recent_events if e.category == EventCategory.MISSION]
+        completed_events = [e for e in mission_events if e.event_type == "MissionCompleted"]
+        failed_events = [e for e in mission_events if e.event_type == "MissionFailed"]
+        accepted_events = [e for e in mission_events if e.event_type == "MissionAccepted"]
         
-        # Get navigation events
-        jump_events = self.data_store.get_events_by_type("FSDJump", limit=100)
+        # Calculate mission metrics
+        missions_completed = len(completed_events)
+        missions_failed = len(failed_events)
+        total_missions = missions_completed + missions_failed
+        success_rate = (missions_completed / max(total_missions, 1)) * 100
+        total_rewards = sum(e.data.get("Reward", 0) for e in completed_events)
         
-        if jump_events:
-            # Calculate journey stats
-            context["jump_count"] = len(jump_events)
-            total_distance = sum(e.data.get("JumpDist", 0) for e in jump_events)
-            context["total_distance"] = f"{total_distance:.2f}"
-            
-            # Systems visited
-            systems = list(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
-            context["systems_visited"] = ", ".join(systems[:5]) if systems else "None"
-            
-            # Fuel usage (estimate)
-            context["fuel_used"] = f"{len(jump_events) * 2.5:.1f}"  # Rough estimate
-            
-            # Jump range
-            if jump_events:
-                max_jump = max([e.data.get("JumpDist", 0) for e in jump_events])
-                context["jump_range"] = f"{max_jump:.2f}"
-            else:
-                context["jump_range"] = "30"
-        else:
-            context["jump_count"] = 0
-            context["total_distance"] = "0"
-            context["systems_visited"] = "None"
-            context["fuel_used"] = "0"
-            context["jump_range"] = "30"
-        
-        # Navigation preferences
-        context["route_preferences"] = "Fastest route, avoid hostile systems"
-        context["destination_system"] = "Colonia"  # Example destination
-        context["cargo_weight"] = "50"  # Example cargo
-        
-        # Discoveries
-        scan_events = self.data_store.get_events_by_type("Scan", limit=20)
-        if scan_events:
-            discoveries = [e.data.get("BodyName", "Unknown") for e in scan_events[:3]]
-            context["discoveries"] = ", ".join(discoveries)
-        else:
-            context["discoveries"] = "None recently"
-        
-        return context
-    
-    def _build_mission_context(self) -> Dict[str, Any]:
-        """Build mission-specific context."""
-        context = {}
-        
-        # Get mission events
-        mission_accepted = self.data_store.get_events_by_type("MissionAccepted", limit=20)
-        mission_completed = self.data_store.get_events_by_type("MissionCompleted", limit=20)
-        
-        # Active missions (accepted but not completed)
-        active_count = len(mission_accepted) - len(mission_completed)
-        context["active_missions"] = str(max(0, active_count))
+        # Active missions
+        active_missions = "Check mission panel for current active missions"
         
         # Mission types
-        if mission_accepted:
-            types = set(e.data.get("Name", "Unknown") for e in mission_accepted)
-            context["mission_types"] = ", ".join(list(types)[:3])
-        else:
-            context["mission_types"] = "None active"
+        mission_types = {}
+        for event in accepted_events:
+            mission_type = event.data.get("Name", "Unknown")
+            mission_types[mission_type] = mission_types.get(mission_type, 0) + 1
         
-        # Time remaining (placeholder)
-        context["time_remaining"] = "Various deadlines"
+        mission_types_summary = "\n".join(f"- {mission_type}: {count}" for mission_type, count in mission_types.items()) or "No missions accepted"
         
-        # Reputation goals
-        context["reputation_goals"] = "Federation rank increase, Local faction support"
+        # Faction standings (placeholder)
+        faction_reputation = "Check faction panel for current standings"
+        faction_standings = "Review faction relationships in galaxy map"
         
-        return context
+        return {
+            "faction_reputation": faction_reputation,
+            "active_missions": active_missions,
+            "missions_completed": missions_completed,
+            "missions_failed": missions_failed,
+            "success_rate": success_rate,
+            "total_rewards": total_rewards,
+            "mission_types_summary": mission_types_summary,
+            "faction_standings": faction_standings
+        }
     
-    def _build_performance_context(self) -> Dict[str, Any]:
-        """Build performance-specific context."""
-        context = {}
+    async def _build_engineering_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for engineering progress."""
+        engineering_events = [e for e in recent_events if e.category == EventCategory.ENGINEERING]
         
-        # Get all events for performance analysis
-        all_events = self.data_store.get_all_events()
+        # Engineering metrics (placeholders as Elite Dangerous engineering events vary)
+        engineer_standings = "Check engineer progress in right panel"
+        engineers_visited = len(set(e.data.get("Engineer") for e in engineering_events if "Engineer" in e.data))
+        modifications_applied = len([e for e in engineering_events if e.event_type == "EngineerContribution"])
+        materials_used = "Review recent material usage for engineering"
+        ship_modifications = "Check current ship modifications in outfitting"
+        material_inventory = "Review materials inventory in right panel"
+        blueprint_progress = "Check blueprint progress with engineers"
         
-        # Calculate credits flow
-        credits_earned = sum(e.data.get("Reward", 0) for e in all_events if "Reward" in e.data)
-        credits_spent = sum(e.data.get("Cost", 0) for e in all_events if "Cost" in e.data)
+        return {
+            "engineer_standings": engineer_standings,
+            "engineers_visited": engineers_visited,
+            "modifications_applied": modifications_applied,
+            "materials_used": materials_used,
+            "ship_modifications": ship_modifications,
+            "material_inventory": material_inventory,
+            "blueprint_progress": blueprint_progress
+        }
+    
+    async def _build_journey_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for journey review."""
+        jump_events = [e for e in recent_events if e.event_type == "FSDJump"]
+        dock_events = [e for e in recent_events if e.event_type == "Docked"]
         
-        context["credits_earned"] = f"{credits_earned:,}"
-        context["credits_spent"] = f"{credits_spent:,}"
+        # Journey metrics
+        total_jumps = len(jump_events)
+        total_distance = sum(e.data.get("JumpDist", 0) for e in jump_events)
+        systems_visited = len(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
+        stations_visited = len(set(e.data.get("StationName") for e in dock_events if "StationName" in e.data))
+        
+        avg_jump_distance = total_distance / max(total_jumps, 1)
+        
+        # Get current ship jump range (placeholder)
+        jump_range = 30.0  # Default assumption
+        
+        # Route analysis
+        route_analysis = f"Traveled through {systems_visited} unique systems with {total_jumps} total jumps"
+        
+        # Notable events
+        notable_events_list = []
+        for event in recent_events:
+            if event.category in [EventCategory.EXPLORATION, EventCategory.COMBAT]:
+                notable_events_list.append(f"- {event.summary}")
+        
+        notable_events = "\n".join(notable_events_list[:5]) or "No notable events during journey"
+        
+        # Efficiency metrics (placeholders)
+        fuel_efficiency = "Analyze fuel usage patterns"
+        navigation_time = f"{time_range_hours} hours total navigation time"
+        
+        return {
+            "jump_range": jump_range,
+            "total_jumps": total_jumps,
+            "total_distance": total_distance,
+            "systems_visited": systems_visited,
+            "stations_visited": stations_visited,
+            "route_analysis": route_analysis,
+            "notable_events": notable_events,
+            "avg_jump_distance": avg_jump_distance,
+            "fuel_efficiency": fuel_efficiency,
+            "navigation_time": navigation_time
+        }
+    
+    async def _build_performance_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for performance review."""
+        # Calculate earnings and spending
+        earnings_events = [e for e in recent_events if "Reward" in e.data and e.data["Reward"] > 0]
+        spending_events = [e for e in recent_events if "Cost" in e.data and e.data["Cost"] > 0]
+        
+        credits_earned = sum(e.data.get("Reward", 0) for e in earnings_events)
+        credits_spent = sum(e.data.get("Cost", 0) for e in spending_events)
+        net_profit = credits_earned - credits_spent
+        credits_per_hour = credits_earned / max(time_range_hours, 1)
+        
+        # Get current total assets (placeholder)
+        total_assets = self.data_store.get_game_state().credits
         
         # Activity breakdown
-        categories = {}
-        for event in all_events:
-            cat = event.category.value
-            categories[cat] = categories.get(cat, 0) + 1
-        
-        if categories:
-            top_activities = sorted(categories.items(), key=lambda x: x[1], reverse=True)[:3]
-            context["activity_breakdown"] = ", ".join([f"{c[0]} ({c[1]})" for c in top_activities])
-        else:
-            context["activity_breakdown"] = "No recent activities"
-        
-        # Placeholder values for other metrics
-        context["rank_progress"] = "Combat +1, Trade +0, Exploration +2"
-        context["new_ships"] = "None"
-        context["achievements"] = "First discovery bonus x3"
-        
-        # Strategy context
-        context["recent_activities"] = context["activity_breakdown"]
-        context["active_goals"] = "Elite exploration rank, Colonia journey"
-        context["ships_owned"] = "Python, AspX, Vulture"
-        context["preferred_activities"] = "Exploration, Trading"
-        context["play_time"] = "10"
-        
-        # Additional roleplay context
-        context["ship_status"] = "All systems operational"
-        context["current_mission"] = "Deep space exploration"
-        context["faction_states"] = "Federation: Friendly, Empire: Neutral"
-        context["economic_status"] = "Boom"
-        context["system_events"] = "None reported"
-        
-        return context
-    
-    def generate_contextual_prompt(
-        self,
-        prompt_type: PromptType,
-        time_range_hours: int = 24
-    ) -> Dict[str, Any]:
-        """
-        Generate the most relevant prompt for the specified type based on current context.
-        
-        Args:
-            prompt_type: Type of prompt to generate
-            time_range_hours: Time range for analysis
-            
-        Returns:
-            Generated prompt with context
-        """
-        try:
-            # Find templates matching the prompt type
-            matching_templates = [
-                name for name in self.templates.keys()
-                if self._get_prompt_type(name) == prompt_type
-            ]
-            
-            if not matching_templates:
-                return {
-                    "error": f"No templates found for type: {prompt_type.value}",
-                    "available_types": [t.value for t in PromptType]
-                }
-            
-            # Select the most relevant template based on recent activity
-            selected_template = self._select_best_template(matching_templates, time_range_hours)
-            
-            # Generate the prompt
-            return self.generate_prompt(selected_template, {"hours": time_range_hours})
-            
-        except Exception as e:
-            logger.error(f"Error generating contextual prompt: {e}")
-            return {"error": str(e)}
-    
-    def _select_best_template(self, template_names: List[str], time_range_hours: int) -> str:
-        """
-        Select the best template based on recent activity.
-        
-        Args:
-            template_names: List of template names to choose from
-            time_range_hours: Time range for activity analysis
-            
-        Returns:
-            Name of the best template
-        """
-        # Get recent events to determine activity
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
-        all_events = self.data_store.get_all_events()
-        recent_events = [e for e in all_events if e.timestamp >= cutoff_time]
-        
-        if not recent_events:
-            # No recent activity, return first template
-            return template_names[0]
-        
-        # Count events by category
-        category_counts = {}
+        activity_counts = {}
         for event in recent_events:
-            cat = event.category
-            category_counts[cat] = category_counts.get(cat, 0) + 1
+            category = event.category.value
+            activity_counts[category] = activity_counts.get(category, 0) + 1
         
-        # Score templates based on relevance to recent activity
-        template_scores = {}
-        for name in template_names:
-            score = 0
-            
-            # Higher score for templates matching recent activity
-            if "exploration" in name and EventCategory.EXPLORATION in category_counts:
-                score += category_counts[EventCategory.EXPLORATION]
-            if "trading" in name and EventCategory.TRADING in category_counts:
-                score += category_counts[EventCategory.TRADING]
-            if "combat" in name and EventCategory.COMBAT in category_counts:
-                score += category_counts[EventCategory.COMBAT]
-            if "mining" in name and EventCategory.MINING in category_counts:
-                score += category_counts[EventCategory.MINING]
-            
-            # Prefer analysis templates over specific action templates
-            if "analysis" in name or "review" in name:
-                score += 10
-            
-            template_scores[name] = score
+        activity_breakdown = "\n".join(f"- {activity}: {count} events" for activity, count in activity_counts.items()) or "No recent activity"
         
-        # Return template with highest score
-        best_template = max(template_scores.items(), key=lambda x: x[1])
-        return best_template[0]
-    
-    def generate_adaptive_prompts(self, count: int = 3) -> List[Dict[str, Any]]:
-        """
-        Generate multiple adaptive prompts based on current game state and recent activity.
+        # Efficiency metrics
+        efficiency_metrics = f"Credits per hour: {credits_per_hour:,.0f} CR/hr\nProfit margin: {(net_profit/max(credits_earned, 1)*100):.1f}%"
         
-        Args:
-            count: Number of prompts to generate
-            
-        Returns:
-            List of generated prompts
-        """
-        try:
-            prompts = []
-            
-            # Analyze recent activity to determine relevant prompt types
-            activity_types = self._analyze_recent_activity()
-            
-            # Generate prompts for top activity types
-            for activity_type in activity_types[:count]:
-                prompt = self.generate_contextual_prompt(activity_type)
-                if "error" not in prompt:
-                    prompts.append(prompt)
-            
-            # Fill remaining slots with strategic prompts if needed
-            while len(prompts) < count:
-                strategic_prompts = ["daily_goals", "performance_analysis", "career_advice"]
-                for prompt_name in strategic_prompts:
-                    if len(prompts) >= count:
-                        break
-                    prompt = self.generate_prompt(prompt_name)
-                    if "error" not in prompt:
-                        prompts.append(prompt)
-            
-            return prompts
-            
-        except Exception as e:
-            logger.error(f"Error generating adaptive prompts: {e}")
-            return [{"error": str(e)}]
-    
-    def _analyze_recent_activity(self) -> List[PromptType]:
-        """
-        Analyze recent activity to determine relevant prompt types.
+        # Progress indicators (placeholder)
+        progress_indicators = "Review rank progress in right panel"
+        achievements = "Check recent achievements and milestones"
         
-        Returns:
-            List of prompt types ordered by relevance
-        """
-        # Get recent events
-        recent_events = self.data_store.get_recent_events(minutes=120)
-        
-        if not recent_events:
-            # Default order when no recent activity
-            return [PromptType.STRATEGY, PromptType.PERFORMANCE, PromptType.EXPLORATION]
-        
-        # Count events by category
-        category_counts = {}
-        for event in recent_events:
-            cat = event.category
-            category_counts[cat] = category_counts.get(cat, 0) + 1
-        
-        # Map categories to prompt types
-        prompt_type_scores = {
-            PromptType.EXPLORATION: category_counts.get(EventCategory.EXPLORATION, 0) + 
-                                   category_counts.get(EventCategory.SYSTEM, 0),
-            PromptType.TRADING: category_counts.get(EventCategory.TRADING, 0),
-            PromptType.COMBAT: category_counts.get(EventCategory.COMBAT, 0),
-            PromptType.MINING: category_counts.get(EventCategory.MINING, 0),
-            PromptType.NAVIGATION: category_counts.get(EventCategory.NAVIGATION, 0),
-            PromptType.ENGINEERING: category_counts.get(EventCategory.ENGINEERING, 0),
-            PromptType.MISSIONS: category_counts.get(EventCategory.MISSION, 0),
-            PromptType.PERFORMANCE: 5,  # Base score for performance
-            PromptType.STRATEGY: 5,  # Base score for strategy
-            PromptType.ROLEPLAY: 3   # Base score for roleplay
+        return {
+            "total_assets": total_assets,
+            "credits_earned": credits_earned,
+            "credits_spent": credits_spent,
+            "net_profit": net_profit,
+            "credits_per_hour": credits_per_hour,
+            "activity_breakdown": activity_breakdown,
+            "efficiency_metrics": efficiency_metrics,
+            "progress_indicators": progress_indicators,
+            "achievements": achievements
         }
+    
+    async def _build_strategic_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
+        """Build context for strategic planning."""
+        # Activity focus analysis
+        activity_counts = {}
+        for event in recent_events:
+            category = event.category.value
+            activity_counts[category] = activity_counts.get(category, 0) + 1
         
-        # Sort by score
-        sorted_types = sorted(prompt_type_scores.items(), key=lambda x: x[1], reverse=True)
+        top_activity = max(activity_counts, key=activity_counts.get) if activity_counts else "none"
+        activity_focus = f"Primary focus: {top_activity} ({activity_counts.get(top_activity, 0)} events)"
         
-        return [pt[0] for pt in sorted_types]
+        # Current objectives (placeholder)
+        current_objectives = "Analyze mission log and personal goals"
+        
+        # Opportunities (placeholder)
+        opportunities = "Review galaxy map for current opportunities"
+        
+        # Resource assessment
+        game_state = self.data_store.get_game_state()
+        resource_assessment = f"Credits: {game_state.credits:,} CR\nShip: {game_state.current_ship}\nLocation: {game_state.current_system}"
+        
+        # Market conditions (placeholder)
+        market_conditions = "Check commodity markets and galactic average prices"
+        
+        # Risk factors
+        risk_factors = "Consider current galaxy state and faction conflicts"
+        
+        return {
+            "activity_focus": activity_focus,
+            "current_objectives": current_objectives,
+            "opportunities": opportunities,
+            "resource_assessment": resource_assessment,
+            "market_conditions": market_conditions,
+            "risk_factors": risk_factors
+        }
