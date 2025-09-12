@@ -20,7 +20,7 @@ from .journal.events import EventProcessor
 from .utils.data_store import get_data_store, reset_data_store
 from .mcp.mcp_tools import MCPTools
 from .mcp.mcp_resources import MCPResources
-from .mcp.mcp_prompts import MCPPrompts, PromptType
+from .mcp.mcp_prompts import MCPPrompts
 
 
 # Configure logging
@@ -395,24 +395,18 @@ class EliteDangerousServer:
     def setup_mcp_resources(self):
         """Set up MCP resource handlers for structured data access."""
         
-        # Resources are accessed through tools in FastMCP
-        @self.app.tool()
+        @self.app.resource()
         async def list_resources() -> List[Dict[str, Any]]:
             """List all available MCP resources with metadata."""
             return self.mcp_resources.list_resources()
         
-        @self.app.tool()
+        @self.app.resource()
         async def get_resource(uri: str) -> Optional[Dict[str, Any]]:
             """
             Get resource data for the specified URI.
             
             Args:
                 uri: Resource URI with optional query parameters
-                     Examples:
-                     - elite://status/current
-                     - elite://journal/recent?minutes=30
-                     - elite://events/search?type=FSDJump&category=navigation
-                     - elite://summary/exploration?hours=24
                 
             Returns:
                 Resource data or None if invalid URI
@@ -430,104 +424,151 @@ class EliteDangerousServer:
                 return {"status": "error", "message": str(e)}
         
         logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources")
-    
+
     def setup_mcp_prompts(self):
         """Set up MCP prompt handlers for context-aware AI assistance."""
         
-        # Prompts are also accessed through tools in FastMCP
         @self.app.tool()
-        async def list_prompts() -> List[Dict[str, Any]]:
-            """List all available prompt templates with metadata."""
-            return self.mcp_prompts.list_prompts()
+        async def list_available_prompts() -> Dict[str, Any]:
+            """List all available prompt templates with descriptions and metadata."""
+            try:
+                prompts = self.mcp_prompts.list_available_prompts()
+                return {
+                    "available_prompts": prompts,
+                    "total_count": len(prompts),
+                    "prompt_types": list(set(p["type"] for p in prompts))
+                }
+            except Exception as e:
+                logger.error(f"Error listing prompts: {e}")
+                return {"error": str(e)}
         
         @self.app.tool()
-        async def generate_prompt(
-            prompt_name: str,
-            custom_context: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
-            """
-            Generate a specific prompt with current game context.
-            
-            Args:
-                prompt_name: Name of the prompt template
-                            Options: exploration_analysis, trading_analysis, combat_review,
-                                   mining_optimization, route_planning, daily_goals, etc.
-                custom_context: Optional custom context values to override defaults
-                
-            Returns:
-                Generated prompt with metadata and context
-            """
-            return self.mcp_prompts.generate_prompt(prompt_name, custom_context)
-        
-        @self.app.tool()
-        async def generate_contextual_prompt(
-            prompt_type: str,
+        async def generate_analysis_prompt(
+            analysis_type: str,
             time_range_hours: int = 24
         ) -> Dict[str, Any]:
             """
-            Generate the most relevant prompt for the specified type based on current context.
+            Generate a context-aware analysis prompt for Elite Dangerous activities.
             
             Args:
-                prompt_type: Type of prompt (exploration, trading, combat, mining, navigation, 
-                           engineering, missions, performance, strategy, roleplay)
-                time_range_hours: Time range for activity analysis (default 24)
-                
-            Returns:
-                Generated prompt adapted to recent activity
+                analysis_type: Type of analysis - exploration, trading, combat, mining, missions, engineering, journey, performance, strategic
+                time_range_hours: Time range to analyze in hours (default 24)
             """
             try:
-                # Convert string to PromptType enum
-                prompt_type_enum = PromptType(prompt_type.lower())
-                return self.mcp_prompts.generate_contextual_prompt(prompt_type_enum, time_range_hours)
-            except ValueError:
-                return {
-                    "error": f"Invalid prompt type: {prompt_type}",
-                    "valid_types": [t.value for t in PromptType]
+                # Map analysis types to template IDs
+                template_mapping = {
+                    "exploration": "exploration_analysis",
+                    "trading": "trading_strategy", 
+                    "combat": "combat_assessment",
+                    "mining": "mining_optimization",
+                    "missions": "mission_guidance",
+                    "engineering": "engineering_progress",
+                    "journey": "journey_review",
+                    "performance": "performance_review",
+                    "strategic": "strategic_planning",
+                    "strategy": "strategic_planning"
                 }
-        
-        @self.app.tool()
-        async def generate_adaptive_prompts(count: int = 3) -> List[Dict[str, Any]]:
-            """
-            Generate multiple adaptive prompts based on current game state and recent activity.
-            
-            Args:
-                count: Number of prompts to generate (default 3)
                 
-            Returns:
-                List of contextually relevant prompts
-            """
-            return self.mcp_prompts.generate_adaptive_prompts(count)
-        
-        @self.app.tool()
-        async def analyze_activity_for_prompts() -> Dict[str, Any]:
-            """
-            Analyze recent activity to determine which prompt types would be most relevant.
-            
-            Returns:
-                Analysis of recent activity with recommended prompt types
-            """
-            try:
-                # Get activity analysis
-                prompt_types = self.mcp_prompts._analyze_recent_activity()
+                template_id = template_mapping.get(analysis_type.lower())
+                if not template_id:
+                    available_types = ", ".join(template_mapping.keys())
+                    return {
+                        "error": f"Invalid analysis type: {analysis_type}",
+                        "available_types": available_types
+                    }
                 
-                # Get recent event distribution
-                recent_events = self.data_store.get_recent_events(minutes=120)
-                category_counts = {}
-                for event in recent_events:
-                    cat = event.category.value
-                    category_counts[cat] = category_counts.get(cat, 0) + 1
+                # Generate the prompt
+                prompt = await self.mcp_prompts.generate_prompt(template_id, time_range_hours)
                 
                 return {
-                    "recommended_prompt_types": [pt.value for pt in prompt_types[:5]],
-                    "recent_activity_distribution": category_counts,
-                    "total_recent_events": len(recent_events),
-                    "analysis_time_range_minutes": 120
+                    "analysis_type": analysis_type,
+                    "time_range_hours": time_range_hours,
+                    "prompt": prompt,
+                    "template_id": template_id
                 }
+                
             except Exception as e:
-                logger.error(f"Error analyzing activity: {e}")
+                logger.error(f"Error generating analysis prompt: {e}")
                 return {"error": str(e)}
         
-        logger.info(f"Registered {len(self.mcp_prompts.templates)} prompt templates")
+        @self.app.tool()
+        async def generate_exploration_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware exploration analysis prompt."""
+            return await self.generate_analysis_prompt("exploration", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_trading_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware trading strategy prompt."""
+            return await self.generate_analysis_prompt("trading", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_combat_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware combat assessment prompt."""
+            return await self.generate_analysis_prompt("combat", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_mining_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware mining optimization prompt."""
+            return await self.generate_analysis_prompt("mining", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_mission_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware mission guidance prompt."""
+            return await self.generate_analysis_prompt("missions", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_engineering_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware engineering progress prompt."""
+            return await self.generate_analysis_prompt("engineering", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_journey_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware journey review prompt."""
+            return await self.generate_analysis_prompt("journey", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_performance_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware performance review prompt."""
+            return await self.generate_analysis_prompt("performance", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_strategic_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware strategic planning prompt."""
+            return await self.generate_analysis_prompt("strategic", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_custom_prompt(
+            template_id: str,
+            time_range_hours: int = 24
+        ) -> Dict[str, Any]:
+            """
+            Generate a prompt using a specific template ID.
+            
+            Args:
+                template_id: Specific template identifier
+                time_range_hours: Time range to analyze in hours
+            """
+            try:
+                available_templates = list(self.mcp_prompts.templates.keys())
+                if template_id not in available_templates:
+                    return {
+                        "error": f"Invalid template ID: {template_id}",
+                        "available_templates": available_templates
+                    }
+                
+                prompt = await self.mcp_prompts.generate_prompt(template_id, time_range_hours)
+                
+                return {
+                    "template_id": template_id,
+                    "time_range_hours": time_range_hours,
+                    "prompt": prompt
+                }
+                
+            except Exception as e:
+                logger.error(f"Error generating custom prompt: {e}")
+                return {"error": str(e)}
+        
+        logger.info(f"Registered {len(self.mcp_prompts.templates)} MCP prompt templates")
 
 
 # Global server instance
