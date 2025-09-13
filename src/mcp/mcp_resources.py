@@ -279,7 +279,15 @@ class MCPResources:
             # Check if resource exists
             if base_uri not in self.resources:
                 logger.warning(f"Unknown resource URI: {base_uri}")
-                return None
+                if "summary/" in base_uri:
+                    return {
+                        "error": f"Unknown activity type: {base_uri.split('/')[-1]}",
+                        "valid_activities": ["exploration", "trading", "combat", "mining", "journey"]
+                    }
+                return {
+                    "error": f"Unknown resource URI: {base_uri}",
+                    "available_resources": list(self.resources.keys())
+                }
             
             metadata = self.resources[base_uri]
             

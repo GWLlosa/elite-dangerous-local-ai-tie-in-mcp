@@ -367,8 +367,10 @@ class TestMCPResources:
     async def test_invalid_resource_uri(self, resources):
         """Test handling of invalid resource URI."""
         result = await resources.get_resource("elite://invalid/resource")
-        
-        assert result is None
+
+        assert result is not None
+        assert "error" in result
+        assert "available_resources" in result
     
     @pytest.mark.asyncio
     async def test_caching_behavior(self, resources, mock_data_store):

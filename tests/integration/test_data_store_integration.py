@@ -152,14 +152,12 @@ class TestDataStoreIntegration:
             mock_config.return_value = mock_config_instance
             
             # Create monitor with event callback to store events
-            monitor = JournalMonitor()
-            
-            # Set up callback to integrate with data store
             def event_callback(event_data):
                 processed_event = self.event_processor.process_event(event_data)
-                self.data_store.store_event(processed_event)
-            
-            monitor.set_event_callback(event_callback)
+                if processed_event:
+                    data_store.store_event(processed_event)
+
+            monitor = JournalMonitor(self.journal_path, event_callback)
             
             # Start monitoring in background
             async def run_monitoring_test():
@@ -428,7 +426,7 @@ class TestDataStoreIntegration:
         assert len(events) <= 10  # Should not exceed max_events
         
         # Verify newest events are kept
-        event_data_values = [e.raw_data.get('Data') for e in events]
+        event_data_values = [e.raw_event.get('Data') for e in events]
         assert "Event49" in event_data_values  # Latest event should be kept
         assert "Event0" not in event_data_values  # Oldest should be removed
         

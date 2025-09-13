@@ -506,9 +506,14 @@ class TestMCPPrompts:
             assert len(template.template) > 100  # Substantial content
             assert len(template.variables) > 0
             
-            # Check template contains variable placeholders
+            # Check template contains variable placeholders (with optional formatting)
             for variable in template.variables:
-                assert f"{{{variable}}}" in template.template
+                # Check for variable with optional formatting like {variable} or {variable:,} or {variable:.1f}
+                variable_found = (
+                    f"{{{variable}}}" in template.template or
+                    f"{{{variable}:" in template.template
+                )
+                assert variable_found, f"Template {template_id} missing variable {variable} in template text"
     
     @pytest.mark.asyncio
     async def test_prompt_contains_game_context(self, prompts, mock_data_store):

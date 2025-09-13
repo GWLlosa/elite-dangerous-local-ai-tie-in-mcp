@@ -51,7 +51,7 @@ class TestJournalEventIntegration:
         """Test parsing journal file and processing events."""
         # Parse journal file
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(temp_journal_file))
+        entries, _ = parser.read_journal_file(temp_journal_file)
         
         # Verify we got all entries
         assert len(entries) == 7
@@ -88,7 +88,7 @@ class TestJournalEventIntegration:
     def test_categorize_parsed_events(self, tmp_path, temp_journal_file):
         """Test categorizing events directly from parsed journal."""
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(temp_journal_file))
+        entries, _ = parser.read_journal_file(temp_journal_file)
         
         # Categorize all events
         categorized = categorize_events(entries)
@@ -108,7 +108,7 @@ class TestJournalEventIntegration:
     def test_summarize_parsed_events(self, tmp_path, temp_journal_file):
         """Test generating summaries from parsed events."""
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(temp_journal_file))
+        entries, _ = parser.read_journal_file(temp_journal_file)
         
         # Generate summaries
         summaries = summarize_events(entries, max_summaries=5)
@@ -123,7 +123,7 @@ class TestJournalEventIntegration:
     def test_event_statistics_from_parsed(self, tmp_path, temp_journal_file):
         """Test generating statistics from parsed journal."""
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(temp_journal_file))
+        entries, _ = parser.read_journal_file(temp_journal_file)
         
         stats = get_event_statistics(entries)
         
@@ -299,7 +299,7 @@ class TestEventProcessingPipeline:
         assert len(journal_files) == 2
         
         for journal_file in journal_files:
-            entries = parser.read_journal_file(journal_file)
+            entries, _ = parser.read_journal_file(journal_file)
             all_entries.extend(entries)
         
         # Process and categorize all events
@@ -347,7 +347,7 @@ class TestEventProcessingPipeline:
         
         # Parse and process
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(journal))
+        entries, _ = parser.read_journal_file(journal)
         
         # Process all events
         processor = EventProcessor()
@@ -395,7 +395,7 @@ class TestEventProcessingPipeline:
         
         # Parse and process
         parser = JournalParser(str(tmp_path))
-        entries = parser.read_journal_file(str(journal))
+        entries, _ = parser.read_journal_file(journal)
         
         # Categorize all events
         categorized = categorize_events(entries)
