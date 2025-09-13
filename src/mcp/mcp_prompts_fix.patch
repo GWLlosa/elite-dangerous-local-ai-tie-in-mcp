@@ -1,0 +1,22 @@
+# Patch for mcp_prompts.py
+
+## Issues to fix:
+1. Line ~554: Replace `get_all_events()` with `query_events()`
+2. Line ~668: Replace `get_all_events()` with `query_events()` 
+3. Throughout: Replace `e.data` with `e.key_data` for event attribute access
+
+## Specific fixes:
+
+### In _build_performance_context method (around line 554):
+OLD: all_events = self.data_store.get_all_events()
+NEW: all_events = self.data_store.query_events()
+
+### In _select_best_template method (around line 668):
+OLD: all_events = self.data_store.get_all_events()
+NEW: all_events = self.data_store.query_events()
+
+### Throughout all context building methods:
+OLD: e.data.get(...)
+NEW: e.key_data.get(...)
+
+This patch fixes the AttributeError: Mock object has no attribute 'get_all_events'

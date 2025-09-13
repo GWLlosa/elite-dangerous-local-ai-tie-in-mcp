@@ -20,6 +20,7 @@ from .journal.events import EventProcessor
 from .utils.data_store import get_data_store, reset_data_store
 from .mcp.mcp_tools import MCPTools
 from .mcp.mcp_resources import MCPResources
+from .mcp.mcp_prompts import MCPPrompts
 
 
 # Configure logging
@@ -64,6 +65,7 @@ class EliteDangerousServer:
         self.data_store = get_data_store()
         self.mcp_tools = MCPTools(self.data_store)
         self.mcp_resources = MCPResources(self.data_store)
+        self.mcp_prompts = MCPPrompts(self.data_store)
         
         # Server state
         self._running = False
@@ -157,6 +159,7 @@ class EliteDangerousServer:
             self.data_store = get_data_store()
             self.mcp_tools = MCPTools(self.data_store)
             self.mcp_resources = MCPResources(self.data_store)
+            self.mcp_prompts = MCPPrompts(self.data_store)
             
             # Set running flag
             self._running = True
@@ -392,23 +395,43 @@ class EliteDangerousServer:
     def setup_mcp_resources(self):
         """Set up MCP resource handlers for structured data access."""
         
-        @self.app.resource()
-        async def list_resources() -> List[Dict[str, Any]]:
+        @self.app.tool()
+        async def list_available_resources() -> Dict[str, Any]:
             """List all available MCP resources with metadata."""
-            return self.mcp_resources.list_resources()
+            try:
+                resources = self.mcp_resources.list_resources()
+                return {
+                    "available_resources": resources,
+                    "total_count": len(resources),
+                    "resource_types": list(set(r.get("type", "unknown") for r in resources))
+                }
+            except Exception as e:
+                logger.error(f"Error listing resources: {e}")
+                return {"error": str(e)}
         
-        @self.app.resource()
-        async def get_resource(uri: str) -> Optional[Dict[str, Any]]:
+        @self.app.tool()
+        async def get_resource_data(uri: str) -> Dict[str, Any]:
             """
             Get resource data for the specified URI.
             
             Args:
-                uri: Resource URI with optional query parameters
+                uri: Resource URI with optional query parameters (e.g., 'elite://status/current')
                 
             Returns:
-                Resource data or None if invalid URI
+                Resource data or error message
             """
-            return await self.mcp_resources.get_resource(uri)
+            try:
+                resource_data = await self.mcp_resources.get_resource(uri)
+                if resource_data is None:
+                    return {"error": f"Resource not found: {uri}"}
+                return {
+                    "uri": uri,
+                    "data": resource_data,
+                    "timestamp": resource_data.get("timestamp") if isinstance(resource_data, dict) else None
+                }
+            except Exception as e:
+                logger.error(f"Error getting resource {uri}: {e}")
+                return {"error": str(e)}
         
         @self.app.tool()
         async def refresh_resource_cache() -> Dict[str, str]:
@@ -420,7 +443,152 @@ class EliteDangerousServer:
                 logger.error(f"Error clearing resource cache: {e}")
                 return {"status": "error", "message": str(e)}
         
-        logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources")
+        logger.info(f"Registered {len(self.mcp_resources.resources)} MCP resources as tools")
+
+    def setup_mcp_prompts(self):
+        """Set up MCP prompt handlers for context-aware AI assistance."""
+        
+        @self.app.tool()
+        async def list_available_prompts() -> Dict[str, Any]:
+            """List all available prompt templates with descriptions and metadata."""
+            try:
+                prompts = self.mcp_prompts.list_available_prompts()
+                return {
+                    "available_prompts": prompts,
+                    "total_count": len(prompts),
+                    "prompt_types": list(set(p["type"] for p in prompts))
+                }
+            except Exception as e:
+                logger.error(f"Error listing prompts: {e}")
+                return {"error": str(e)}
+        
+        @self.app.tool()
+        async def generate_analysis_prompt(
+            analysis_type: str,
+            time_range_hours: int = 24
+        ) -> Dict[str, Any]:
+            """
+            Generate a context-aware analysis prompt for Elite Dangerous activities.
+            
+            Args:
+                analysis_type: Type of analysis - exploration, trading, combat, mining, missions, engineering, journey, performance, strategic
+                time_range_hours: Time range to analyze in hours (default 24)
+            """
+            try:
+                # Map analysis types to template IDs
+                template_mapping = {
+                    "exploration": "exploration_analysis",
+                    "trading": "trading_strategy", 
+                    "combat": "combat_assessment",
+                    "mining": "mining_optimization",
+                    "missions": "mission_guidance",
+                    "engineering": "engineering_progress",
+                    "journey": "journey_review",
+                    "performance": "performance_review",
+                    "strategic": "strategic_planning",
+                    "strategy": "strategic_planning"
+                }
+                
+                template_id = template_mapping.get(analysis_type.lower())
+                if not template_id:
+                    available_types = ", ".join(template_mapping.keys())
+                    return {
+                        "error": f"Invalid analysis type: {analysis_type}",
+                        "available_types": available_types
+                    }
+                
+                # Generate the prompt
+                prompt = await self.mcp_prompts.generate_prompt(template_id, time_range_hours)
+                
+                return {
+                    "analysis_type": analysis_type,
+                    "time_range_hours": time_range_hours,
+                    "prompt": prompt,
+                    "template_id": template_id
+                }
+                
+            except Exception as e:
+                logger.error(f"Error generating analysis prompt: {e}")
+                return {"error": str(e)}
+        
+        @self.app.tool()
+        async def generate_exploration_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware exploration analysis prompt."""
+            return await self.generate_analysis_prompt("exploration", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_trading_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware trading strategy prompt."""
+            return await self.generate_analysis_prompt("trading", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_combat_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware combat assessment prompt."""
+            return await self.generate_analysis_prompt("combat", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_mining_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware mining optimization prompt."""
+            return await self.generate_analysis_prompt("mining", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_mission_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware mission guidance prompt."""
+            return await self.generate_analysis_prompt("missions", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_engineering_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware engineering progress prompt."""
+            return await self.generate_analysis_prompt("engineering", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_journey_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware journey review prompt."""
+            return await self.generate_analysis_prompt("journey", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_performance_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware performance review prompt."""
+            return await self.generate_analysis_prompt("performance", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_strategic_prompt(time_range_hours: int = 24) -> Dict[str, Any]:
+            """Generate context-aware strategic planning prompt."""
+            return await self.generate_analysis_prompt("strategic", time_range_hours)
+        
+        @self.app.tool()
+        async def generate_custom_prompt(
+            template_id: str,
+            time_range_hours: int = 24
+        ) -> Dict[str, Any]:
+            """
+            Generate a prompt using a specific template ID.
+            
+            Args:
+                template_id: Specific template identifier
+                time_range_hours: Time range to analyze in hours
+            """
+            try:
+                available_templates = list(self.mcp_prompts.templates.keys())
+                if template_id not in available_templates:
+                    return {
+                        "error": f"Invalid template ID: {template_id}",
+                        "available_templates": available_templates
+                    }
+                
+                prompt = await self.mcp_prompts.generate_prompt(template_id, time_range_hours)
+                
+                return {
+                    "template_id": template_id,
+                    "time_range_hours": time_range_hours,
+                    "prompt": prompt
+                }
+                
+            except Exception as e:
+                logger.error(f"Error generating custom prompt: {e}")
+                return {"error": str(e)}
+        
+        logger.info(f"Registered {len(self.mcp_prompts.templates)} MCP prompt templates")
 
 
 # Global server instance
@@ -436,6 +604,7 @@ async def create_server() -> EliteDangerousServer:
         _server.setup_basic_mcp_handlers()
         _server.setup_core_mcp_handlers()  # Add core MCP tools
         _server.setup_mcp_resources()  # Add MCP resources
+        _server.setup_mcp_prompts()  # Add MCP prompts
         _server.setup_signal_handlers()
     
     return _server

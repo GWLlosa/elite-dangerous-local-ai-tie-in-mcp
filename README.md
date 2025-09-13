@@ -93,11 +93,12 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **194+ tests** passing with **86% code coverage**
+- **275+ tests** passing with **95%+ code coverage**
 - **Real-time monitoring** validated with mock journal events
-- **Event processing** tested with 130+ event types
-- **Data storage** verified with concurrent access patterns
-- **MCP server** tested with comprehensive unit tests
+- **Event processing** tested with 130+ event types across 17 categories
+- **Data storage** verified with concurrent access patterns and thread safety
+- **MCP server** tested with comprehensive unit and integration tests
+- **MCP tools, resources, and prompts** extensively tested with edge cases
 
 ### Documentation
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
@@ -137,35 +138,81 @@ Add the following to your Claude Desktop configuration file:
 
 ## 📊 Project Status
 
-**Current Status**: Active development - Milestones 1-7 completed ✅
+**Current Status**: Production Ready - Milestones 1-10 completed ✅
 
 ### ✅ Completed Milestones:
 1. **Project Structure** - Complete foundation and build system
 2. **Configuration Management** - Environment variables and path validation
-3. **Journal File Discovery** - File parsing with comprehensive tests  
+3. **Journal File Discovery** - File parsing with comprehensive tests
 4. **Real-time Monitoring** - File system watching with position tracking
 5. **Event Processing** - 130+ event types across 17 categories
 6. **Data Storage** - In-memory storage with thread safety and game state tracking
 7. **MCP Server Framework** - FastMCP integration with background monitoring
-
-### 🔄 In Progress:
-8. **Core MCP Tools** - Implementation of primary MCP tools for game queries
-9. **MCP Resources** - Dynamic resource exposure based on game state
-10. **MCP Prompts** - Context-aware prompts for gameplay scenarios
+8. **Core MCP Tools** - 15+ tools for game data queries and analysis
+9. **MCP Resources** - 17+ dynamic resource endpoints with caching
+10. **MCP Prompts** - 9 context-aware prompt templates for AI assistance
 
 ### 🎯 Upcoming Milestones:
 11. **EDCoPilot Integration** - Dynamic custom chatter generation
-12. **Analytics Dashboard** - Comprehensive gameplay statistics
-13. **Performance Optimization** - Caching and efficiency improvements
-14. **Documentation & Polish** - User guides and API documentation
-15. **Release Preparation** - Final testing and deployment packaging
+12. **Advanced Analytics** - Enhanced gameplay statistics and reporting
+13. **Performance Optimization** - Advanced caching and efficiency improvements
+14. **Documentation Enhancement** - Expanded user guides and API documentation
+15. **Release Preparation** - Final packaging and deployment optimization
 
 ## 🛠️ MCP Server Features
 
-### Available Tools
+### MCP Tools (15+ Available)
+#### Core Data Access
 - **`server_status`** - Get current server status and statistics
 - **`get_recent_events`** - Retrieve recent journal events with filtering
 - **`clear_data_store`** - Clear stored events and reset game state
+- **`get_current_location`** - Current system, station, and coordinates
+- **`get_current_ship`** - Ship type, status, fuel, hull, and cargo
+
+#### Activity Analysis
+- **`get_exploration_summary`** - Exploration progress and discoveries
+- **`get_trading_summary`** - Trading performance and profit analysis
+- **`get_combat_summary`** - Combat statistics and earnings
+- **`search_events`** - Advanced event filtering and search
+
+#### AI Assistance
+- **`list_available_prompts`** - View all prompt templates
+- **`generate_analysis_prompt`** - Context-aware AI prompts for any activity
+- **`list_available_resources`** - View all MCP resource endpoints
+- **`get_resource_data`** - Access structured data by URI
+
+### MCP Resources (17+ Dynamic Endpoints)
+#### Status Resources
+- `elite://status/location` - Current location and coordinates
+- `elite://status/ship` - Ship status and configuration
+- `elite://status/game` - Overall game state and session info
+
+#### Data Resources
+- `elite://journal/recent?minutes=60` - Recent journal events
+- `elite://journal/stats` - Journal statistics and counts
+- `elite://events/by-category?category=exploration` - Events by category
+- `elite://events/by-type?type=FSDJump` - Events by specific type
+
+#### Activity Summaries
+- `elite://summary/exploration?hours=24` - Exploration analysis
+- `elite://summary/trading?hours=12` - Trading performance
+- `elite://summary/combat?hours=6` - Combat statistics
+- `elite://summary/journey?hours=48` - Journey overview
+
+#### Analytics
+- `elite://metrics/performance?hours=24` - Performance metrics
+- `elite://metrics/credits?hours=12` - Credit flow analysis
+
+### MCP Prompts (9 Context-Aware Templates)
+- **Exploration Analysis** - Analyze recent exploration activities
+- **Trading Strategy** - Trading performance and market opportunities
+- **Combat Assessment** - Combat statistics and tactical analysis
+- **Mining Optimization** - Mining efficiency and resource analysis
+- **Mission Guidance** - Mission progress and completion strategies
+- **Engineering Progress** - Engineering upgrades and material status
+- **Journey Review** - Travel analysis and route optimization
+- **Performance Review** - Overall gameplay performance metrics
+- **Strategic Planning** - Long-term goal planning and recommendations
 
 ### Background Services
 - **Journal Monitoring** - Automatic real-time journal file watching
@@ -173,39 +220,187 @@ Add the following to your Claude Desktop configuration file:
 - **State Tracking** - Current ship, location, and game mode tracking
 - **Automatic Cleanup** - Memory management for long-running sessions
 
-## 🎯 Usage Examples
+## 🎯 Usage Guide
 
 ### Starting the MCP Server
 ```bash
-# Direct server startup
+# Method 1: Direct server startup (for testing)
 python src/server.py
 
-# Or configure in Claude Desktop (see Configuration section)
+# Method 2: Via Claude Desktop (recommended for production)
+# Configure in Claude Desktop config file (see Configuration section)
+
+# Method 3: Using virtual environment
+venv/Scripts/activate  # Windows
+source venv/bin/activate  # Linux/Mac
+python src/server.py
 ```
 
-### Querying Game State (via Claude Desktop)
-Once the server is running and connected to Claude Desktop, you can ask:
-- "What's my current location in Elite Dangerous?"
-- "Show me my recent exploration discoveries"
-- "Summarize my trading activity from the last hour"
-- "What happened in my last combat encounter?"
+### Claude Desktop Integration Examples
 
-### Development API Example
+Once connected to Claude Desktop, you can interact with your Elite Dangerous data:
+
+#### Basic Status Queries
+```
+"What's my current location and ship status in Elite Dangerous?"
+"Show me my recent journal activity from the last hour"
+"How much fuel and cargo space do I have?"
+```
+
+#### Activity Analysis
+```
+"Analyze my exploration progress from the last 24 hours"
+"What's my trading performance this session?"
+"Summarize my combat encounters and earnings"
+"Show me my recent mining activity and profits"
+```
+
+#### AI-Powered Insights
+```
+"Generate an exploration strategy prompt based on my recent activities"
+"Help me optimize my trading routes using my current data"
+"Analyze my combat performance and suggest improvements"
+"Create a mission planning prompt for my current situation"
+```
+
+#### Resource Access
+```
+"Get my current ship configuration from elite://status/ship"
+"Show me recent FSD jumps using the events resource"
+"Access my exploration summary for the past day"
+```
+
+### MCP Tools Usage Examples
+
+#### Core Data Access
+```python
+# Get current location
+await get_current_location()
+# Returns: {"current_system": "Sol", "coordinates": [0, 0, 0], "docked": true, ...}
+
+# Get ship status
+await get_current_ship()
+# Returns: {"ship_type": "Python", "fuel_level": 32.0, "hull_health": 100.0, ...}
+
+# Get recent events
+await get_recent_events(minutes=60, category="exploration")
+# Returns: [{"event_type": "Scan", "timestamp": "...", "summary": "...", ...}, ...]
+```
+
+#### Activity Summaries
+```python
+# Exploration analysis
+await get_exploration_summary(hours=24)
+# Returns: {"systems_visited": 15, "bodies_scanned": 47, "earnings": 2500000, ...}
+
+# Trading performance
+await get_trading_summary(hours=12)
+# Returns: {"trades_completed": 8, "profit": 5000000, "profit_per_hour": 416667, ...}
+
+# Combat statistics
+await get_combat_summary(hours=6)
+# Returns: {"kills": 12, "bounties": 3500000, "combat_bonds": 1200000, ...}
+```
+
+#### AI Prompt Generation
+```python
+# Generate context-aware prompts
+await generate_analysis_prompt("exploration", 24)
+# Returns: Detailed prompt analyzing recent exploration with current context
+
+# List available prompts
+await list_available_prompts()
+# Returns: [{"id": "exploration_analysis", "name": "Exploration Analysis", ...}, ...]
+```
+
+### MCP Resources Usage Examples
+
+Resources use URI-based access with query parameters:
+
+#### Status Resources
+```python
+# Current location
+await get_resource_data("elite://status/location")
+# Current ship details
+await get_resource_data("elite://status/ship")
+# Overall game state
+await get_resource_data("elite://status/game")
+```
+
+#### Dynamic Data Resources
+```python
+# Recent events with time filter
+await get_resource_data("elite://journal/recent?minutes=30")
+# Events by category
+await get_resource_data("elite://events/by-category?category=trading")
+# Events by specific type
+await get_resource_data("elite://events/by-type?type=MarketSell")
+```
+
+#### Activity Summaries
+```python
+# Exploration summary for last 24 hours
+await get_resource_data("elite://summary/exploration?hours=24")
+# Trading analysis for last 12 hours
+await get_resource_data("elite://summary/trading?hours=12")
+# Journey overview for last 2 days
+await get_resource_data("elite://summary/journey?hours=48")
+```
+
+### Development API Examples
+
+For direct integration or custom applications:
+
 ```python
 from src.server import EliteDangerousServer
-from src.journal.monitor import JournalMonitor
+from src.utils.data_store import get_data_store
 
-# Server automatically starts monitoring on initialization
+# Initialize server (starts monitoring automatically)
 server = EliteDangerousServer()
 
-# Access server tools
-status = await server.server_status()
-events = await server.get_recent_events(minutes=60, category="exploration")
+# Access data store directly
+data_store = get_data_store()
+game_state = data_store.get_game_state()
+recent_events = data_store.get_recent_events(minutes=60)
 
-# Get current game state
-state = server.data_store.get_game_state()
-print(f"Current System: {state.current_system}")
-print(f"Ship: {state.current_ship}")
+# Use MCP tools programmatically
+tools = server.mcp_tools
+location = await tools.get_current_location()
+exploration_data = await tools.get_exploration_summary(hours=24)
+
+# Access MCP resources
+resources = server.mcp_resources
+ship_status = await resources.get_resource("elite://status/ship")
+
+# Generate AI prompts
+prompts = server.mcp_prompts
+strategy_prompt = await prompts.generate_prompt("trading_strategy", 12)
+```
+
+### Error Handling and Troubleshooting
+
+#### Common Issues
+```bash
+# Check server status
+python scripts/check_environment.py
+
+# Verify dependencies
+python scripts/setup_dependencies.py
+
+# Test all functionality
+python scripts/run_tests.py
+
+# Check logs for issues
+tail -f elite_mcp_server.log
+```
+
+#### Resource Caching
+```python
+# Clear resource cache if data seems stale
+await refresh_resource_cache()
+
+# Individual resource refresh
+await get_resource_data("elite://status/location", force_refresh=True)
 ```
 
 ## Contributing
