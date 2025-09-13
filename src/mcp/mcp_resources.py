@@ -374,7 +374,7 @@ class MCPResources:
             
             # Get nearby systems from recent jumps
             recent_events = self.data_store.get_events_by_type("FSDJump", limit=10)
-            visited_systems = list({e.data.get("StarSystem") for e in recent_events if "StarSystem" in e.data})
+            visited_systems = list({e.raw_event.get("StarSystem") for e in recent_events if "StarSystem" in e.raw_event})
             
             return {
                 "current_system": game_state.current_system,
@@ -395,7 +395,7 @@ class MCPResources:
             
             # Get recent ship events for more details
             loadout_events = self.data_store.get_events_by_type("Loadout", limit=1)
-            current_loadout = loadout_events[0].data if loadout_events else {}
+            current_loadout = loadout_events[0].raw_event if loadout_events else {}
             
             return {
                 "ship_type": game_state.current_ship,
@@ -448,7 +448,7 @@ class MCPResources:
             stats = self.data_store.get_statistics()
             
             # Get event distribution
-            all_events = self.data_store.get_all_events()
+            all_events = self.data_store.get_recent_events(24 * 60)  # Get last 24 hours
             type_distribution = {}
             category_distribution = {}
             
@@ -501,7 +501,7 @@ class MCPResources:
                         "timestamp": e.timestamp.isoformat(),
                         "type": e.event_type,
                         "summary": e.summary,
-                        "data": e.data
+                        "data": e.raw_event
                     }
                     for e in events
                 ],
@@ -524,7 +524,7 @@ class MCPResources:
                         "timestamp": e.timestamp.isoformat(),
                         "category": e.category.value,
                         "summary": e.summary,
-                        "data": e.data
+                        "data": e.raw_event
                     }
                     for e in events
                 ],
@@ -538,7 +538,7 @@ class MCPResources:
         """Search events with multiple filters."""
         try:
             # Build filter criteria
-            events = self.data_store.get_all_events()
+            events = self.data_store.get_recent_events(24 * 60)  # Get last 24 hours
             
             # Apply filters
             if "type" in params:
@@ -553,12 +553,12 @@ class MCPResources:
             
             if "system" in params:
                 system_name = params["system"]
-                events = [e for e in events if e.data.get("StarSystem") == system_name]
+                events = [e for e in events if e.raw_event.get("StarSystem") == system_name]
             
             if "text" in params:
                 search_text = params["text"].lower()
                 events = [e for e in events if search_text in e.summary.lower() or 
-                         search_text in str(e.data).lower()]
+                         search_text in str(e.raw_event).lower()]
             
             if "minutes" in params:
                 minutes = int(params["minutes"])
@@ -591,7 +591,7 @@ class MCPResources:
         try:
             # Get events from time range
             cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-            all_events = self.data_store.get_all_events()
+            all_events = self.data_store.get_recent_events(24 * 60)  # Get last 24 hours
             events = [e for e in all_events if e.timestamp >= cutoff_time]
             
             # Filter by activity type
@@ -600,7 +600,7 @@ class MCPResources:
                 events = [e for e in events if e.category in relevant_categories]
                 
                 # Calculate exploration metrics
-                systems_visited = len(set(e.data.get("StarSystem") for e in events 
+                systems_visited = len(set(e.raw_event.get("StarSystem") for e in events 
                                          if e.event_type == "FSDJump"))
                 bodies_scanned = len([e for e in events if "Scan" in e.event_type])
                 
@@ -618,7 +618,7 @@ class MCPResources:
                 events = [e for e in events if e.category in relevant_categories]
                 
                 # Calculate trading metrics
-                total_profit = sum(e.data.get("Profit", 0) for e in events 
+                total_profit = sum(e.raw_event.get("Profit", 0) for e in events 
                                  if e.event_type == "MarketSell")
                 trades_count = len([e for e in events if e.event_type in ["MarketBuy", "MarketSell"]])
                 
@@ -636,7 +636,7 @@ class MCPResources:
                 events = [e for e in events if e.category in relevant_categories]
                 
                 # Calculate combat metrics
-                bounties_earned = sum(e.data.get("Reward", 0) for e in events 
+                bounties_earned = sum(e.raw_event.get("Reward", 0) for e in events 
                                     if e.event_type == "Bounty")
                 kills = len([e for e in events if e.event_type in ["PVPKill", "Died"]])
                 
@@ -668,14 +668,14 @@ class MCPResources:
                 
             elif activity == "journey":
                 jump_events = [e for e in events if e.event_type == "FSDJump"]
-                total_distance = sum(e.data.get("JumpDist", 0) for e in jump_events)
+                total_distance = sum(e.raw_event.get("JumpDist", 0) for e in jump_events)
                 
                 return {
                     "activity": "journey",
                     "time_range_hours": hours,
                     "total_jumps": len(jump_events),
                     "total_distance_ly": round(total_distance, 2),
-                    "systems_visited": len(set(e.data.get("StarSystem") for e in jump_events)),
+                    "systems_visited": len(set(e.raw_event.get("StarSystem") for e in jump_events)),
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             
@@ -700,10 +700,10 @@ class MCPResources:
             cargo = {}
             
             if material_events:
-                materials = material_events[0].data.get("Raw", {})
+                materials = material_events[0].raw_event.get("Raw", {})
             
             if cargo_events:
-                cargo = cargo_events[0].data.get("Inventory", [])
+                cargo = cargo_events[0].raw_event.get("Inventory", [])
             
             return {
                 "materials": materials,
@@ -723,7 +723,7 @@ class MCPResources:
             factions = {}
             if reputation_events:
                 # Process reputation data
-                rep_data = reputation_events[0].data
+                rep_data = reputation_events[0].raw_event
                 for faction in ["Empire", "Federation", "Alliance"]:
                     if faction in rep_data:
                         factions[faction] = rep_data[faction]
@@ -740,12 +740,12 @@ class MCPResources:
         """Get performance metrics."""
         try:
             cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-            all_events = self.data_store.get_all_events()
+            all_events = self.data_store.get_recent_events(24 * 60)  # Get last 24 hours
             events = [e for e in all_events if e.timestamp >= cutoff_time]
             
             # Calculate various metrics
-            credits_earned = sum(e.data.get("Reward", 0) for e in events if "Reward" in e.data)
-            credits_spent = sum(e.data.get("Cost", 0) for e in events if "Cost" in e.data)
+            credits_earned = sum(e.raw_event.get("Reward", 0) for e in events if "Reward" in e.raw_event)
+            credits_spent = sum(e.raw_event.get("Cost", 0) for e in events if "Cost" in e.raw_event)
             jumps_made = len([e for e in events if e.event_type == "FSDJump"])
             
             return {
@@ -765,7 +765,7 @@ class MCPResources:
         """Get credit flow metrics."""
         try:
             cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
-            all_events = self.data_store.get_all_events()
+            all_events = self.data_store.get_recent_events(24 * 60)  # Get last 24 hours
             events = [e for e in all_events if e.timestamp >= cutoff_time]
             
             # Track credit changes
@@ -773,15 +773,15 @@ class MCPResources:
             expenses = []
             
             for event in events:
-                if "Reward" in event.data:
+                if "Reward" in event.raw_event:
                     earnings.append({
-                        "amount": event.data["Reward"],
+                        "amount": event.raw_event["Reward"],
                         "source": event.event_type,
                         "timestamp": event.timestamp.isoformat()
                     })
-                if "Cost" in event.data:
+                if "Cost" in event.raw_event:
                     expenses.append({
-                        "amount": event.data["Cost"],
+                        "amount": event.raw_event["Cost"],
                         "reason": event.event_type,
                         "timestamp": event.timestamp.isoformat()
                     })

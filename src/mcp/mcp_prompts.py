@@ -506,8 +506,7 @@ Please provide:
             
             # Get recent events for analysis
             cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
-            all_events = self.data_store.get_all_events()
-            recent_events = [e for e in all_events if e.timestamp >= cutoff_time]
+            recent_events = self.data_store.get_recent_events(time_range_hours * 60)  # Convert hours to minutes
             
             # Build base context
             context = {
@@ -555,19 +554,19 @@ Please provide:
         scan_events = [e for e in recent_events if "Scan" in e.event_type]
         
         # Calculate exploration metrics
-        systems_visited = len(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
+        systems_visited = len(set(e.raw_event.get("StarSystem") for e in jump_events if "StarSystem" in e.raw_event))
         bodies_scanned = len(scan_events)
-        distance_ly = sum(e.data.get("JumpDist", 0) for e in jump_events)
-        exploration_earnings = sum(e.data.get("Reward", 0) for e in exploration_events)
+        distance_ly = sum(e.raw_event.get("JumpDist", 0) for e in jump_events)
+        exploration_earnings = sum(e.raw_event.get("Reward", 0) for e in exploration_events)
         
         # Recent systems list
-        recent_systems_list = list({e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data})[-10:]
+        recent_systems_list = list({e.raw_event.get("StarSystem") for e in jump_events if "StarSystem" in e.raw_event})[-10:]
         recent_systems = "\n".join(f"- {system}" for system in recent_systems_list) or "No recent jumps"
         
         # Scan summary
         scan_types = {}
         for event in scan_events:
-            scan_type = event.data.get("ScanType", "Unknown")
+            scan_type = event.raw_event.get("ScanType", "Unknown")
             scan_types[scan_type] = scan_types.get(scan_type, 0) + 1
         
         scan_summary = "\n".join(f"- {scan_type}: {count}" for scan_type, count in scan_types.items()) or "No scans performed"
@@ -588,19 +587,19 @@ Please provide:
         sell_events = [e for e in trading_events if e.event_type == "MarketSell"]
         
         # Calculate trading metrics
-        total_profit = sum(e.data.get("Profit", 0) for e in sell_events)
+        total_profit = sum(e.raw_event.get("Profit", 0) for e in sell_events)
         trade_count = len(buy_events) + len(sell_events)
         avg_profit_per_trade = total_profit / max(len(sell_events), 1)
         profit_per_hour = total_profit / max(time_range_hours, 1)
         
         # Get ship cargo capacity
         loadout_events = self.data_store.get_events_by_type("Loadout", limit=1)
-        cargo_capacity = loadout_events[0].data.get("CargoCapacity", 0) if loadout_events else 0
+        cargo_capacity = loadout_events[0].raw_event.get("CargoCapacity", 0) if loadout_events else 0
         
         # Best trades
-        best_trades_list = sorted(sell_events, key=lambda x: x.data.get("Profit", 0), reverse=True)[:5]
+        best_trades_list = sorted(sell_events, key=lambda x: x.raw_event.get("Profit", 0), reverse=True)[:5]
         best_trades = "\n".join(
-            f"- {e.data.get('Type', 'Unknown')}: {e.data.get('Profit', 0):,} CR profit"
+            f"- {e.raw_event.get('Type', 'Unknown')}: {e.raw_event.get('Profit', 0):,} CR profit"
             for e in best_trades_list
         ) or "No profitable trades found"
         
@@ -625,8 +624,8 @@ Please provide:
         death_events = [e for e in combat_events if e.event_type == "Died"]
         
         # Calculate combat metrics
-        bounties_earned = sum(e.data.get("Reward", 0) for e in bounty_events)
-        combat_bonds = sum(e.data.get("Reward", 0) for e in bond_events)
+        bounties_earned = sum(e.raw_event.get("Reward", 0) for e in bounty_events)
+        combat_bonds = sum(e.raw_event.get("Reward", 0) for e in bond_events)
         ships_destroyed = len(bounty_events) + len(bond_events)
         deaths = len(death_events)
         survival_rate = ((ships_destroyed - deaths) / max(ships_destroyed, 1)) * 100
@@ -655,23 +654,23 @@ Please provide:
         # Calculate mining metrics
         materials_collected = len(collection_events)
         asteroids_mined = len([e for e in mining_events if e.event_type == "AsteroidCracked"])
-        mining_earnings = sum(e.data.get("MarketValue", 0) for e in collection_events)
+        mining_earnings = sum(e.raw_event.get("MarketValue", 0) for e in collection_events)
         avg_value_per_ton = mining_earnings / max(materials_collected, 1)
         
         # Get cargo info
         cargo_events = self.data_store.get_events_by_type("Cargo", limit=1)
-        cargo_data = cargo_events[0].data if cargo_events else {}
+        cargo_data = cargo_events[0].raw_event if cargo_events else {}
         inventory = cargo_data.get("Inventory", [])
         cargo_used = sum(item.get("Count", 0) for item in inventory)
         
         # Get ship cargo capacity
         loadout_events = self.data_store.get_events_by_type("Loadout", limit=1)
-        cargo_capacity = loadout_events[0].data.get("CargoCapacity", 0) if loadout_events else 0
+        cargo_capacity = loadout_events[0].raw_event.get("CargoCapacity", 0) if loadout_events else 0
         
         # Materials summary
         material_types = {}
         for event in collection_events:
-            material = event.data.get("Name", "Unknown")
+            material = event.raw_event.get("Name", "Unknown")
             material_types[material] = material_types.get(material, 0) + 1
         
         materials_summary = "\n".join(f"- {material}: {count}" for material, count in material_types.items()) or "No materials collected"
@@ -702,7 +701,7 @@ Please provide:
         missions_failed = len(failed_events)
         total_missions = missions_completed + missions_failed
         success_rate = (missions_completed / max(total_missions, 1)) * 100
-        total_rewards = sum(e.data.get("Reward", 0) for e in completed_events)
+        total_rewards = sum(e.raw_event.get("Reward", 0) for e in completed_events)
         
         # Active missions
         active_missions = "Check mission panel for current active missions"
@@ -710,7 +709,7 @@ Please provide:
         # Mission types
         mission_types = {}
         for event in accepted_events:
-            mission_type = event.data.get("Name", "Unknown")
+            mission_type = event.raw_event.get("Name", "Unknown")
             mission_types[mission_type] = mission_types.get(mission_type, 0) + 1
         
         mission_types_summary = "\n".join(f"- {mission_type}: {count}" for mission_type, count in mission_types.items()) or "No missions accepted"
@@ -736,7 +735,7 @@ Please provide:
         
         # Engineering metrics (placeholders as Elite Dangerous engineering events vary)
         engineer_standings = "Check engineer progress in right panel"
-        engineers_visited = len(set(e.data.get("Engineer") for e in engineering_events if "Engineer" in e.data))
+        engineers_visited = len(set(e.raw_event.get("Engineer") for e in engineering_events if "Engineer" in e.raw_event))
         modifications_applied = len([e for e in engineering_events if e.event_type == "EngineerContribution"])
         materials_used = "Review recent material usage for engineering"
         ship_modifications = "Check current ship modifications in outfitting"
@@ -760,9 +759,9 @@ Please provide:
         
         # Journey metrics
         total_jumps = len(jump_events)
-        total_distance = sum(e.data.get("JumpDist", 0) for e in jump_events)
-        systems_visited = len(set(e.data.get("StarSystem") for e in jump_events if "StarSystem" in e.data))
-        stations_visited = len(set(e.data.get("StationName") for e in dock_events if "StationName" in e.data))
+        total_distance = sum(e.raw_event.get("JumpDist", 0) for e in jump_events)
+        systems_visited = len(set(e.raw_event.get("StarSystem") for e in jump_events if "StarSystem" in e.raw_event))
+        stations_visited = len(set(e.raw_event.get("StationName") for e in dock_events if "StationName" in e.raw_event))
         
         avg_jump_distance = total_distance / max(total_jumps, 1)
         
@@ -800,11 +799,11 @@ Please provide:
     async def _build_performance_context(self, recent_events: List, time_range_hours: int) -> Dict[str, Any]:
         """Build context for performance review."""
         # Calculate earnings and spending
-        earnings_events = [e for e in recent_events if "Reward" in e.data and e.data["Reward"] > 0]
-        spending_events = [e for e in recent_events if "Cost" in e.data and e.data["Cost"] > 0]
+        earnings_events = [e for e in recent_events if "Reward" in e.raw_event and e.raw_event["Reward"] > 0]
+        spending_events = [e for e in recent_events if "Cost" in e.raw_event and e.raw_event["Cost"] > 0]
         
-        credits_earned = sum(e.data.get("Reward", 0) for e in earnings_events)
-        credits_spent = sum(e.data.get("Cost", 0) for e in spending_events)
+        credits_earned = sum(e.raw_event.get("Reward", 0) for e in earnings_events)
+        credits_spent = sum(e.raw_event.get("Cost", 0) for e in spending_events)
         net_profit = credits_earned - credits_spent
         credits_per_hour = credits_earned / max(time_range_hours, 1)
         

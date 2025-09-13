@@ -100,27 +100,27 @@ class TestMCPPrompts:
             timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
             event_type="FSDJump",
             category=EventCategory.NAVIGATION,
-            data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
+            raw_event={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
             summary="Jumped to Alpha Centauri"
         )
-        
+
         mock_event2 = ProcessedEvent(
             timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
             event_type="Scan",
             category=EventCategory.EXPLORATION,
-            data={"BodyName": "Alpha Centauri A", "ScanType": "Detailed"},
+            raw_event={"BodyName": "Alpha Centauri A", "ScanType": "Detailed"},
             summary="Scanned Alpha Centauri A"
         )
-        
+
         mock_event3 = ProcessedEvent(
             timestamp=datetime.now(timezone.utc) - timedelta(hours=3),
             event_type="MarketSell",
             category=EventCategory.TRADING,
-            data={"Type": "Gold", "Profit": 50000},
+            raw_event={"Type": "Gold", "Profit": 50000},
             summary="Sold Gold for 50,000 CR profit"
         )
         
-        store.get_all_events.return_value = [mock_event1, mock_event2, mock_event3]
+        store.get_recent_events.return_value = [mock_event1, mock_event2, mock_event3]
         store.get_events_by_type.return_value = [mock_event1]
         store.get_events_by_category.return_value = [mock_event2]
         
@@ -315,14 +315,14 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
                 event_type="FSDJump",
                 category=EventCategory.NAVIGATION,
-                data={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
+                raw_event={"StarSystem": "Alpha Centauri", "JumpDist": 4.37},
                 summary="Jumped to Alpha Centauri"
             ),
             ProcessedEvent(
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
                 event_type="Scan",
                 category=EventCategory.EXPLORATION,
-                data={"BodyName": "Alpha Centauri A", "ScanType": "Detailed"},
+                raw_event={"BodyName": "Alpha Centauri A", "ScanType": "Detailed"},
                 summary="Scanned Alpha Centauri A"
             )
         ]
@@ -348,14 +348,14 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
                 event_type="MarketSell",
                 category=EventCategory.TRADING,
-                data={"Type": "Gold", "Profit": 50000},
+                raw_event={"Type": "Gold", "Profit": 50000},
                 summary="Sold Gold for 50,000 CR profit"
             ),
             ProcessedEvent(
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
                 event_type="MarketBuy",
                 category=EventCategory.TRADING,
-                data={"Type": "Gold", "Cost": 450000},
+                raw_event={"Type": "Gold", "Cost": 450000},
                 summary="Bought Gold for 450,000 CR"
             )
         ]
@@ -366,7 +366,7 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc),
                 event_type="Loadout",
                 category=EventCategory.SHIP,
-                data={"CargoCapacity": 284},
+                raw_event={"CargoCapacity": 284},
                 summary="Ship loadout"
             )
         ]
@@ -392,14 +392,14 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
                 event_type="Bounty",
                 category=EventCategory.COMBAT,
-                data={"Reward": 100000, "Target": "Pirate"},
+                raw_event={"Reward": 100000, "Target": "Pirate"},
                 summary="Bounty claimed: 100,000 CR"
             ),
             ProcessedEvent(
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
                 event_type="FactionKillBond",
                 category=EventCategory.COMBAT,
-                data={"Reward": 75000, "AwardingFaction": "Federation"},
+                raw_event={"Reward": 75000, "AwardingFaction": "Federation"},
                 summary="Combat bond: 75,000 CR"
             )
         ]
@@ -426,14 +426,14 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
                 event_type="MaterialCollected",
                 category=EventCategory.MINING,
-                data={"Name": "Painite", "MarketValue": 50000},
+                raw_event={"Name": "Painite", "MarketValue": 50000},
                 summary="Collected Painite"
             ),
             ProcessedEvent(
                 timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
                 event_type="AsteroidCracked",
                 category=EventCategory.MINING,
-                data={"Body": "Asteroid"},
+                raw_event={"Body": "Asteroid"},
                 summary="Cracked asteroid"
             )
         ]
@@ -444,14 +444,14 @@ class TestMCPPrompts:
                 timestamp=datetime.now(timezone.utc),
                 event_type="Cargo",
                 category=EventCategory.SHIP,
-                data={"Inventory": [{"Name": "Painite", "Count": 5}]},
+                raw_event={"Inventory": [{"Name": "Painite", "Count": 5}]},
                 summary="Cargo inventory"
             )],
             "Loadout": [ProcessedEvent(
                 timestamp=datetime.now(timezone.utc),
                 event_type="Loadout",
                 category=EventCategory.SHIP,
-                data={"CargoCapacity": 284},
+                raw_event={"CargoCapacity": 284},
                 summary="Ship loadout"
             )]
         }.get(event_type, [])

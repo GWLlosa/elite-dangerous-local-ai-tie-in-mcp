@@ -54,41 +54,41 @@ class SetupTracker:
     def print_summary(self):
         """Print a summary of the setup process."""
         print("\n" + "="*60)
-        
+
         if self.has_errors():
-            print("❌ SETUP FAILED!")
+            print("[FAILED] SETUP FAILED!")
         else:
-            print("🎉 SETUP COMPLETE!")
-        
+            print("[SUCCESS] SETUP COMPLETE!")
+
         print("="*60)
-        
+
         if self.successes:
-            print("\n✅ Successful Steps:")
+            print("\n[SUCCESS] Successful Steps:")
             for success in self.successes:
-                print(f"   • {success}")
-        
+                print(f"   * {success}")
+
         if self.warnings:
-            print("\n⚠️  Warnings:")
+            print("\n[WARNING] Warnings:")
             for step, message in self.warnings:
-                print(f"   • {step}: {message}")
-        
+                print(f"   * {step}: {message}")
+
         if self.errors:
-            print("\n❌ Errors:")
+            print("\n[ERROR] Errors:")
             for step, message in self.errors:
-                print(f"   • {step}: {message}")
-            
-            print("\n📋 Troubleshooting:")
+                print(f"   * {step}: {message}")
+
+            print("\n[INFO] Troubleshooting:")
             print("   1. Ensure you have Python 3.9+ installed")
             print("   2. Try running the script again")
             print("   3. Check your internet connection for package downloads")
             print("   4. Manually install packages: pip install -r requirements.txt")
             print("   5. Check for dependency conflicts: pip check")
         else:
-            print("\n📋 Next steps:")
+            print("\n[INFO] Next steps:")
             print("   1. Activate virtual environment (see instructions above)")
             print("   2. Run: python scripts/check_dependencies.py")
             print("   3. Run: python scripts/run_tests.py")
-        
+
         print("="*60)
 
 
@@ -108,18 +108,18 @@ PACKAGE_IMPORT_MAP = {
 def print_header(title):
     """Print a formatted header."""
     print(f"\n{'='*60}")
-    print(f"🔧 {title}")
+    print(f"[INFO] {title}")
     print('='*60)
 
 
 def print_step(step, description):
     """Print a formatted step."""
-    print(f"\n→ {step}: {description}")
+    print(f"\n-> {step}: {description}")
 
 
 def print_status(message, success=True):
     """Print a status message."""
-    icon = "✅" if success else "❌"
+    icon = "[SUCCESS]" if success else "[FAILED]"
     print(f"  {icon} {message}")
 
 
@@ -344,8 +344,8 @@ def install_requirements():
             missing_packages.append((package_name, requirement_line))
             print_status(f"{package_name} - Missing", False)
     
-    print(f"  ✅ Installed: {len(installed_packages)} packages")
-    print(f"  ❌ Missing: {len(missing_packages)} packages")
+    print(f"  [SUCCESS] Installed: {len(installed_packages)} packages")
+    print(f"  [FAILED] Missing: {len(missing_packages)} packages")
     
     # If packages are missing, try to install them individually
     if missing_packages:
@@ -472,9 +472,9 @@ def create_activation_instructions():
         print_status("Virtual environment not found", False)
         return
     
-    print("📋 To activate the virtual environment:")
+    print("[INFO] To activate the virtual environment:")
     print()
-    
+
     if platform.system() == "Windows":
         print("   PowerShell:")
         print("   .\\venv\\Scripts\\Activate.ps1")
@@ -484,23 +484,23 @@ def create_activation_instructions():
     else:
         print("   Bash/Zsh:")
         print("   source venv/bin/activate")
-    
+
     print()
-    print("📋 To deactivate the virtual environment:")
+    print("[INFO] To deactivate the virtual environment:")
     print("   deactivate")
     print()
-    print("📋 To run tests (with virtual environment activated):")
+    print("[INFO] To run tests (with virtual environment activated):")
     print("   python scripts/run_tests.py")
 
 
 def main():
     """Main setup function."""
-    print("🔧 Elite Dangerous MCP Server - Dependency Setup")
+    print("[INFO] Elite Dangerous MCP Server - Dependency Setup")
     print(f"Setting up environment at: {Path.cwd()}")
-    
+
     # Verify we're in the project root
     if not Path("src").exists() or not Path("requirements.txt").exists():
-        print("\n❌ Error: Must be run from project root directory")
+        print("\n[ERROR] Error: Must be run from project root directory")
         print("   Current directory should contain 'src' folder and 'requirements.txt'")
         setup_tracker.add_error("Directory Check", "Not in project root directory")
         setup_tracker.print_summary()
@@ -521,7 +521,7 @@ def main():
     
     # Install requirements
     if not install_requirements():
-        print("\n❌ Critical error: Failed to install required dependencies")
+        print("\n[ERROR] Critical error: Failed to install required dependencies")
         setup_tracker.print_summary()
         sys.exit(1)
     
@@ -545,12 +545,12 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n❌ Setup interrupted by user")
+        print("\n\n[ERROR] Setup interrupted by user")
         setup_tracker.add_error("Setup Process", "Interrupted by user")
         setup_tracker.print_summary()
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n❌ Unexpected error during setup: {e}")
+        print(f"\n\n[ERROR] Unexpected error during setup: {e}")
         setup_tracker.add_error("Setup Process", f"Unexpected error: {e}")
         setup_tracker.print_summary()
         sys.exit(1)
