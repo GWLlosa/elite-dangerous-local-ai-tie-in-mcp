@@ -316,6 +316,7 @@ Please provide:
 Current Status:
 - Location: {current_system}
 - Ship: {current_ship}
+- Credits: {credits:,}
 - Jump Range: {jump_range:.1f} LY
 - Fuel: {fuel_level}%
 
@@ -342,7 +343,7 @@ Please provide:
 3. Suggestions for discovering interesting locations
 4. Tips for planning efficient long-distance routes
 5. Assessment of exploration opportunities along my journey""",
-                variables=["current_system", "current_ship", "jump_range", "fuel_level",
+                variables=["current_system", "current_ship", "credits", "jump_range", "fuel_level",
                           "time_range", "total_jumps", "total_distance", "systems_visited",
                           "stations_visited", "route_analysis", "notable_events", "avg_jump_distance",
                           "fuel_efficiency", "navigation_time"]

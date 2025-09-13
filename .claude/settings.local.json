@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(venv\\Scripts\\python.exe scripts/run_tests.py:*)",
+      "Bash(venv/Scripts/python.exe scripts/run_tests.py:*)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/unit/test_mcp_prompts.py::TestMCPPrompts::test_initialization -v)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/unit/test_mcp_prompts.py -v)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/unit/test_mcp_prompts.py::TestMCPPrompts::test_generate_exploration_prompt -v)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/unit/test_mcp_prompts.py::TestMCPPrompts::test_build_exploration_context -v)",
+      "Bash(venv/Scripts/python.exe -m pytest tests/unit/test_mcp_resources.py -v)",
+      "Bash(venv/Scripts/python.exe scripts/test_milestone_10.py:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
