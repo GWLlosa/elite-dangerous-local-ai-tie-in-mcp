@@ -728,19 +728,26 @@ def run_server():
         sys.exit(1)
 
 
-# When running as a script, detect if we're being called by MCP or run directly
+# When running as a script, always try to handle asyncio properly
 if __name__ == "__main__":
-    # Check if stdin/stdout are being used for MCP protocol (pipes)
-    import os
-    if os.isatty(sys.stdin.fileno()) and os.isatty(sys.stdout.fileno()):
-        # Running interactively (direct run), use our run_server function
-        run_server()
-    else:
-        # Running as MCP server (stdin/stdout are pipes), run directly
+    try:
+        # Try to get the current running loop
+        loop = asyncio.get_running_loop()
+        # If we get here, we're in an existing loop - create a new one
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(main())
+            new_loop.run_until_complete(main())
+        finally:
+            new_loop.close()
+            asyncio.set_event_loop(loop)  # Restore original loop
+    except RuntimeError:
+        # No running loop, safe to use asyncio.run
+        try:
+            asyncio.run(main())
         except Exception as e:
-            logger.error(f"MCP server error: {e}")
+            logger.error(f"Failed to start server: {e}")
             sys.exit(1)
+    except Exception as e:
+        logger.error(f"Server startup error: {e}")
+        sys.exit(1)
