@@ -475,6 +475,21 @@ await get_resource_data("elite://status/location", force_refresh=True)
 - Follow the [AI Directives](ai-directives/README.md) for consistency
 - Create session reports for knowledge preservation
 
+### ChatGPT/Codex Integration
+
+Use ChatGPT (OpenAI) models with MCP‑capable clients to get the same tool/resource/prompt access as Claude Desktop. Recommended options:
+
+- Continue (VS Code/JetBrains) using OpenAI models
+- Cursor with MCP + OpenAI
+- Cline (VS Code) with MCP
+
+Quick start:
+- Configure the client’s `mcpServers` to run this repo’s Python with `src/server.py`
+- Set `ELITE_JOURNAL_PATH` (and optional `ELITE_EDCOPILOT_PATH`, `ELITE_DEBUG`)
+- Ask it to use the Elite Dangerous MCP tools (e.g., “What’s my current status?”)
+
+Full setup and troubleshooting: see `docs/CHATGPT_CODEX_INTEGRATION.md`.
+
 ## License
 
 This project is licensed under the MIT License.
