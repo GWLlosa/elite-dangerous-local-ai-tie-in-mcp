@@ -45,14 +45,26 @@ except ImportError:
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('elite_mcp_server.log')
-    ]
-)
+# When running as MCP server, avoid stdout logging to prevent JSON protocol interference
+if len(sys.argv) > 0 and sys.argv[0].endswith('server.py') and '--mcp' not in sys.argv:
+    # Running directly, use both stdout and file logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stderr),  # Use stderr instead of stdout for MCP compatibility
+            logging.FileHandler('elite_mcp_server.log')
+        ]
+    )
+else:
+    # Running as MCP server, only use file logging to avoid JSON protocol interference
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('elite_mcp_server.log')
+        ]
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -697,12 +709,12 @@ async def main():
         async with lifespan_manager() as server:
             # Run the MCP server
             await server.app.run()
-            
+
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
         logger.error(f"Server error: {e}")
-        sys.exit(1)
+        raise  # Re-raise instead of sys.exit to avoid issues in MCP context
 
 
 def run_server():
@@ -716,5 +728,19 @@ def run_server():
         sys.exit(1)
 
 
+# When running as a script, detect if we're being called by MCP or run directly
 if __name__ == "__main__":
-    run_server()
+    # Check if stdin/stdout are being used for MCP protocol (pipes)
+    import os
+    if os.isatty(sys.stdin.fileno()) and os.isatty(sys.stdout.fileno()):
+        # Running interactively (direct run), use our run_server function
+        run_server()
+    else:
+        # Running as MCP server (stdin/stdout are pipes), run directly
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(main())
+        except Exception as e:
+            logger.error(f"MCP server error: {e}")
+            sys.exit(1)
