@@ -391,6 +391,54 @@ class EliteDangerousServer:
         async def get_material_inventory() -> Dict[str, Any]:
             """Get current material and cargo inventory with recent changes."""
             return await self.mcp_tools.get_material_inventory()
+
+        # ==================== EDCoPilot Integration Tools ====================
+
+        @self.app.tool()
+        async def generate_edcopilot_chatter(chatter_type: str = "all") -> Dict[str, Any]:
+            """
+            Generate EDCoPilot custom chatter files based on current game state.
+
+            Args:
+                chatter_type: Type of chatter to generate ("space", "crew", "deepspace", or "all")
+
+            Returns:
+                Status of file generation with details
+            """
+            return self.mcp_tools.generate_edcopilot_chatter(chatter_type)
+
+        @self.app.tool()
+        async def get_edcopilot_status() -> Dict[str, Any]:
+            """
+            Get status of EDCoPilot integration and existing custom files.
+
+            Returns:
+                Status of EDCoPilot integration and file information
+            """
+            return self.mcp_tools.get_edcopilot_status()
+
+        @self.app.tool()
+        async def backup_edcopilot_files() -> Dict[str, Any]:
+            """
+            Create backups of all existing EDCoPilot custom files.
+
+            Returns:
+                Status of backup operation
+            """
+            return self.mcp_tools.backup_edcopilot_files()
+
+        @self.app.tool()
+        async def preview_edcopilot_chatter(chatter_type: str = "space") -> Dict[str, Any]:
+            """
+            Preview EDCoPilot chatter content without writing files.
+
+            Args:
+                chatter_type: Type of chatter to preview ("space", "crew", "deepspace")
+
+            Returns:
+                Preview of generated chatter content
+            """
+            return self.mcp_tools.preview_edcopilot_chatter(chatter_type)
     
     def setup_mcp_resources(self):
         """Set up MCP resource handlers for structured data access."""

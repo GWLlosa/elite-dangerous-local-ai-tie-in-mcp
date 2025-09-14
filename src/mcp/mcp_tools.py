@@ -1056,3 +1056,225 @@ class MCPTools:
         except Exception as e:
             logger.error(f"Error getting material inventory: {e}")
             return {"error": str(e)}
+
+    def generate_edcopilot_chatter(self, chatter_type: str = "all") -> Dict[str, Any]:
+        """
+        Generate EDCoPilot custom chatter files based on current game state.
+
+        Args:
+            chatter_type: Type of chatter to generate ("space", "crew", "deepspace", or "all")
+
+        Returns:
+            Status of file generation with details
+        """
+        try:
+            from ..edcopilot.generator import EDCoPilotContentGenerator
+            from ..utils.config import EliteConfig
+
+            config = EliteConfig()
+            generator = EDCoPilotContentGenerator(self.data_store, config.edcopilot_path)
+
+            if chatter_type == "all":
+                written_files = generator.write_files(backup_existing=True)
+                return {
+                    "status": "success",
+                    "files_generated": list(written_files.keys()),
+                    "output_directory": str(config.edcopilot_path),
+                    "message": f"Generated {len(written_files)} EDCoPilot chatter files"
+                }
+            else:
+                # Generate specific chatter type
+                files = generator.generate_contextual_chatter()
+
+                # Filter to requested type
+                target_files = {}
+                if chatter_type.lower() in ["space", "spacechatter"]:
+                    target_files = {k: v for k, v in files.items() if "SpaceChatter" in k}
+                elif chatter_type.lower() in ["crew", "crewchatter"]:
+                    target_files = {k: v for k, v in files.items() if "CrewChatter" in k}
+                elif chatter_type.lower() in ["deepspace", "deepspacechatter"]:
+                    target_files = {k: v for k, v in files.items() if "DeepSpaceChatter" in k}
+                else:
+                    return {"error": f"Unknown chatter type: {chatter_type}"}
+
+                # Write filtered files
+                written_files = {}
+                for filename, content in target_files.items():
+                    file_path = config.edcopilot_path / filename
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    written_files[filename] = file_path
+
+                return {
+                    "status": "success",
+                    "files_generated": list(written_files.keys()),
+                    "output_directory": str(config.edcopilot_path),
+                    "message": f"Generated {chatter_type} chatter file(s)"
+                }
+
+        except ImportError as e:
+            return {
+                "error": "EDCoPilot integration not available",
+                "details": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error generating EDCoPilot chatter: {e}")
+            return {"error": str(e)}
+
+    def get_edcopilot_status(self) -> Dict[str, Any]:
+        """
+        Get status of EDCoPilot integration and existing custom files.
+
+        Returns:
+            Status of EDCoPilot integration and file information
+        """
+        try:
+            from ..edcopilot.generator import EDCoPilotFileManager
+            from ..utils.config import EliteConfig
+
+            config = EliteConfig()
+            file_manager = EDCoPilotFileManager(config.edcopilot_path)
+
+            # Check if EDCoPilot directory exists
+            if not config.edcopilot_path.exists():
+                return {
+                    "status": "not_configured",
+                    "edcopilot_path": str(config.edcopilot_path),
+                    "exists": False,
+                    "message": "EDCoPilot directory not found. Set ELITE_EDCOPILOT_PATH environment variable."
+                }
+
+            # List existing custom files
+            custom_files = file_manager.list_custom_files()
+            file_info = {}
+
+            for file_path in custom_files:
+                file_info[file_path.name] = file_manager.get_file_info(file_path)
+
+            # Get current game context for chatter generation
+            from ..edcopilot.generator import EDCoPilotContextAnalyzer
+            context_analyzer = EDCoPilotContextAnalyzer(self.data_store)
+            context = context_analyzer.analyze_current_context()
+
+            return {
+                "status": "available",
+                "edcopilot_path": str(config.edcopilot_path),
+                "exists": True,
+                "custom_files": file_info,
+                "total_files": len(custom_files),
+                "current_context": {
+                    "primary_activity": context["primary_activity"],
+                    "current_system": context["current_system"],
+                    "docked": context["docked"],
+                    "fuel_low": context["fuel_low"],
+                    "deep_space": context["is_deep_space"]
+                },
+                "message": f"EDCoPilot integration ready. Found {len(custom_files)} existing custom files."
+            }
+
+        except ImportError as e:
+            return {
+                "error": "EDCoPilot integration not available",
+                "details": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error getting EDCoPilot status: {e}")
+            return {"error": str(e)}
+
+    def backup_edcopilot_files(self) -> Dict[str, Any]:
+        """
+        Create backups of all existing EDCoPilot custom files.
+
+        Returns:
+            Status of backup operation
+        """
+        try:
+            from ..edcopilot.generator import EDCoPilotFileManager
+            from ..utils.config import EliteConfig
+
+            config = EliteConfig()
+            file_manager = EDCoPilotFileManager(config.edcopilot_path)
+
+            if not config.edcopilot_path.exists():
+                return {
+                    "status": "error",
+                    "message": "EDCoPilot directory not found"
+                }
+
+            backup_files = file_manager.backup_files()
+
+            return {
+                "status": "success",
+                "backups_created": len(backup_files),
+                "backup_files": {name: str(path) for name, path in backup_files.items()},
+                "message": f"Created {len(backup_files)} backup files"
+            }
+
+        except ImportError as e:
+            return {
+                "error": "EDCoPilot integration not available",
+                "details": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error backing up EDCoPilot files: {e}")
+            return {"error": str(e)}
+
+    def preview_edcopilot_chatter(self, chatter_type: str = "space") -> Dict[str, Any]:
+        """
+        Preview EDCoPilot chatter content without writing files.
+
+        Args:
+            chatter_type: Type of chatter to preview ("space", "crew", "deepspace")
+
+        Returns:
+            Preview of generated chatter content
+        """
+        try:
+            from ..edcopilot.generator import EDCoPilotContentGenerator
+            from ..utils.config import EliteConfig
+
+            config = EliteConfig()
+            generator = EDCoPilotContentGenerator(self.data_store, config.edcopilot_path)
+
+            # Generate content without writing files
+            files = generator.generate_contextual_chatter()
+
+            # Filter to requested type
+            target_file = None
+            if chatter_type.lower() in ["space", "spacechatter"]:
+                target_file = next((k for k in files.keys() if "SpaceChatter" in k), None)
+            elif chatter_type.lower() in ["crew", "crewchatter"]:
+                target_file = next((k for k in files.keys() if "CrewChatter" in k), None)
+            elif chatter_type.lower() in ["deepspace", "deepspacechatter"]:
+                target_file = next((k for k in files.keys() if "DeepSpaceChatter" in k), None)
+            else:
+                return {"error": f"Unknown chatter type: {chatter_type}"}
+
+            if not target_file:
+                return {"error": f"Could not find {chatter_type} chatter template"}
+
+            content = files[target_file]
+
+            # Count entries (non-comment, non-empty lines)
+            lines = content.split('\n')
+            entry_lines = [line for line in lines if line.strip() and not line.strip().startswith('#')]
+
+            return {
+                "status": "success",
+                "chatter_type": chatter_type,
+                "filename": target_file,
+                "content_preview": content[:1000] + "..." if len(content) > 1000 else content,
+                "total_lines": len(lines),
+                "entry_count": len(entry_lines),
+                "sample_entries": entry_lines[:5],
+                "message": f"Generated {len(entry_lines)} {chatter_type} chatter entries"
+            }
+
+        except ImportError as e:
+            return {
+                "error": "EDCoPilot integration not available",
+                "details": str(e)
+            }
+        except Exception as e:
+            logger.error(f"Error previewing EDCoPilot chatter: {e}")
+            return {"error": str(e)}
