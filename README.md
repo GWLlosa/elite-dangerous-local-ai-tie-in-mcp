@@ -109,25 +109,56 @@ pytest tests/integration/ -v   # Integration tests only
 
 ### Claude Desktop Integration
 
-Add the following to your Claude Desktop configuration file:
+#### Step 1: Locate Claude Desktop Configuration File
 
-**Windows**: `%APPDATA%\\Claude\\claude_desktop_config.json`  
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+#### Step 2: Add MCP Server Configuration
+
+Add the following to your Claude Desktop configuration file:
 
 ```json
 {
   "mcpServers": {
     "elite-dangerous": {
       "command": "python",
-      "args": ["path/to/elite-dangerous-local-ai-tie-in-mcp/src/server.py"],
+      "args": ["C:/path/to/elite-dangerous-local-ai-tie-in-mcp/src/server.py"],
       "env": {
-        "ELITE_JOURNAL_PATH": "/path/to/elite/dangerous/journals",
+        "ELITE_JOURNAL_PATH": "C:/Users/YourUsername/Saved Games/Frontier Developments/Elite Dangerous",
         "ELITE_EDCOPILOT_PATH": "C:/Utilities/EDCoPilot/User custom files",
         "ELITE_DEBUG": "false"
       }
     }
   }
 }
+```
+
+#### Step 3: Update Path Configuration
+
+**Critical**: Replace the paths in the configuration with your actual system paths:
+
+1. **Server Path** (`args`): Update to your actual repository location
+2. **Journal Path** (`ELITE_JOURNAL_PATH`):
+   - **Windows**: `C:/Users/[Username]/Saved Games/Frontier Developments/Elite Dangerous`
+   - **Steam**: `C:/Users/[Username]/Saved Games/Frontier Developments/Elite Dangerous`
+   - **Epic**: Same as Steam
+   - **Linux**: `~/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous`
+3. **EDCoPilot Path** (optional): Update if you use EDCoPilot voice integration
+
+#### Step 4: Restart Claude Desktop
+
+After saving the configuration file, restart Claude Desktop for the changes to take effect.
+
+#### Step 5: Verify Connection
+
+In Claude Desktop, try asking:
+```
+"What's my current status in Elite Dangerous?"
+```
+
+If configured correctly, Claude will respond with your current game state using the MCP tools.
 ```
 
 ### Environment Variables
@@ -138,7 +169,7 @@ Add the following to your Claude Desktop configuration file:
 
 ## 📊 Project Status
 
-**Current Status**: Production Ready - Milestones 1-10 completed ✅
+**Current Status**: Production Ready - Milestones 1-11 completed ✅
 
 ### ✅ Completed Milestones:
 1. **Project Structure** - Complete foundation and build system
@@ -151,9 +182,9 @@ Add the following to your Claude Desktop configuration file:
 8. **Core MCP Tools** - 15+ tools for game data queries and analysis
 9. **MCP Resources** - 17+ dynamic resource endpoints with caching
 10. **MCP Prompts** - 9 context-aware prompt templates for AI assistance
+11. **EDCoPilot Integration** - 4 MCP tools, 3 chatter types, 40+ contextual dialogue entries
 
 ### 🎯 Upcoming Milestones:
-11. **EDCoPilot Integration** - Dynamic custom chatter generation
 12. **Advanced Analytics** - Enhanced gameplay statistics and reporting
 13. **Performance Optimization** - Advanced caching and efficiency improvements
 14. **Documentation Enhancement** - Expanded user guides and API documentation
@@ -161,7 +192,7 @@ Add the following to your Claude Desktop configuration file:
 
 ## 🛠️ MCP Server Features
 
-### MCP Tools (15+ Available)
+### MCP Tools (19+ Available)
 #### Core Data Access
 - **`server_status`** - Get current server status and statistics
 - **`get_recent_events`** - Retrieve recent journal events with filtering
@@ -180,6 +211,12 @@ Add the following to your Claude Desktop configuration file:
 - **`generate_analysis_prompt`** - Context-aware AI prompts for any activity
 - **`list_available_resources`** - View all MCP resource endpoints
 - **`get_resource_data`** - Access structured data by URI
+
+#### EDCoPilot Integration
+- **`generate_edcopilot_chatter`** - Generate contextual chatter files based on game state
+- **`get_edcopilot_status`** - Check EDCoPilot integration configuration and custom files
+- **`backup_edcopilot_files`** - Create timestamped backups of existing custom files
+- **`preview_edcopilot_chatter`** - Preview generated content without writing files
 
 ### MCP Resources (17+ Dynamic Endpoints)
 #### Status Resources
