@@ -174,11 +174,15 @@ class EDCoPilotContentGenerator:
         if context['is_deep_space']:
             self._add_deep_space_context(space_template, context)
 
-        # Regenerate files with enhanced content
-        return self.template_manager.generate_all_templates()
+        # Generate files with enhanced content (don't regenerate from scratch)
+        enhanced_files = self.template_manager.generate_all_templates()
+
+        # Apply token replacement to all files
+        return self._replace_tokens_in_files(enhanced_files, context)
 
     def _add_exploration_context(self, template, context: Dict[str, Any]) -> None:
         """Add exploration-specific contextual chatter."""
+        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
         exploration_entries = [
             ChatterEntry(
                 text=f"We've made {context['recent_discoveries']} discoveries in the past hour. Excellent work!",
@@ -188,11 +192,16 @@ class EDCoPilotContentGenerator:
                 text=f"Current system: {context['current_system']}. Scanning for valuable astronomical data.",
                 conditions=[EDCoPilotConditions.IN_SUPERCRUISE, EDCoPilotConditions.EXPLORING]
             ),
+            ChatterEntry(
+                text=f"{ship_name}'s sensors are detecting fascinating stellar phenomena in {context['current_system']}.",
+                conditions=[EDCoPilotConditions.EXPLORING]
+            ),
         ]
         template.entries.extend(exploration_entries)
 
     def _add_trading_context(self, template, context: Dict[str, Any]) -> None:
         """Add trading-specific contextual chatter."""
+        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
         trading_entries = [
             ChatterEntry(
                 text=f"Market analysis complete for {context['current_system']}. Profit margins look promising.",
@@ -200,6 +209,10 @@ class EDCoPilotContentGenerator:
             ),
             ChatterEntry(
                 text=f"Credits: {context['credits']:,}. Our trading run is proving quite profitable.",
+                conditions=[EDCoPilotConditions.TRADING]
+            ),
+            ChatterEntry(
+                text=f"{ship_name}'s cargo manifest updated. Trading algorithms suggest optimal routes from {context['current_system']}.",
                 conditions=[EDCoPilotConditions.TRADING]
             ),
         ]
@@ -214,9 +227,14 @@ class EDCoPilotContentGenerator:
 
     def _add_combat_context(self, template, context: Dict[str, Any]) -> None:
         """Add combat-specific contextual chatter."""
+        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
         combat_entries = [
             ChatterEntry(
                 text=f"Combat log shows {context['combat_events']} engagements recently. Stay sharp, Commander.",
+                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
+            ),
+            ChatterEntry(
+                text=f"{ship_name}'s combat systems are primed and ready for engagement in {context['current_system']}.",
                 conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
             ),
         ]
@@ -266,6 +284,50 @@ class EDCoPilotContentGenerator:
             ),
         ]
         template.entries.extend(deep_space_entries)
+
+    def _replace_tokens_in_files(self, files: Dict[str, str], context: Dict[str, Any]) -> Dict[str, str]:
+        """Replace placeholder tokens with actual contextual values."""
+        enhanced_files = {}
+
+        for filename, content in files.items():
+            enhanced_content = self._replace_tokens_in_content(content, context)
+            enhanced_files[filename] = enhanced_content
+
+        return enhanced_files
+
+    def _replace_tokens_in_content(self, content: str, context: Dict[str, Any]) -> str:
+        """Replace tokens in content with actual values from context."""
+        # Create token replacement mapping with null-safe values
+        replacements = {
+            '{SystemName}': context.get('current_system') or 'Unknown System',
+            '{ShipName}': self._extract_ship_name(context.get('ship_type') or 'Unknown Ship'),
+            '{ShipType}': context.get('ship_type') or 'Unknown Ship',
+            '{CommanderName}': context.get('commander_name') or 'Commander',
+            '{Credits}': f"{context.get('credits', 0):,}",
+            '{FuelPercent}': f"{context.get('fuel_level', 100):.0f}",
+            '{StationName}': context.get('current_station') or 'Station',
+            '{BodyName}': context.get('current_body') or 'Body',
+        }
+
+        # Apply replacements (ensure all values are strings)
+        enhanced_content = content
+        for token, value in replacements.items():
+            if value is not None:
+                enhanced_content = enhanced_content.replace(token, str(value))
+
+        return enhanced_content
+
+    def _extract_ship_name(self, ship_type: str) -> str:
+        """Extract ship name from ship type string."""
+        if not ship_type:
+            return 'Unknown Ship'
+
+        # Handle formats like "Mandalay EXCELSIOR" -> "EXCELSIOR"
+        if ' ' in ship_type:
+            parts = ship_type.split(' ', 1)
+            if len(parts) > 1:
+                return parts[1]  # Return the name part
+        return ship_type
 
     def write_files(self, backup_existing: bool = True) -> Dict[str, Path]:
         """Write generated files to EDCoPilot directory."""
