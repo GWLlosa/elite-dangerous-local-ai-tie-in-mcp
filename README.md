@@ -123,7 +123,7 @@ Add the following to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "elite-dangerous": {
-      "command": "python",
+      "command": "C:/path/to/elite-dangerous-local-ai-tie-in-mcp/venv/Scripts/python.exe",
       "args": ["C:/path/to/elite-dangerous-local-ai-tie-in-mcp/src/server.py"],
       "env": {
         "ELITE_JOURNAL_PATH": "C:/Users/YourUsername/Saved Games/Frontier Developments/Elite Dangerous",
@@ -140,12 +140,15 @@ Add the following to your Claude Desktop configuration file:
 **Critical**: Replace the paths in the configuration with your actual system paths:
 
 1. **Server Path** (`args`): Update to your actual repository location
-2. **Journal Path** (`ELITE_JOURNAL_PATH`):
+2. **Python Environment**: Use the full path to your virtual environment's Python executable:
+   - **Windows**: `C:/path/to/project/venv/Scripts/python.exe`
+   - **Linux/Mac**: `C:/path/to/project/venv/bin/python`
+3. **Journal Path** (`ELITE_JOURNAL_PATH`):
    - **Windows**: `C:/Users/[Username]/Saved Games/Frontier Developments/Elite Dangerous`
    - **Steam**: `C:/Users/[Username]/Saved Games/Frontier Developments/Elite Dangerous`
    - **Epic**: Same as Steam
    - **Linux**: `~/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous`
-3. **EDCoPilot Path** (optional): Update if you use EDCoPilot voice integration
+4. **EDCoPilot Path** (optional): Update if you use EDCoPilot voice integration
 
 #### Step 4: Restart Claude Desktop
 
