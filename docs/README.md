@@ -20,6 +20,18 @@ This directory contains comprehensive documentation for the Elite Dangerous Loca
 - Troubleshooting dependency issues
 - Validating test coverage and functionality
 
+### [`CHATGPT_CODEX_INTEGRATION.md`](CHATGPT_CODEX_INTEGRATION.md)
+**Use with ChatGPT/Codex via MCP clients**
+
+**Features:**
+- ChatGPT‑class model integration through MCP‑capable clients (Continue, Cursor, Cline)
+- One‑time configuration with `mcpServers` command/args/env
+- Usage examples and troubleshooting
+
+**When to use:**
+- You want Claude‑level MCP functionality with ChatGPT models
+- You use VS Code/JetBrains (Continue), Cursor, or Cline
+
 ### Additional Documentation (Future)
 - **API Reference** - MCP tools, resources, and prompts documentation
 - **Configuration Guide** - Detailed configuration options and examples
@@ -42,6 +54,9 @@ This directory contains comprehensive documentation for the Elite Dangerous Loca
 1. **Check dependencies**: `python scripts/check_dependencies.py`
 2. **Review**: [Troubleshooting section](TESTING_GUIDE.md#troubleshooting-common-issues)
 3. **Fix**: `python scripts/setup_dependencies.py`
+
+### For ChatGPT/Codex Users:
+- See: [`CHATGPT_CODEX_INTEGRATION.md`](CHATGPT_CODEX_INTEGRATION.md)
 
 ## 🔗 Related Resources
 
