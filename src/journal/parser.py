@@ -96,10 +96,11 @@ class JournalParser:
         """
         filename = file_path.name
         
-        # Valid patterns: Journal.YYYYMMDDHHMMSS.NN.log[.backup]
+        # Valid patterns: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
+        # Elite Dangerous uses ISO-like format with dashes and T separator
         patterns = [
-            r'^Journal\.\d{14}\.\d{2}\.log$',
-            r'^Journal\.\d{14}\.\d{2}\.log\.backup$'
+            r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log$',
+            r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log\.backup$'
         ]
         
         for pattern in patterns:
@@ -331,25 +332,26 @@ class JournalParser:
 
         Args:
             file_path: Path to journal file
-            
+
         Returns:
             datetime: Extracted timestamp (epoch if parsing fails)
         """
         try:
-            # Pattern: Journal.YYYYMMDDHHMMSS.NN.log[.backup]
+            # Pattern: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
             filename = file_path.name
-            
-            # Extract timestamp part using regex
-            match = re.search(r'Journal\.(\d{14})\.', filename)
+
+            # Extract timestamp part using regex - new ISO-like format
+            match = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
             if not match:
                 logger.warning(f"Could not extract timestamp from filename: {filename}")
                 return datetime.fromtimestamp(0)  # Epoch as fallback
-            
+
             timestamp_str = match.group(1)
-            timestamp = datetime.strptime(timestamp_str, "%Y%m%d%H%M%S")
-            
+            # Parse format like "2025-09-13T221119"
+            timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
+
             return timestamp
-            
+
         except Exception as e:
             logger.warning(f"Error parsing timestamp from {file_path.name}: {e}")
             return datetime.fromtimestamp(0)  # Epoch as fallback

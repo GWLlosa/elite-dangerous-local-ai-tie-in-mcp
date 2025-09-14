@@ -115,11 +115,66 @@ class EliteDangerousServer:
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
     
+    async def load_historical_data(self, hours_back: int = 24):
+        """Load historical journal data from recent files."""
+        try:
+            logger.info(f"Loading historical data from last {hours_back} hours...")
+
+            from src.journal.parser import JournalParser
+            from datetime import datetime, timedelta
+
+            # Initialize journal parser
+            journal_parser = JournalParser(self.config.journal_path)
+
+            # Find recent journal files
+            all_files = journal_parser.find_journal_files()
+            cutoff_time = datetime.now() - timedelta(hours=hours_back)
+
+            recent_files = []
+            for file_path in all_files:
+                file_timestamp = journal_parser._extract_timestamp_from_filename(file_path)
+                if file_timestamp > cutoff_time:
+                    recent_files.append(file_path)
+
+            logger.info(f"Found {len(recent_files)} recent journal files to process")
+
+            events_loaded = 0
+            for file_path in recent_files:
+                try:
+                    # Read and process all events from this file
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        for line_no, line in enumerate(f, 1):
+                            try:
+                                # Parse journal entry
+                                event_data = journal_parser.parse_journal_entry(line)
+                                if event_data:
+                                    # Process the event
+                                    processed_event = self.event_processor.process_event(event_data)
+
+                                    # Store in data store
+                                    self.data_store.store_event(processed_event)
+                                    events_loaded += 1
+
+                            except Exception as e:
+                                logger.debug(f"Error processing line {line_no} in {file_path.name}: {e}")
+
+                except Exception as e:
+                    logger.warning(f"Error reading historical file {file_path.name}: {e}")
+
+            logger.info(f"Loaded {events_loaded} historical events from {len(recent_files)} files")
+
+        except Exception as e:
+            logger.error(f"Failed to load historical data: {e}")
+            # Don't raise - this is not critical for server operation
+
     async def start_journal_monitoring(self):
         """Start journal monitoring in background task."""
         try:
             logger.info("Starting journal monitoring...")
-            
+
+            # Load historical data first
+            await self.load_historical_data(hours_back=24)
+
             # Set up event callback to process and store events
             def on_journal_event(event_data_list, event_type: str):
                 try:
@@ -747,52 +802,38 @@ async def run_mcp_server():
     finally:
         await server.shutdown()
 
+def main():
+    """Main server entry point."""
+    # Setup asyncio for our background tasks
+    async def setup_server():
+        server = await create_server()
+        await server.startup()
+        return server
+
+    # Create and start the server components in asyncio context
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    try:
+        server = loop.run_until_complete(setup_server())
+
+        # Now run FastMCP in the main thread
+        # This will handle MCP protocol on stdin/stdout
+        server.app.run()
+
+    finally:
+        # Cleanup
+        async def cleanup():
+            await server.shutdown()
+        loop.run_until_complete(cleanup())
+        loop.close()
+
 if __name__ == "__main__":
     try:
-        # Check if we're already in an asyncio context
-        try:
-            loop = asyncio.get_running_loop()
-            # We're in an existing loop, run directly
-            import asyncio
-            task = asyncio.create_task(run_mcp_server())
-            # This won't work in an existing loop, so we need a different approach
-            logger.error("Cannot run MCP server in existing asyncio loop context")
-            sys.exit(1)
-        except RuntimeError:
-            # No existing loop - this is the normal case for MCP servers
-            server = None
-            try:
-                # Create server synchronously first
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-                # Create server
-                server_coro = create_server()
-                server = loop.run_until_complete(server_coro)
-
-                # Start server
-                startup_coro = server.startup()
-                loop.run_until_complete(startup_coro)
-
-                # Run the FastMCP app - this should handle its own loop properly
-                app_coro = server.app.run()
-                loop.run_until_complete(app_coro)
-
-            except KeyboardInterrupt:
-                logger.info("Server stopped by user")
-            except Exception as e:
-                logger.error(f"Server error: {e}")
-                sys.exit(1)
-            finally:
-                # Cleanup
-                if server:
-                    try:
-                        shutdown_coro = server.shutdown()
-                        loop.run_until_complete(shutdown_coro)
-                    except Exception as e:
-                        logger.error(f"Error during shutdown: {e}")
-                if loop and not loop.is_closed():
-                    loop.close()
+        logger.info("Starting Elite Dangerous MCP Server...")
+        main()
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
     except Exception as e:
-        logger.error(f"Fatal server error: {e}")
+        logger.error(f"Server error: {e}")
         sys.exit(1)
