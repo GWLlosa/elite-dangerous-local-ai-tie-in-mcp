@@ -706,9 +706,18 @@ async def lifespan_manager():
 async def main():
     """Main entry point for the MCP server."""
     try:
-        async with lifespan_manager() as server:
-            # Run the MCP server
+        # Create and set up the server
+        server = await create_server()
+
+        # Start server components but don't run the app yet
+        await server.startup()
+
+        try:
+            # Run the MCP server - this will handle its own event loop
             await server.app.run()
+        finally:
+            # Clean shutdown
+            await server.shutdown()
 
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
@@ -728,26 +737,62 @@ def run_server():
         sys.exit(1)
 
 
-# When running as a script, always try to handle asyncio properly
+# For FastMCP servers, we need to run the app directly without asyncio wrappers
+async def run_mcp_server():
+    """Run the FastMCP server directly."""
+    server = await create_server()
+    await server.startup()
+    try:
+        await server.app.run()
+    finally:
+        await server.shutdown()
+
 if __name__ == "__main__":
     try:
-        # Try to get the current running loop
-        loop = asyncio.get_running_loop()
-        # If we get here, we're in an existing loop - create a new one
-        new_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(new_loop)
+        # Check if we're already in an asyncio context
         try:
-            new_loop.run_until_complete(main())
-        finally:
-            new_loop.close()
-            asyncio.set_event_loop(loop)  # Restore original loop
-    except RuntimeError:
-        # No running loop, safe to use asyncio.run
-        try:
-            asyncio.run(main())
-        except Exception as e:
-            logger.error(f"Failed to start server: {e}")
+            loop = asyncio.get_running_loop()
+            # We're in an existing loop, run directly
+            import asyncio
+            task = asyncio.create_task(run_mcp_server())
+            # This won't work in an existing loop, so we need a different approach
+            logger.error("Cannot run MCP server in existing asyncio loop context")
             sys.exit(1)
+        except RuntimeError:
+            # No existing loop - this is the normal case for MCP servers
+            server = None
+            try:
+                # Create server synchronously first
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+                # Create server
+                server_coro = create_server()
+                server = loop.run_until_complete(server_coro)
+
+                # Start server
+                startup_coro = server.startup()
+                loop.run_until_complete(startup_coro)
+
+                # Run the FastMCP app - this should handle its own loop properly
+                app_coro = server.app.run()
+                loop.run_until_complete(app_coro)
+
+            except KeyboardInterrupt:
+                logger.info("Server stopped by user")
+            except Exception as e:
+                logger.error(f"Server error: {e}")
+                sys.exit(1)
+            finally:
+                # Cleanup
+                if server:
+                    try:
+                        shutdown_coro = server.shutdown()
+                        loop.run_until_complete(shutdown_coro)
+                    except Exception as e:
+                        logger.error(f"Error during shutdown: {e}")
+                if loop and not loop.is_closed():
+                    loop.close()
     except Exception as e:
-        logger.error(f"Server startup error: {e}")
+        logger.error(f"Fatal server error: {e}")
         sys.exit(1)
