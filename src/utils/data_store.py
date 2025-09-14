@@ -81,12 +81,19 @@ class GameState:
     game_mode: Optional[str] = None
     group: Optional[str] = None
     
+    # Commander information
+    commander_name: Optional[str] = None
+
     # Credits and cargo
     credits: int = 0
     loan: int = 0
     cargo_capacity: int = 0
     cargo_count: int = 0
-    
+
+    # Fuel information
+    fuel_level: float = 100.0
+    fuel_capacity: float = 32.0
+
     # Last update timestamp
     last_updated: Optional[datetime] = None
 
@@ -471,6 +478,7 @@ class DataStore:
         """Handle game load events."""
         # FIXED: use key_data instead of extracted_data
         data = event.key_data
+        self._game_state.commander_name = data.get('commander')
         self._game_state.current_ship = data.get('ship_type')
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
@@ -478,6 +486,9 @@ class DataStore:
         self._game_state.group = data.get('group')
         self._game_state.credits = data.get('credits', 0)
         self._game_state.loan = data.get('loan', 0)
+        # Store fuel info for contextual generation
+        self._game_state.fuel_level = data.get('fuel_level', 100.0)
+        self._game_state.fuel_capacity = data.get('fuel_capacity', 32.0)
     
     def _handle_loadout(self, event: ProcessedEvent) -> None:
         """Handle ship loadout events."""

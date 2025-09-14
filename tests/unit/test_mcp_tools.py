@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, MagicMock, patch
 
-from src.mcp.mcp_tools import MCPTools, ActivityType
+from src.elite_mcp.mcp_tools import MCPTools, ActivityType
 from src.journal.events import ProcessedEvent, EventCategory
 from src.utils.data_store import DataStore, GameState, EventFilter
 

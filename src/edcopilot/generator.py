@@ -37,15 +37,19 @@ class EDCoPilotContextAnalyzer:
         game_state = self.data_store.get_game_state()
         recent_events = self.data_store.get_recent_events(minutes=30)
 
+        # Debug logging to see what data we're actually getting
+        logger.info(f"DEBUG: Game state - system: {game_state.current_system}, ship: {game_state.current_ship}, credits: {game_state.credits}")
+        logger.info(f"DEBUG: Found {len(recent_events)} recent events")
+
         context = {
             # Basic game state
-            'commander_name': 'Commander',  # Default, could be extracted from LoadGame event
+            'commander_name': game_state.commander_name or 'Commander',
             'current_system': game_state.current_system or 'Unknown System',
             'current_station': game_state.current_station,
             'current_body': game_state.current_body,
             'ship_type': game_state.current_ship or 'Unknown Ship',
             'credits': game_state.credits,
-            'fuel_level': 100.0,  # Default value, would be from Status events
+            'fuel_level': game_state.fuel_level or 100.0,
             'hull_health': 100.0,  # Default value, would be from Status events
             'docked': game_state.docked,
 

@@ -495,7 +495,19 @@ class EventProcessor:
         # Mining events
         elif event_type == "MiningRefined":
             key_data["material"] = event.get("Type")
-            
+
+        # System events
+        elif event_type == "LoadGame":
+            key_data["commander"] = event.get("Commander")
+            key_data["ship_type"] = event.get("Ship")
+            key_data["ship_name"] = event.get("ShipName")
+            key_data["ship_id"] = event.get("ShipIdent")
+            key_data["credits"] = event.get("Credits")
+            key_data["fuel_level"] = event.get("FuelLevel")
+            key_data["fuel_capacity"] = event.get("FuelCapacity")
+            key_data["game_mode"] = event.get("GameMode")
+            key_data["loan"] = event.get("Loan")
+
         return key_data
     
     def _generate_summary(self, event: Dict[str, Any], event_type: str, 

@@ -7,7 +7,7 @@ import asyncio
 from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock, MagicMock, patch, AsyncMock
 
-from src.mcp.mcp_resources import MCPResources, ResourceCache, ResourceType
+from src.elite_mcp.mcp_resources import MCPResources, ResourceCache, ResourceType
 from src.utils.data_store import DataStore
 from src.journal.events import ProcessedEvent, EventCategory
 
