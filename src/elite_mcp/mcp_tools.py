@@ -10,8 +10,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Set
 from enum import Enum
 
-from ..journal.events import EventCategory, ProcessedEvent
-from ..utils.data_store import EventFilter, QuerySortOrder, GameState
+try:
+    from ..journal.events import EventCategory, ProcessedEvent
+    from ..utils.data_store import EventFilter, QuerySortOrder, GameState
+except ImportError:
+    from src.journal.events import EventCategory, ProcessedEvent
+    from src.utils.data_store import EventFilter, QuerySortOrder, GameState
 
 logger = logging.getLogger(__name__)
 
@@ -1068,8 +1072,12 @@ class MCPTools:
             Status of file generation with details
         """
         try:
-            from ..edcopilot.generator import EDCoPilotContentGenerator
-            from ..utils.config import EliteConfig
+            try:
+                from ..edcopilot.generator import EDCoPilotContentGenerator
+                from ..utils.config import EliteConfig
+            except ImportError:
+                from src.edcopilot.generator import EDCoPilotContentGenerator
+                from src.utils.config import EliteConfig
 
             config = EliteConfig()
             generator = EDCoPilotContentGenerator(self.data_store, config.edcopilot_path)
@@ -1129,8 +1137,12 @@ class MCPTools:
             Status of EDCoPilot integration and file information
         """
         try:
-            from ..edcopilot.generator import EDCoPilotFileManager
-            from ..utils.config import EliteConfig
+            try:
+                from ..edcopilot.generator import EDCoPilotFileManager
+                from ..utils.config import EliteConfig
+            except ImportError:
+                from src.edcopilot.generator import EDCoPilotFileManager
+                from src.utils.config import EliteConfig
 
             config = EliteConfig()
             file_manager = EDCoPilotFileManager(config.edcopilot_path)
@@ -1152,7 +1164,10 @@ class MCPTools:
                 file_info[file_path.name] = file_manager.get_file_info(file_path)
 
             # Get current game context for chatter generation
-            from ..edcopilot.generator import EDCoPilotContextAnalyzer
+            try:
+                from ..edcopilot.generator import EDCoPilotContextAnalyzer
+            except ImportError:
+                from src.edcopilot.generator import EDCoPilotContextAnalyzer
             context_analyzer = EDCoPilotContextAnalyzer(self.data_store)
             context = context_analyzer.analyze_current_context()
 
@@ -1189,8 +1204,12 @@ class MCPTools:
             Status of backup operation
         """
         try:
-            from ..edcopilot.generator import EDCoPilotFileManager
-            from ..utils.config import EliteConfig
+            try:
+                from ..edcopilot.generator import EDCoPilotFileManager
+                from ..utils.config import EliteConfig
+            except ImportError:
+                from src.edcopilot.generator import EDCoPilotFileManager
+                from src.utils.config import EliteConfig
 
             config = EliteConfig()
             file_manager = EDCoPilotFileManager(config.edcopilot_path)
@@ -1230,8 +1249,12 @@ class MCPTools:
             Preview of generated chatter content
         """
         try:
-            from ..edcopilot.generator import EDCoPilotContentGenerator
-            from ..utils.config import EliteConfig
+            try:
+                from ..edcopilot.generator import EDCoPilotContentGenerator
+                from ..utils.config import EliteConfig
+            except ImportError:
+                from src.edcopilot.generator import EDCoPilotContentGenerator
+                from src.utils.config import EliteConfig
 
             config = EliteConfig()
             generator = EDCoPilotContentGenerator(self.data_store, config.edcopilot_path)

@@ -16,8 +16,12 @@ from .templates import (
     EDCoPilotTemplateManager, ChatterType, ChatterEntry,
     EDCoPilotTokens, EDCoPilotConditions
 )
-from ..utils.data_store import DataStore
-from ..journal.events import EventCategory, ProcessedEvent
+try:
+    from ..utils.data_store import DataStore
+    from ..journal.events import EventCategory, ProcessedEvent
+except ImportError:
+    from src.utils.data_store import DataStore
+    from src.journal.events import EventCategory, ProcessedEvent
 
 logger = logging.getLogger(__name__)
 

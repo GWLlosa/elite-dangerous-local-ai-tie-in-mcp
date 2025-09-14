@@ -16,7 +16,11 @@
       "Bash(git pull:*)",
       "Bash(git merge:*)",
       "Bash(git commit:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git push:*)",
+      "Read(//c/Users/gwllo/AppData/Roaming/Claude/logs/**)",
+      "Bash(venv/Scripts/pip.exe list:*)",
+      "Bash(venv/Scripts/pip.exe show:*)"
     ],
     "deny": [],
     "ask": []

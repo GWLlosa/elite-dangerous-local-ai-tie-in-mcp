@@ -15,8 +15,12 @@ from urllib.parse import urlparse, parse_qs
 from enum import Enum
 import hashlib
 
-from ..utils.data_store import DataStore
-from ..journal.events import EventCategory
+try:
+    from ..utils.data_store import DataStore
+    from ..journal.events import EventCategory
+except ImportError:
+    from src.utils.data_store import DataStore
+    from src.journal.events import EventCategory
 
 
 logger = logging.getLogger(__name__)

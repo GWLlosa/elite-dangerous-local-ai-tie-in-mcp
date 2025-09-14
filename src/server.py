@@ -9,18 +9,39 @@ import asyncio
 import logging
 import sys
 import signal
+import os
+from pathlib import Path
 from typing import Optional, Any, Dict, List
 from contextlib import asynccontextmanager
 
+# Add the project root directory to the Python path to fix relative imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Change to the project directory to ensure relative paths work
+os.chdir(project_root)
+
 from mcp.server.fastmcp import FastMCP
 
-from .utils.config import EliteConfig
-from .journal.monitor import JournalMonitor
-from .journal.events import EventProcessor
-from .utils.data_store import get_data_store, reset_data_store
-from .mcp.mcp_tools import MCPTools
-from .mcp.mcp_resources import MCPResources
-from .mcp.mcp_prompts import MCPPrompts
+# Import modules using try/except to handle both relative and absolute imports
+try:
+    # Try relative imports first (when run as module)
+    from .utils.config import EliteConfig
+    from .journal.monitor import JournalMonitor
+    from .journal.events import EventProcessor
+    from .utils.data_store import get_data_store, reset_data_store
+    from .elite_mcp.mcp_tools import MCPTools
+    from .elite_mcp.mcp_resources import MCPResources
+    from .elite_mcp.mcp_prompts import MCPPrompts
+except ImportError:
+    # Fall back to absolute imports (when run as script)
+    from src.utils.config import EliteConfig
+    from src.journal.monitor import JournalMonitor
+    from src.journal.events import EventProcessor
+    from src.utils.data_store import get_data_store, reset_data_store
+    from src.elite_mcp.mcp_tools import MCPTools
+    from src.elite_mcp.mcp_resources import MCPResources
+    from src.elite_mcp.mcp_prompts import MCPPrompts
 
 
 # Configure logging

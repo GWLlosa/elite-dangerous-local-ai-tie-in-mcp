@@ -10,8 +10,12 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from enum import Enum
 
-from ..utils.data_store import DataStore
-from ..journal.events import EventCategory
+try:
+    from ..utils.data_store import DataStore
+    from ..journal.events import EventCategory
+except ImportError:
+    from src.utils.data_store import DataStore
+    from src.journal.events import EventCategory
 
 logger = logging.getLogger(__name__)
 
