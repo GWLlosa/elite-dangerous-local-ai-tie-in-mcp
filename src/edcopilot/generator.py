@@ -186,105 +186,129 @@ class EDCoPilotContentGenerator:
 
     def _add_exploration_context(self, template, context: Dict[str, Any]) -> None:
         """Add exploration-specific contextual chatter."""
-        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
+        from .templates import EDCoPilotTokens, ChatterType, ChatterEntry
+
         exploration_entries = [
             ChatterEntry(
                 text=f"We've made {context['recent_discoveries']} discoveries in the past hour. Excellent work!",
-                conditions=[EDCoPilotConditions.EXPLORING]
+                conditions=[EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
-                text=f"Current system: {context['current_system']}. Scanning for valuable astronomical data.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE, EDCoPilotConditions.EXPLORING]
+                text=f"Current system: {EDCoPilotTokens.SYSTEM_NAME}. Scanning for valuable astronomical data.",
+                conditions=[EDCoPilotConditions.IN_SUPERCRUISE, EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
-                text=f"{ship_name}'s sensors are detecting fascinating stellar phenomena in {context['current_system']}.",
-                conditions=[EDCoPilotConditions.EXPLORING]
+                text=f"{EDCoPilotTokens.SHIP_NAME}'s sensors are detecting fascinating stellar phenomena in {EDCoPilotTokens.SYSTEM_NAME}.",
+                conditions=[EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
         template.entries.extend(exploration_entries)
 
     def _add_trading_context(self, template, context: Dict[str, Any]) -> None:
         """Add trading-specific contextual chatter."""
-        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
+        from .templates import EDCoPilotTokens, ChatterType, ChatterEntry
+
         trading_entries = [
             ChatterEntry(
-                text=f"Market analysis complete for {context['current_system']}. Profit margins look promising.",
-                conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED]
+                text=f"Market analysis complete for {EDCoPilotTokens.SYSTEM_NAME}. Profit margins look promising.",
+                conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
-                text=f"Credits: {context['credits']:,}. Our trading run is proving quite profitable.",
-                conditions=[EDCoPilotConditions.TRADING]
+                text=f"Credits: {EDCoPilotTokens.CREDITS}. Our trading run is proving quite profitable.",
+                conditions=[EDCoPilotConditions.TRADING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
-                text=f"{ship_name}'s cargo manifest updated. Trading algorithms suggest optimal routes from {context['current_system']}.",
-                conditions=[EDCoPilotConditions.TRADING]
+                text=f"{EDCoPilotTokens.SHIP_NAME}'s cargo manifest updated. Trading algorithms suggest optimal routes from {EDCoPilotTokens.SYSTEM_NAME}.",
+                conditions=[EDCoPilotConditions.TRADING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
 
         if context['high_value_cargo']:
             trading_entries.append(ChatterEntry(
                 text="High-value cargo detected. Recommend caution in inhabited systems.",
-                conditions=[EDCoPilotConditions.TRADING]
+                conditions=[EDCoPilotConditions.TRADING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ))
 
         template.entries.extend(trading_entries)
 
     def _add_combat_context(self, template, context: Dict[str, Any]) -> None:
         """Add combat-specific contextual chatter."""
-        ship_name = self._extract_ship_name(context.get('ship_type', 'Unknown Ship'))
+        from .templates import EDCoPilotTokens, ChatterType, ChatterEntry
+
         combat_entries = [
             ChatterEntry(
                 text=f"Combat log shows {context['combat_events']} engagements recently. Stay sharp, Commander.",
-                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
+                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
-                text=f"{ship_name}'s combat systems are primed and ready for engagement in {context['current_system']}.",
-                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
+                text=f"{EDCoPilotTokens.SHIP_NAME}'s combat systems are primed and ready for engagement in {EDCoPilotTokens.SYSTEM_NAME}.",
+                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
 
         if context['recently_under_attack']:
             combat_entries.append(ChatterEntry(
                 text="Threat assessment: elevated. Multiple hostiles in recent encounters.",
-                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
+                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ))
 
         template.entries.extend(combat_entries)
 
     def _add_fuel_warning_context(self, template, context: Dict[str, Any]) -> None:
         """Add fuel-specific contextual chatter."""
+        from .templates import EDCoPilotTokens, ChatterType, ChatterEntry
+
         fuel_entries = [
             ChatterEntry(
-                text=f"Fuel at {context['fuel_level']:.0f}%. Nearest fuel source should be prioritized.",
-                conditions=[EDCoPilotConditions.FUEL_LOW]
+                text=f"Fuel at {EDCoPilotTokens.FUEL_PERCENT}%. Nearest fuel source should be prioritized.",
+                conditions=[EDCoPilotConditions.FUEL_LOW],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="Engineering recommends fuel conservation protocols until refuel.",
-                conditions=[EDCoPilotConditions.FUEL_LOW]
+                conditions=[EDCoPilotConditions.FUEL_LOW],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
         template.entries.extend(fuel_entries)
 
     def _add_discovery_context(self, template, context: Dict[str, Any]) -> None:
         """Add first discovery contextual chatter."""
+        from .templates import ChatterType, ChatterEntry
+
         discovery_entries = [
             ChatterEntry(
                 text="Cartographics will pay handsomely for our recent first discovery data!",
-                conditions=[EDCoPilotConditions.FIRST_DISCOVERY]
+                conditions=[EDCoPilotConditions.FIRST_DISCOVERY],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="Commander, we're making history with these uncharted discoveries.",
-                conditions=[EDCoPilotConditions.FIRST_DISCOVERY, EDCoPilotConditions.EXPLORING]
+                conditions=[EDCoPilotConditions.FIRST_DISCOVERY, EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
         template.entries.extend(discovery_entries)
 
     def _add_deep_space_context(self, template, context: Dict[str, Any]) -> None:
         """Add deep space contextual chatter."""
+        from .templates import ChatterType, ChatterEntry
+
         deep_space_entries = [
             ChatterEntry(
                 text=f"We're deep in unexplored territory. The nearest inhabited system feels like a distant memory.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE]
+                conditions=[EDCoPilotConditions.DEEP_SPACE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
         template.entries.extend(deep_space_entries)

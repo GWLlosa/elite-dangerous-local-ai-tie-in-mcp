@@ -6,7 +6,7 @@ with proper formatting, conditions, and token support.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
 from dataclasses import dataclass
 
@@ -160,7 +160,7 @@ class CrewConversation:
         for speaker, text in self.dialogue_lines:
             lines.append(f"{speaker.value} {text}")
 
-        lines.append("[\example]")
+        lines.append("[\\example]")
         return "\n".join(lines)
 
 
