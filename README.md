@@ -12,7 +12,7 @@ A Model Context Protocol (MCP) server that provides real-time integration betwee
 
 🎭 **EDCoPilot Integration**: Generates dynamic custom chatter, crew dialogue, and speech extensions based on your current game state
 
-🎪 **Dynamic Theme System** *(Planned)*: AI-powered personality themes with ship-specific multi-crew support for immersive roleplay
+🎪 **Dynamic Theme System** *(NEW!)*: AI-powered personality themes with ship-specific multi-crew support for immersive roleplay and dynamic character development
 
 📊 **Comprehensive Analytics**: Track exploration progress, trading performance, combat statistics, and journey summaries
 
@@ -99,15 +99,17 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **275+ tests** passing with **95%+ code coverage**
+- **440+ tests** passing with **95%+ code coverage**
 - **Real-time monitoring** validated with mock journal events
 - **Event processing** tested with 130+ event types across 17 categories
 - **Data storage** verified with concurrent access patterns and thread safety
 - **MCP server** tested with comprehensive unit and integration tests
 - **MCP tools, resources, and prompts** extensively tested with edge cases
+- **Dynamic Theme System** tested with 159 comprehensive tests covering performance, edge cases, and integration scenarios
 
 ### Documentation
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
+- **[Dynamic Theme System Guide](docs/THEME_SYSTEM_GUIDE.md)** - Complete guide to AI-powered crew themes *(NEW!)*
 - **[Scripts Documentation](scripts/README.md)** - Automation script details
 - **[AI Directives](ai-directives/README.md)** - Development guidelines for AI assistants
 
@@ -188,15 +190,21 @@ If configured correctly, Claude will respond with your current game state using 
 5. **Event Processing** - 130+ event types across 17 categories
 6. **Data Storage** - In-memory storage with thread safety and game state tracking
 7. **MCP Server Framework** - FastMCP integration with background monitoring
-8. **Core MCP Tools** - 33+ tools for game data queries and analysis
+8. **Core MCP Tools** - 43+ tools for game data queries and analysis
 9. **MCP Resources** - 17+ dynamic resource endpoints with caching
 10. **MCP Prompts** - 9 context-aware prompt templates for AI assistance
 11. **EDCoPilot Integration** - 4 MCP tools, 3 chatter types, 40+ contextual dialogue entries
-12. **Historical Data Loading** - ✨ **NEW** - Automatic processing of existing journal files (last 24 hours) on server startup
-13. **Journal Parser Fixes** - ✨ **NEW** - Fixed filename validation and timestamp extraction for all journal file formats
-14. **AsyncIO Stability** - ✨ **NEW** - Resolved FastMCP integration issues for stable Claude Desktop connection
+12. **Historical Data Loading** - Automatic processing of existing journal files (last 24 hours) on server startup
+13. **Journal Parser Fixes** - Fixed filename validation and timestamp extraction for all journal file formats
+14. **AsyncIO Stability** - Resolved FastMCP integration issues for stable Claude Desktop connection
+15. **Dynamic Multi-Crew Theme System** - ✨ **NEW** - AI-powered theme generation with ship-specific crew management
 
 ### 🎯 Recent Achievements (September 2025):
+- **🎪 Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management
+- **⚡ 159 New Tests** - Comprehensive test coverage for performance, edge cases, and integration scenarios
+- **🚀 10+ New MCP Tools** - Enhanced theme management tools for Claude Desktop integration
+- **🎭 AI Theme Generation** - Intelligent prompt generation for creating immersive crew personalities
+- **🛸 Ship-Specific Themes** - Automatic crew configuration based on ship type and role
 - **258+ Historical Events** loaded automatically on server startup
 - **200+ Journal Files** now properly recognized and processed
 - **Zero-downtime Integration** - Works with existing journal files even when Elite Dangerous is offline
@@ -211,7 +219,7 @@ If configured correctly, Claude will respond with your current game state using 
 
 ## 🛠️ MCP Server Features
 
-### MCP Tools (33+ Available)
+### MCP Tools (43+ Available)
 #### Core Data Access
 - **`server_status`** - Get current server status and statistics
 - **`get_recent_events`** - Retrieve recent journal events with filtering
@@ -236,6 +244,18 @@ If configured correctly, Claude will respond with your current game state using 
 - **`get_edcopilot_status`** - Check EDCoPilot integration configuration and custom files
 - **`backup_edcopilot_files`** - Create timestamped backups of existing custom files
 - **`preview_edcopilot_chatter`** - Preview generated content without writing files
+
+#### Dynamic Theme System *(NEW!)*
+- **`set_edcopilot_theme`** - Set AI-powered personality themes for crew members
+- **`get_theme_status`** - View current theme configuration and ship setups
+- **`reset_theme`** - Clear all theme settings and return to defaults
+- **`generate_themed_templates_prompt`** - Create Claude Desktop prompts for theme generation
+- **`apply_generated_templates`** - Apply AI-generated templates to EDCoPilot with validation
+- **`configure_ship_crew`** - Set up ship-specific crew roles and personalities
+- **`set_crew_member_theme`** - Configure individual crew member themes and contexts
+- **`generate_crew_setup_prompt`** - Generate prompts for multi-crew theme coordination
+- **`preview_themed_content`** - Preview themed content before applying to files
+- **`backup_current_themes`** - Create backups of current theme configurations
 
 **Grammar Compliance**: All EDCoPilot chatter generation follows the formal grammar specification documented in [`docs/edcopilot-chatter-grammar.md`](docs/edcopilot-chatter-grammar.md), ensuring compatibility with EDCoPilot's expected file formats and preventing syntax errors.
 
@@ -319,6 +339,15 @@ Once connected to Claude Desktop, you can interact with your Elite Dangerous dat
 "Help me optimize my trading routes using my current data"
 "Analyze my combat performance and suggest improvements"
 "Create a mission planning prompt for my current situation"
+```
+
+#### Dynamic Theme System *(NEW!)*
+```
+"Set my EDCoPilot theme to 'space explorer' with context 'veteran pilot exploring unknown regions'"
+"Configure my Anaconda crew with scientific expedition personalities"
+"Generate a themed templates prompt for my current crew configuration"
+"Apply these AI-generated templates to my EDCoPilot files with validation"
+"Set my navigator's theme to 'analytical expert' focused on precision navigation"
 ```
 
 #### Resource Access
