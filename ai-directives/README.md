@@ -232,6 +232,7 @@ data_store.get_events_by_category(EventCategory.EXPLORATION)
 - **Implementation Plan**: [`project_implementation_plan.md`](project_implementation_plan.md) - 15-milestone roadmap
 - **Session Reports**: [`session-reports/`](session-reports/) - Historical context and discoveries
 - **Main README**: [`../README.md`](../README.md) - User-facing documentation
+- **EDCoPilot Grammar**: [`../docs/edcopilot-chatter-grammar.md`](../docs/edcopilot-chatter-grammar.md) - Formal specification for chatter file generation
 
 ### Key Scripts
 - `setup_dependencies.py` - Install and verify packages

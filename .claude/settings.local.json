@@ -24,7 +24,15 @@
       "Read(//c/Users/gwllo/Saved Games/Frontier Developments/Elite Dangerous/**)",
       "Bash(findstr:*)",
       "Read(//c/Users/gwllo/Desktop/**)",
-      "Read(//c/Utilities/EDCoPilot/User custom files/**)"
+      "Read(//c/Utilities/EDCoPilot/User custom files/**)",
+      "Bash(taskkill:*)",
+      "Bash(\"taskkill\" \"/F\" \"/IM\" \"python.exe\")",
+      "Read(//c/Users/gwllo/AppData/Roaming/Claude/**)",
+      "Bash(timeout 15 venv/Scripts/python.exe:*)",
+      "Bash(dir:*)",
+      "WebFetch(domain:www.razzafrag.com)",
+      "WebFetch(domain:razzserver.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

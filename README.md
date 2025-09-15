@@ -230,10 +230,12 @@ If configured correctly, Claude will respond with your current game state using 
 - **`get_resource_data`** - Access structured data by URI
 
 #### EDCoPilot Integration
-- **`generate_edcopilot_chatter`** - Generate contextual chatter files based on game state
+- **`generate_edcopilot_chatter`** - Generate contextual chatter files based on game state (follows formal grammar specification)
 - **`get_edcopilot_status`** - Check EDCoPilot integration configuration and custom files
 - **`backup_edcopilot_files`** - Create timestamped backups of existing custom files
 - **`preview_edcopilot_chatter`** - Preview generated content without writing files
+
+**Grammar Compliance**: All EDCoPilot chatter generation follows the formal grammar specification documented in [`docs/edcopilot-chatter-grammar.md`](docs/edcopilot-chatter-grammar.md), ensuring compatibility with EDCoPilot's expected file formats and preventing syntax errors.
 
 ### MCP Resources (17+ Dynamic Endpoints)
 #### Status Resources
@@ -489,6 +491,24 @@ Quick start:
 - Ask it to use the Elite Dangerous MCP tools (e.g., “What’s my current status?”)
 
 Full setup and troubleshooting: see `docs/CHATGPT_CODEX_INTEGRATION.md`.
+
+## Documentation
+
+### Core Documentation
+- **[Project Implementation Plan](ai-directives/project_implementation_plan.md)** - 15-milestone development roadmap
+- **[AI Directives](ai-directives/README.md)** - Development standards and workflow guidelines
+- **[Code Quality Lessons](ai-directives/code_quality_lessons.md)** - Technical patterns and best practices
+
+### EDCoPilot Integration
+- **[EDCoPilot Chatter Grammar Specification](docs/edcopilot-chatter-grammar.md)** - Formal grammar rules for generating compatible chatter files
+- Comprehensive syntax documentation for Space Chatter, Crew Chatter, and Deep Space Chatter
+- Token replacement patterns, conditional logic, and validation requirements
+- Examples and anti-patterns for error prevention
+
+### Session Reports
+- **[Session Reports](ai-directives/session-reports/)** - Historical development context and discoveries
+- Knowledge preservation across development sessions
+- Technical insights and successful patterns
 
 ## License
 

@@ -2,6 +2,72 @@
 
 This document captures critical lessons learned from recent bugfixes and test failures to ensure future code generation gets it right the first time.
 
+## EDCoPilot Chatter Generation Standards
+
+### Grammar Specification Compliance
+**CRITICAL**: All EDCoPilot chatter generation must follow the formal grammar specification
+
+**Reference Document**: [`../docs/edcopilot-chatter-grammar.md`](../docs/edcopilot-chatter-grammar.md)
+
+```python
+# CORRECT ✅ - Follow grammar spec exactly
+def generate_space_chatter(game_state):
+    # Use proper token replacement
+    content = "condition:Docked|Successfully docked at {StationName}. All systems secure."
+
+    # Replace tokens with actual game data
+    content = content.replace("{StationName}", game_state.current_station or "Station")
+
+    return content
+
+# WRONG ❌ - Invalid format
+def generate_space_chatter(game_state):
+    # Wrong delimiter format
+    content = "[condition=Docked] Successfully docked at {StationName}"
+
+    # Missing token replacement
+    return content  # Will output literal "{StationName}"
+```
+
+**Key Requirements:**
+1. **Format Validation**: All output must conform to grammar specification
+2. **Token Replacement**: Replace ALL `{TokenName}` patterns with actual game data
+3. **Condition Syntax**: Use `condition:ConditionName|` format for space chatter
+4. **Conversation Format**: Use `[example]`/`[\example]` blocks for crew chatter
+5. **File Headers**: Include proper comment headers with available tokens/conditions
+6. **Error Prevention**: Validate against grammar before writing files
+
+### Token Management
+**CRITICAL**: Dynamic token replacement must handle missing data gracefully
+
+```python
+# CORRECT ✅ - Safe token replacement with fallbacks
+def replace_tokens(content: str, game_state) -> str:
+    replacements = {
+        "{SystemName}": game_state.current_system or "Unknown System",
+        "{StationName}": game_state.current_station or "Station",
+        "{ShipName}": game_state.ship_name or "Ship",
+        "{CommanderName}": game_state.commander_name or "Commander",
+        "{Credits}": str(game_state.credits) if game_state.credits else "0"
+    }
+
+    for token, value in replacements.items():
+        content = content.replace(token, value)
+
+    return content
+
+# WRONG ❌ - Will cause errors or None values in output
+def replace_tokens(content: str, game_state) -> str:
+    content = content.replace("{SystemName}", game_state.current_system)  # Could be None
+    return content
+```
+
+**Best Practices:**
+- Always provide fallback values for missing game data
+- Test token replacement with empty game state
+- Validate all tokens are replaced before output
+- Use contextually appropriate fallbacks (not generic "Unknown")
+
 ## Core Data Structure Patterns
 
 ### ProcessedEvent Object Structure
@@ -204,5 +270,110 @@ category = event.category.value  # Get string value when needed
 - Check method signatures in the implementation, not documentation
 - Verify return value types and structures
 - Test both success and failure cases
+
+## Critical Data Flow Issues
+
+### Game State Population Bug (September 2025)
+
+**CRITICAL**: Events can be stored successfully but game state fields may remain `None` due to improper data extraction.
+
+#### The Problem
+```python
+# BUG: Events stored but game state not updated
+data_store.store_event(processed_event)
+recent_events = data_store.get_recent_events()  # ✅ Events found
+game_state = data_store.get_game_state()       # ❌ Fields still None
+```
+
+**Root Cause**: The `_update_game_state()` method wasn't properly extracting data from `raw_event` fields into GameState attributes.
+
+**Symptoms to Watch For**:
+- MCP server logs show "Found X events" but "system: None, ship: None"
+- EDCoPilot generates "Unknown System" instead of actual system names
+- Context generation uses generic templates instead of real data
+- Integration appears successful but output contains placeholders
+
+#### Prevention Strategy
+
+**ALWAYS Test End-to-End Data Flow**:
+```python
+# BAD ❌ - Only tests storage
+def test_events_stored():
+    data_store.store_event(event)
+    assert len(data_store.get_recent_events()) > 0
+
+# GOOD ✅ - Tests storage AND extraction
+def test_events_populate_game_state():
+    loadgame_event = ProcessedEvent(
+        raw_event={"Commander": "Hadesfire", "Ship": "Mandalay"},
+        event_type="LoadGame",
+        # ... other params
+    )
+    data_store.store_event(loadgame_event)
+
+    game_state = data_store.get_game_state()
+    assert game_state.commander_name == "Hadesfire"  # Verify extraction works
+    assert game_state.current_ship == "Mandalay"     # Not just that events exist
+```
+
+**Create Bug Reproduction Tests**:
+```python
+def test_game_state_remains_none_despite_loaded_events():
+    """Reproduces the exact issue: events loaded but state fields None."""
+    # Load events that should populate state
+    data_store.store_event(location_event)
+    data_store.store_event(loadgame_event)
+
+    # Verify events are stored
+    assert len(data_store.get_recent_events()) >= 2
+
+    # This should FAIL until bug is fixed
+    game_state = data_store.get_game_state()
+    assert game_state.current_system is not None, "BUG: current_system not populated"
+    assert game_state.commander_name is not None, "BUG: commander_name not populated"
+```
+
+#### Code Review Checklist
+- [ ] Does `_update_game_state()` actually extract `raw_event` data into GameState fields?
+- [ ] Are there tests that verify game state population, not just event storage?
+- [ ] Do integration tests check that MCP tools receive populated data?
+- [ ] Would this change cause EDCoPilot to generate generic vs contextual content?
+
+#### Integration Testing Requirements
+```python
+# REQUIRED: Test the full pipeline
+def test_edcopilot_uses_real_data():
+    # Store events with real data
+    data_store.store_event(location_event)  # Blae Drye SG-P b25-6
+    data_store.store_event(ship_event)      # EXCELSIOR
+
+    # Generate content
+    generator = EDCoPilotGenerator(data_store)
+    context = generator._build_context()
+
+    # Verify real data appears, not placeholders
+    assert "Blae Drye SG-P b25-6" in str(context), "Should use real system name"
+    assert "EXCELSIOR" in str(context), "Should use real ship name"
+    assert "Unknown System" not in str(context), "Should not contain placeholders"
+```
+
+### DataStore State Management
+**CRITICAL**: Always verify that stored events actually populate the intended state fields.
+
+```python
+# PATTERN: Event storage methods that must update state
+def _handle_load_game(self, event: ProcessedEvent) -> None:
+    """LoadGame events must extract commander, ship, credits from raw_event."""
+    key_data = event.key_data or {}
+    # VERIFY: Does this actually populate GameState fields?
+    self.game_state.commander_name = key_data.get("commander")
+    self.game_state.current_ship = key_data.get("ship_type")
+
+def _handle_location_update(self, event: ProcessedEvent) -> None:
+    """Location events must extract system name from raw_event."""
+    system_name = event.raw_event.get("StarSystem")  # Use raw_event, not key_data
+    # VERIFY: Does this actually update current_system?
+    self.game_state.current_system = system_name
+```
 
 This document should be referenced whenever generating or modifying code in this codebase to avoid repeating these common mistakes.

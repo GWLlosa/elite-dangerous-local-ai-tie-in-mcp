@@ -281,10 +281,13 @@ class DataStore:
                 altitude_from_average_radius=self._game_state.altitude_from_average_radius,
                 game_mode=self._game_state.game_mode,
                 group=self._game_state.group,
+                commander_name=self._game_state.commander_name,
                 credits=self._game_state.credits,
                 loan=self._game_state.loan,
                 cargo_capacity=self._game_state.cargo_capacity,
                 cargo_count=self._game_state.cargo_count,
+                fuel_level=self._game_state.fuel_level,
+                fuel_capacity=self._game_state.fuel_capacity,
                 last_updated=self._game_state.last_updated
             )
     
@@ -424,12 +427,12 @@ class DataStore:
     
     def _handle_fsd_jump(self, event: ProcessedEvent) -> None:
         """Handle FSD jump events."""
-        # FIXED: use key_data instead of extracted_data
+        # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_system = data.get('system_name')
+        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
         self._game_state.coordinates = {
             'x': data.get('star_pos_x'),
-            'y': data.get('star_pos_y'), 
+            'y': data.get('star_pos_y'),
             'z': data.get('star_pos_z')
         }
         self._game_state.current_station = None
@@ -446,18 +449,18 @@ class DataStore:
     def _handle_supercruise_exit(self, event: ProcessedEvent) -> None:
         """Handle supercruise exit."""
         self._game_state.supercruise = False
-        # FIXED: use key_data instead of extracted_data
+        # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_body = data.get('body_name')
+        self._game_state.current_body = data.get('body')  # Changed from 'body_name'
     
     def _handle_docked(self, event: ProcessedEvent) -> None:
         """Handle docking events."""
         self._game_state.docked = True
         self._game_state.landed = False
         self._game_state.supercruise = False
-        # FIXED: use key_data instead of extracted_data
+        # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_station = data.get('station_name')
+        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
     
     def _handle_undocked(self, event: ProcessedEvent) -> None:
         """Handle undocking events."""
@@ -492,9 +495,9 @@ class DataStore:
     
     def _handle_loadout(self, event: ProcessedEvent) -> None:
         """Handle ship loadout events."""
-        # FIXED: use key_data instead of extracted_data
+        # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_ship = data.get('ship_type')
+        self._game_state.current_ship = data.get('ship')  # Changed from 'ship_type' to 'ship'
         self._game_state.ship_name = data.get('ship_name')
         self._game_state.ship_id = data.get('ship_id')
         if 'modules' in data:
@@ -547,12 +550,16 @@ class DataStore:
     
     def _handle_location_update(self, event: ProcessedEvent) -> None:
         """Handle location updates."""
-        # FIXED: use key_data instead of extracted_data
+        # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_system = data.get('system_name')
-        self._game_state.current_station = data.get('station_name')
-        self._game_state.current_body = data.get('body_name')
-        
+        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
+        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
+        self._game_state.current_body = data.get('body')  # Changed from 'body_name'
+
+        # Update docked status from Location event
+        if 'docked' in data:
+            self._game_state.docked = data['docked']
+
         if 'star_pos' in data:
             self._game_state.coordinates = data['star_pos']
     

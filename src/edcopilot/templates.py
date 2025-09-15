@@ -36,9 +36,19 @@ class ChatterEntry:
     conditions: Optional[List[str]] = None
     voice_override: Optional[str] = None
     probability: float = 1.0
+    chatter_type: ChatterType = ChatterType.SPACE_CHATTER
 
     def format_for_edcopilot(self) -> str:
-        """Format entry for EDCoPilot file format."""
+        """Format entry for EDCoPilot file format based on chatter type."""
+        if self.chatter_type == ChatterType.SPACE_CHATTER:
+            return self._format_space_chatter()
+        elif self.chatter_type in [ChatterType.CREW_CHATTER, ChatterType.DEEP_SPACE_CHATTER]:
+            return self._format_crew_chatter()
+        else:
+            return self._format_space_chatter()  # Default fallback
+
+    def _format_space_chatter(self) -> str:
+        """Format for Space Chatter - single line with conditions."""
         parts = []
 
         # Add conditions if present
@@ -54,6 +64,12 @@ class ChatterEntry:
         parts.append(self.text)
 
         return "|".join(parts)
+
+    def _format_crew_chatter(self) -> str:
+        """Format for Crew Chatter - simple line (conversations handled at template level)."""
+        # For crew chatter, individual entries are just dialogue lines
+        # The conversation structure is handled by the template manager
+        return self.text
 
 
 class EDCoPilotTokens:
@@ -118,6 +134,36 @@ class EDCoPilotConditions:
     HIGH_VALUE_TARGET = "HighValueTarget"
 
 
+class CrewRole(Enum):
+    """Standard crew roles for crew chatter conversations."""
+    EDCOPILOT = "[<EDCoPilot>]"        # Ship's computer
+    OPERATIONS = "[<Operations>]"       # Operations officer
+    HELM = "[<Helm>]"                  # Helm officer
+    ENGINEERING = "[<Engineering>]"    # Chief engineer
+    COMMS = "[<Comms>]"               # Communications officer
+    NUMBER1 = "[<Number1>]"           # First officer
+    SCIENCE = "[<Science>]"           # Science officer
+    SECURITY = "[<Security>]"         # Security chief
+
+
+@dataclass
+class CrewConversation:
+    """Multi-speaker crew conversation for crew chatter files."""
+    dialogue_lines: List[Tuple[CrewRole, str]]  # (speaker, text) pairs
+    conditions: Optional[List[str]] = None
+    probability: float = 1.0
+
+    def format_for_edcopilot(self) -> str:
+        """Format conversation for EDCoPilot crew chatter format."""
+        lines = ["[example]"]
+
+        for speaker, text in self.dialogue_lines:
+            lines.append(f"{speaker.value} {text}")
+
+        lines.append("[\example]")
+        return "\n".join(lines)
+
+
 class SpaceChatterTemplate:
     """Template for generating EDCoPilot Space Chatter files."""
 
@@ -128,7 +174,8 @@ class SpaceChatterTemplate:
     def add_entry(self, text: str, conditions: Optional[List[str]] = None,
                   voice_override: Optional[str] = None) -> None:
         """Add a chatter entry."""
-        entry = ChatterEntry(text=text, conditions=conditions, voice_override=voice_override)
+        entry = ChatterEntry(text=text, conditions=conditions, voice_override=voice_override,
+                           chatter_type=ChatterType.SPACE_CHATTER)
         self.entries.append(entry)
 
     def generate_navigation_chatter(self) -> None:
@@ -137,39 +184,47 @@ class SpaceChatterTemplate:
             # System entry chatter
             ChatterEntry(
                 text=f"Entering {EDCoPilotTokens.SYSTEM_NAME}, Commander. Scanning for points of interest.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE]
+                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text=f"Welcome to {EDCoPilotTokens.SYSTEM_NAME}. Population centers detected on sensors.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE]
+                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text=f"Jump complete. We're now in the {EDCoPilotTokens.SYSTEM_NAME} system.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE]
+                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
 
             # Docking chatter
             ChatterEntry(
                 text=f"Docking request acknowledged by {EDCoPilotTokens.STATION_NAME}. Bringing us in smoothly.",
-                conditions=[EDCoPilotConditions.APPROACHING_STATION]
+                conditions=[EDCoPilotConditions.APPROACHING_STATION],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text=f"Successfully docked at {EDCoPilotTokens.STATION_NAME}. All systems secure.",
-                conditions=[EDCoPilotConditions.DOCKED]
+                conditions=[EDCoPilotConditions.DOCKED],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="Permission to disembark granted. Station services are now available.",
-                conditions=[EDCoPilotConditions.DOCKED]
+                conditions=[EDCoPilotConditions.DOCKED],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
 
             # Fuel warnings
             ChatterEntry(
                 text=f"Fuel reserves at {EDCoPilotTokens.FUEL_PERCENT}%. Recommend refueling soon, Commander.",
-                conditions=[EDCoPilotConditions.FUEL_LOW]
+                conditions=[EDCoPilotConditions.FUEL_LOW],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="We should consider fuel management for our next jump sequence.",
-                conditions=[EDCoPilotConditions.FUEL_LOW]
+                conditions=[EDCoPilotConditions.FUEL_LOW],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
 
@@ -180,23 +235,28 @@ class SpaceChatterTemplate:
         exploration_entries = [
             ChatterEntry(
                 text=f"Fascinating astronomical data from {EDCoPilotTokens.BODY_NAME}. This should sell well.",
-                conditions=[EDCoPilotConditions.SCANNING, EDCoPilotConditions.EXPLORING]
+                conditions=[EDCoPilotConditions.SCANNING, EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="Detailed surface scan complete. Adding to our exploration database.",
-                conditions=[EDCoPilotConditions.SCANNING]
+                conditions=[EDCoPilotConditions.SCANNING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="Commander, we appear to be the first to discover this. Excellent work!",
-                conditions=[EDCoPilotConditions.FIRST_DISCOVERY]
+                conditions=[EDCoPilotConditions.FIRST_DISCOVERY],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text=f"We're {EDCoPilotTokens.DISTANCE_FROM_SOL} light years from Sol. True exploration territory.",
-                conditions=[EDCoPilotConditions.EXPLORING]
+                conditions=[EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
             ChatterEntry(
                 text="The void between stars is vast, but every system tells a story.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING]
+                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING],
+                chatter_type=ChatterType.SPACE_CHATTER
             ),
         ]
 
