@@ -7,11 +7,13 @@ This comprehensive guide covers all features available in the Elite Dangerous MC
 1. [MCP Tools](#mcp-tools-15-available)
 2. [MCP Resources](#mcp-resources-17-dynamic-endpoints)
 3. [MCP Prompts](#mcp-prompts-9-context-aware-templates)
-4. [Background Services](#background-services)
-5. [Claude Desktop Integration](#claude-desktop-integration)
-6. [Development API](#development-api)
-7. [Configuration Options](#configuration-options)
-8. [Troubleshooting](#troubleshooting)
+4. [EDCoPilot Integration](#edcopilot-integration)
+5. [Dynamic Theme System (Planned)](#dynamic-theme-system-planned)
+6. [Background Services](#background-services)
+7. [Claude Desktop Integration](#claude-desktop-integration)
+8. [Development API](#development-api)
+9. [Configuration Options](#configuration-options)
+10. [Troubleshooting](#troubleshooting)
 
 ## 🔧 MCP Tools (15+ Available)
 
@@ -543,6 +545,182 @@ Analyzes travel patterns and route efficiency.
 
 #### Performance Review (`performance_review`)
 Comprehensive gameplay performance analysis.
+
+**Includes:**
+- Overall progression metrics
+- Activity effectiveness
+- Goal achievement tracking
+- Future recommendations
+
+## 🎭 EDCoPilot Integration
+
+The Elite Dangerous MCP Server provides comprehensive integration with EDCoPilot voice software, enabling dynamic generation of custom chatter files based on your current gameplay state.
+
+### EDCoPilot MCP Tools
+
+#### `generate_edcopilot_chatter`
+Generates contextual chatter files based on current game state.
+
+**Usage in Claude:**
+```
+"Generate EDCoPilot chatter for my current situation"
+```
+
+**Parameters:**
+- `chatter_type` (optional): "space", "crew", "deepspace", or "all"
+- `context_override` (optional): Custom context for generation
+
+**Returns:**
+- Generation status and file locations
+- Entry count and context analysis
+- Backup file information
+
+#### `get_edcopilot_status`
+Check EDCoPilot integration configuration and file status.
+
+**Usage in Claude:**
+```
+"Check my EDCoPilot integration status"
+```
+
+**Returns:**
+```json
+{
+  "status": "available",
+  "edcopilot_path": "C:/Utilities/EDCoPilot/User custom files",
+  "path_exists": true,
+  "custom_files": {
+    "space_chatter": "EDCoPilot.SpaceChatter.Custom.txt",
+    "crew_chatter": "EDCoPilot.CrewChatter.Custom.txt",
+    "deep_space": "EDCoPilot.DeepSpaceChatter.Custom.txt"
+  },
+  "game_context": {
+    "current_system": "Sol",
+    "docked": true,
+    "ship": "Anaconda",
+    "primary_activity": "exploration"
+  }
+}
+```
+
+#### `backup_edcopilot_files`
+Create timestamped backups of existing EDCoPilot custom files.
+
+**Usage in Claude:**
+```
+"Backup my current EDCoPilot files before generating new content"
+```
+
+#### `preview_edcopilot_chatter`
+Preview generated content without writing files.
+
+**Usage in Claude:**
+```
+"Show me a preview of what EDCoPilot chatter would be generated"
+```
+
+### Chatter Types
+
+#### Space Chatter
+General ship operations and navigation dialogue.
+
+**Example Content:**
+```
+condition:InSupercruise|Entering {SystemName}, Commander. Scanning for points of interest.
+condition:Docked|Successfully docked at {StationName}. All systems secure.
+condition:FuelLow|Fuel reserves at {FuelPercent}%. Recommend refueling soon, Commander.
+```
+
+#### Crew Chatter
+Professional crew member reports and updates.
+
+**Example Content:**
+```
+condition:InSupercruise|Navigation officer reports jump calculations complete, Commander.
+condition:Docked|Engineering reports all systems nominal. Power distribution at peak efficiency.
+condition:UnderAttack|All hands, red alert! Hostile contacts on approach vector!
+```
+
+#### Deep Space Chatter
+Special dialogue for deep space exploration (>5000 LY from Sol/Colonia).
+
+**Example Content:**
+```
+condition:DeepSpace|We're {DistanceFromSol} light years from home. The isolation is profound.
+condition:DeepSpace&Exploring|Out here in the void, every star is a beacon of hope in the cosmic darkness.
+```
+
+### Context-Aware Generation
+
+The system analyzes your recent gameplay to generate appropriate chatter:
+
+- **Exploration Focus**: Enhanced discovery and scanning dialogue
+- **Trading Focus**: Market analysis and cargo management chatter
+- **Combat Focus**: Tactical updates and threat assessments
+- **Low Fuel**: Urgent fuel management warnings
+- **Current Location**: References to actual systems and stations
+
+## 🎪 Dynamic Theme System (Planned)
+
+*Milestone 11.5 - Planned Enhancement*
+
+The upcoming Dynamic Theme System will transform EDCoPilot integration from static templates to AI-powered, personalized dialogue generation.
+
+### Planned Features
+
+#### Theme-Based Personality
+Set overall character themes that influence all dialogue:
+- **Space Pirate**: "Entering {SystemName}. Raise the Jolly Roger, matey!"
+- **Corporate Executive**: "Entering {SystemName}. Analyzing market opportunities."
+- **Military Veteran**: "Jump complete to {SystemName}. These old bones have seen enough combat."
+
+#### Ship-Specific Multi-Crew
+Realistic crew compositions based on ship size:
+- **Small Ships (1-2 crew)**: Intimate, personal dialogue
+- **Medium Ships (3-4 crew)**: Professional team operations
+- **Large Ships (5+ crew)**: Full bridge crew with specialized roles
+
+#### Individual Crew Personalities
+Each crew member gets their own theme and background:
+- **Navigator**: "By-the-book military officer, 30-year veteran"
+- **Science Officer**: "Excited researcher on first deep space mission"
+- **Engineer**: "Gruff Scottish mechanic with 40 years experience"
+
+#### Dynamic AI Generation
+- Leverages existing Claude Desktop connection
+- No additional API keys or session management required
+- Unlimited theme possibilities through AI generation
+- Maintains all token functionality for game data integration
+
+### Planned MCP Tools
+
+#### `set_edcopilot_theme`
+Set overall personality theme with context.
+
+**Usage:**
+```
+"Set my EDCoPilot theme to space pirate who owes money to the Space Mafia"
+```
+
+#### `configure_ship_crew`
+Set up crew composition for specific ships.
+
+**Usage:**
+```
+"Configure my Anaconda with a 6-person bridge crew"
+```
+
+#### `set_crew_member_theme`
+Assign individual personalities to crew members.
+
+**Usage:**
+```
+"Make my navigator a by-the-book officer and my engineer a quirky inventor"
+```
+
+See `docs/milestones/MILESTONE_11_5_PLANNED.md` for complete specification.
+
+## 🔄 Background Services
 
 **Includes:**
 - Overall statistics

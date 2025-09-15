@@ -12,6 +12,8 @@ A Model Context Protocol (MCP) server that provides real-time integration betwee
 
 🎭 **EDCoPilot Integration**: Generates dynamic custom chatter, crew dialogue, and speech extensions based on your current game state
 
+🎪 **Dynamic Theme System** *(Planned)*: AI-powered personality themes with ship-specific multi-crew support for immersive roleplay
+
 📊 **Comprehensive Analytics**: Track exploration progress, trading performance, combat statistics, and journey summaries
 
 🔧 **Flexible Configuration**: Configurable paths, event limits, and integration options
