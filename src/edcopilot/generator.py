@@ -181,8 +181,9 @@ class EDCoPilotContentGenerator:
         # Generate files with enhanced content (don't regenerate from scratch)
         enhanced_files = self.template_manager.generate_all_templates()
 
-        # Apply token replacement to all files
-        return self._replace_tokens_in_files(enhanced_files, context)
+        # DO NOT apply token replacement - EDCoPilot handles token replacement at runtime
+        # The files should contain {SystemName}, {StationName} etc. for EDCoPilot to replace
+        return enhanced_files
 
     def _add_exploration_context(self, template, context: Dict[str, Any]) -> None:
         """Add exploration-specific contextual chatter."""
