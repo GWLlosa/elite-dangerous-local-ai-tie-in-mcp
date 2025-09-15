@@ -1,0 +1,832 @@
+{
+  "Anaconda_0": {
+    "ship_name": "Anaconda_0",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.945415+00:00"
+  },
+  "Corvette_1": {
+    "ship_name": "Corvette_1",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.946415+00:00"
+  },
+  "Cutter_2": {
+    "ship_name": "Cutter_2",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.947415+00:00"
+  },
+  "Python_3": {
+    "ship_name": "Python_3",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.947415+00:00"
+  },
+  "Asp Explorer_4": {
+    "ship_name": "Asp Explorer_4",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.948415+00:00"
+  },
+  "Anaconda_5": {
+    "ship_name": "Anaconda_5",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.949417+00:00"
+  },
+  "Corvette_6": {
+    "ship_name": "Corvette_6",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.950415+00:00"
+  },
+  "Cutter_7": {
+    "ship_name": "Cutter_7",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.950415+00:00"
+  },
+  "Python_8": {
+    "ship_name": "Python_8",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.951415+00:00"
+  },
+  "Asp Explorer_9": {
+    "ship_name": "Asp Explorer_9",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.953415+00:00"
+  },
+  "Anaconda_10": {
+    "ship_name": "Anaconda_10",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.953415+00:00"
+  },
+  "Corvette_11": {
+    "ship_name": "Corvette_11",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.954415+00:00"
+  },
+  "Cutter_12": {
+    "ship_name": "Cutter_12",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.955418+00:00"
+  },
+  "Python_13": {
+    "ship_name": "Python_13",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.956415+00:00"
+  },
+  "Asp Explorer_14": {
+    "ship_name": "Asp Explorer_14",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.957416+00:00"
+  },
+  "Anaconda_15": {
+    "ship_name": "Anaconda_15",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.958415+00:00"
+  },
+  "Corvette_16": {
+    "ship_name": "Corvette_16",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.959415+00:00"
+  },
+  "Cutter_17": {
+    "ship_name": "Cutter_17",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.960415+00:00"
+  },
+  "Python_18": {
+    "ship_name": "Python_18",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.961415+00:00"
+  },
+  "Asp Explorer_19": {
+    "ship_name": "Asp Explorer_19",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.962419+00:00"
+  },
+  "Anaconda_20": {
+    "ship_name": "Anaconda_20",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.963418+00:00"
+  },
+  "Corvette_21": {
+    "ship_name": "Corvette_21",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.965418+00:00"
+  },
+  "Cutter_22": {
+    "ship_name": "Cutter_22",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.966418+00:00"
+  },
+  "Python_23": {
+    "ship_name": "Python_23",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.967417+00:00"
+  },
+  "Asp Explorer_24": {
+    "ship_name": "Asp Explorer_24",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.968418+00:00"
+  },
+  "Anaconda_25": {
+    "ship_name": "Anaconda_25",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.969418+00:00"
+  },
+  "Corvette_26": {
+    "ship_name": "Corvette_26",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.971417+00:00"
+  },
+  "Cutter_27": {
+    "ship_name": "Cutter_27",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.972418+00:00"
+  },
+  "Python_28": {
+    "ship_name": "Python_28",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.973417+00:00"
+  },
+  "Asp Explorer_29": {
+    "ship_name": "Asp Explorer_29",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.974417+00:00"
+  },
+  "Anaconda_30": {
+    "ship_name": "Anaconda_30",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.976418+00:00"
+  },
+  "Corvette_31": {
+    "ship_name": "Corvette_31",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.977417+00:00"
+  },
+  "Cutter_32": {
+    "ship_name": "Cutter_32",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.979416+00:00"
+  },
+  "Python_33": {
+    "ship_name": "Python_33",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.980418+00:00"
+  },
+  "Asp Explorer_34": {
+    "ship_name": "Asp Explorer_34",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.982418+00:00"
+  },
+  "Anaconda_35": {
+    "ship_name": "Anaconda_35",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.983417+00:00"
+  },
+  "Corvette_36": {
+    "ship_name": "Corvette_36",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.985417+00:00"
+  },
+  "Cutter_37": {
+    "ship_name": "Cutter_37",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.986418+00:00"
+  },
+  "Python_38": {
+    "ship_name": "Python_38",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.988418+00:00"
+  },
+  "Asp Explorer_39": {
+    "ship_name": "Asp Explorer_39",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.989417+00:00"
+  },
+  "Anaconda_40": {
+    "ship_name": "Anaconda_40",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.991418+00:00"
+  },
+  "Corvette_41": {
+    "ship_name": "Corvette_41",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.993417+00:00"
+  },
+  "Cutter_42": {
+    "ship_name": "Cutter_42",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.995417+00:00"
+  },
+  "Python_43": {
+    "ship_name": "Python_43",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.996417+00:00"
+  },
+  "Asp Explorer_44": {
+    "ship_name": "Asp Explorer_44",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:56.998417+00:00"
+  },
+  "Anaconda_45": {
+    "ship_name": "Anaconda_45",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "science",
+      "engineer",
+      "security",
+      "comms"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:57.000418+00:00"
+  },
+  "Corvette_46": {
+    "ship_name": "Corvette_46",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:57.002418+00:00"
+  },
+  "Cutter_47": {
+    "ship_name": "Cutter_47",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:57.004417+00:00"
+  },
+  "Python_48": {
+    "ship_name": "Python_48",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:57.005417+00:00"
+  },
+  "Asp Explorer_49": {
+    "ship_name": "Asp Explorer_49",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer",
+      "science"
+    ],
+    "crew_themes": {},
+    "overall_theme": "theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:12:57.007417+00:00"
+  },
+  "Fleet_0_Ship_0": {
+    "ship_name": "Fleet_0_Ship_0",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.362083+00:00"
+  },
+  "Fleet_0_Ship_1": {
+    "ship_name": "Fleet_0_Ship_1",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.365084+00:00"
+  },
+  "Fleet_0_Ship_2": {
+    "ship_name": "Fleet_0_Ship_2",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.369081+00:00"
+  },
+  "Fleet_0_Ship_3": {
+    "ship_name": "Fleet_0_Ship_3",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.372083+00:00"
+  },
+  "Fleet_0_Ship_4": {
+    "ship_name": "Fleet_0_Ship_4",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.374083+00:00"
+  },
+  "Fleet_1_Ship_0": {
+    "ship_name": "Fleet_1_Ship_0",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.377084+00:00"
+  },
+  "Fleet_1_Ship_1": {
+    "ship_name": "Fleet_1_Ship_1",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.379083+00:00"
+  },
+  "Fleet_1_Ship_2": {
+    "ship_name": "Fleet_1_Ship_2",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.381082+00:00"
+  },
+  "Fleet_1_Ship_3": {
+    "ship_name": "Fleet_1_Ship_3",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.384082+00:00"
+  },
+  "Fleet_1_Ship_4": {
+    "ship_name": "Fleet_1_Ship_4",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.386082+00:00"
+  },
+  "Fleet_2_Ship_0": {
+    "ship_name": "Fleet_2_Ship_0",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.389084+00:00"
+  },
+  "Fleet_2_Ship_1": {
+    "ship_name": "Fleet_2_Ship_1",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.391081+00:00"
+  },
+  "Fleet_2_Ship_2": {
+    "ship_name": "Fleet_2_Ship_2",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.393084+00:00"
+  },
+  "Fleet_2_Ship_3": {
+    "ship_name": "Fleet_2_Ship_3",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.396089+00:00"
+  },
+  "Fleet_2_Ship_4": {
+    "ship_name": "Fleet_2_Ship_4",
+    "crew_roles": [
+      "commander",
+      "navigator",
+      "engineer"
+    ],
+    "crew_themes": {},
+    "overall_theme": "worker_4_theme_0",
+    "overall_context": "context_0",
+    "last_updated": "2025-09-15T18:13:11.398082+00:00"
+  }
+}

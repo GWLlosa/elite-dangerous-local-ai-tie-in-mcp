@@ -7,15 +7,47 @@ gameplay data, creating dynamic chatter, crew dialogue, and speech extensions.
 Modules:
 - generator: EDCoPilot custom file generation
 - templates: Template system for dynamic content creation
+- theme_storage: Theme persistence and configuration management
+- theme_generator: AI-powered theme generation system
+- theme_mcp_tools: MCP tools for Dynamic Multi-Crew Theme System
 """
 
 # Package version
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-# Future exports - will be implemented in later milestones
-# from .generator import EDCoPilotGenerator
-# from .templates import EDCoPilotTemplates, ChitChatTemplate, SpaceChatterTemplate
+# Core exports
+from .generator import EDCoPilotContentGenerator as EDCoPilotGenerator
+from .templates import (
+    EDCoPilotTemplateManager, ChatterEntry, ChatterType,
+    SpaceChatterTemplate, CrewChatterTemplate, DeepSpaceChatterTemplate
+)
+from .theme_storage import (
+    ThemeStorage, CrewMemberTheme, ShipCrewConfig, CrewRole
+)
+from .theme_generator import (
+    ThemeGenerator, ThemePromptGenerator, TemplateValidator
+)
+from .theme_mcp_tools import ThemeMCPTools
 
 __all__ = [
-    # Will be populated as classes are implemented
+    # Core functionality
+    "EDCoPilotGenerator",
+
+    # Template system
+    "EDCoPilotTemplateManager",
+    "ChatterEntry",
+    "ChatterType",
+    "SpaceChatterTemplate",
+    "CrewChatterTemplate",
+    "DeepSpaceChatterTemplate",
+
+    # Theme system
+    "ThemeStorage",
+    "CrewMemberTheme",
+    "ShipCrewConfig",
+    "CrewRole",
+    "ThemeGenerator",
+    "ThemePromptGenerator",
+    "TemplateValidator",
+    "ThemeMCPTools"
 ]
