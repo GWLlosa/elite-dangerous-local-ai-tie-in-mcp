@@ -32,7 +32,8 @@
       "Bash(dir:*)",
       "WebFetch(domain:www.razzafrag.com)",
       "WebFetch(domain:razzserver.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": []
