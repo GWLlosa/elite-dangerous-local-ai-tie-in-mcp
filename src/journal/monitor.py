@@ -8,7 +8,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Callable, Dict, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import threading
 
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent
@@ -46,7 +46,7 @@ class JournalEventHandler(FileSystemEventHandler):
         self.current_positions: Dict[str, int] = {}
         self.monitored_files: Set[str] = set()
         # Initialize to past time so first status check won't be throttled
-        self.last_status_check = datetime.now() - timedelta(seconds=1.0)
+        self.last_status_check = datetime.now(timezone.utc) - timedelta(seconds=1.0)
         
         logger.info("Initialized journal event handler")
     
@@ -159,7 +159,7 @@ class JournalEventHandler(FileSystemEventHandler):
             await self._safe_callback([{
                 'event_type': 'file_rotation',
                 'new_file': str(file_path),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }], 'system_events')
             
         except Exception as e:
@@ -174,7 +174,7 @@ class JournalEventHandler(FileSystemEventHandler):
         """
         try:
             # Throttle status updates to avoid spam
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             if now - self.last_status_check < timedelta(seconds=0.5):
                 return
             

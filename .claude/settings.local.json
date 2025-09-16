@@ -33,7 +33,13 @@
       "WebFetch(domain:www.razzafrag.com)",
       "WebFetch(domain:razzserver.com)",
       "WebFetch(domain:github.com)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(find:*)",
+      "Bash(venvScriptspython.exe srcserver.py)",
+      "Bash(\"venv\\Scripts\\python.exe\" \"src\\server.py\")",
+      "Bash(timeout:*)",
+      "Bash(\"venv\\Scripts\\python.exe\" scripts/run_tests.py)",
+      "Bash(\"venv\\Scripts\\python.exe\" -m pytest tests/ -v --tb=short)"
     ],
     "deny": [],
     "ask": []
