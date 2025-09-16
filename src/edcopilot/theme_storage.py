@@ -210,7 +210,7 @@ class ThemeStorage:
             "theme": theme,
             "context": context,
             "set_time": datetime.now(timezone.utc).isoformat(),
-            "theme_id": f"{theme.replace(' ', '_')}_{int(datetime.now().timestamp())}"
+            "theme_id": f"{theme.replace(' ', '_')}_{int(datetime.now(timezone.utc).timestamp())}"
         }
         self._save_current_theme()
         self._add_to_history("theme_set", {"theme": theme, "context": context})

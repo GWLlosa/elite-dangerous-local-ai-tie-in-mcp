@@ -123,14 +123,14 @@ class EliteDangerousServer:
             logger.info(f"Loading historical data from last {hours_back} hours...")
 
             from src.journal.parser import JournalParser
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, timezone
 
             # Initialize journal parser
             journal_parser = JournalParser(self.config.journal_path)
 
             # Find recent journal files
             all_files = journal_parser.find_journal_files()
-            cutoff_time = datetime.now() - timedelta(hours=hours_back)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
 
             recent_files = []
             for file_path in all_files:

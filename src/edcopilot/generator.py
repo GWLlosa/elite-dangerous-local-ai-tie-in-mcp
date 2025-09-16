@@ -378,7 +378,7 @@ class EDCoPilotContentGenerator:
 
             # Backup existing file if requested
             if backup_existing and file_path.exists():
-                backup_path = file_path.with_suffix(f'.backup.{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                backup_path = file_path.with_suffix(f'.backup.{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.txt')
                 shutil.copy2(file_path, backup_path)
                 logger.info(f"Backed up existing file: {backup_path}")
 
@@ -460,7 +460,7 @@ class EDCoPilotFileManager:
         custom_files = self.list_custom_files()
         backup_files = {}
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         for file_path in custom_files:
             backup_name = f"{file_path.stem}.backup.{timestamp}{file_path.suffix}"
@@ -482,7 +482,7 @@ class EDCoPilotFileManager:
 
         backup_files = list(self.edcopilot_path.glob("*.backup.*.txt"))
         removed_count = 0
-        cutoff_time = datetime.now() - timedelta(days=keep_days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=keep_days)
 
         for backup_file in backup_files:
             try:

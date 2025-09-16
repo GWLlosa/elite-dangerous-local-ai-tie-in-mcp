@@ -49,7 +49,10 @@ class ThemeMCPTools:
         # Initialize theme system components
         self.theme_storage = ThemeStorage()
         self.theme_generator = ThemeGenerator(self.theme_storage)
-        self.edcopilot_generator = EDCoPilotGenerator(data_store)
+
+        # Load config to get edcopilot_path
+        config = load_config()
+        self.edcopilot_generator = EDCoPilotGenerator(data_store, config.edcopilot_path)
 
         logger.info("Theme MCP tools initialized")
 
@@ -647,8 +650,8 @@ class ThemeMCPTools:
                 }
 
             # Create backup name with timestamp
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            from datetime import datetime, timezone
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             backup_name = f"backup_{timestamp}"
 
             # Save as preset

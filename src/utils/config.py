@@ -326,9 +326,9 @@ def load_config(config_file: Optional[Path] = None) -> EliteConfig:
         # Log validation summary
         for path_name, result in validation_results.items():
             if result['exists']:
-                logger.info(f"✅ {path_name}: {result['message']}")
+                logger.info(f"[SUCCESS] {path_name}: {result['message']}")
             else:
-                logger.warning(f"⚠️  {path_name}: {result['message']}")
+                logger.warning(f"[WARNING] {path_name}: {result['message']}")
         
         logger.info("Configuration loaded successfully")
         return config
