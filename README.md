@@ -35,7 +35,7 @@ cd elite-dangerous-local-ai-tie-in-mcp
 python scripts/setup_dependencies.py
 
 # 3. Verify environment setup
-python scripts/check_environment.py
+python scripts/check_dependencies.py
 
 # 4. Run tests to verify everything works
 python scripts/run_tests.py
@@ -474,7 +474,7 @@ strategy_prompt = await prompts.generate_prompt("trading_strategy", 12)
 #### Common Issues
 ```bash
 # Check server status
-python scripts/check_environment.py
+python scripts/check_dependencies.py
 
 # Verify dependencies
 python scripts/setup_dependencies.py
@@ -509,7 +509,7 @@ await get_resource_data("elite://status/location", force_refresh=True)
 ### Development Workflow
 - Use the automation scripts for setup: `scripts/setup_dependencies.py`
 - Run tests frequently: `python scripts/run_tests.py`
-- Check environment: `python scripts/check_environment.py`
+- Check environment: `python scripts/check_dependencies.py`
 - Follow the [AI Directives](ai-directives/README.md) for consistency
 - Create session reports for knowledge preservation
 
