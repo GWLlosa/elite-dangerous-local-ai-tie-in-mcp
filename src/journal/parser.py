@@ -96,9 +96,12 @@ class JournalParser:
         """
         filename = file_path.name
         
-        # Valid patterns: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
-        # Elite Dangerous uses ISO-like format with dashes and T separator
+        # Valid patterns:
+        # 1) Legacy: Journal.YYYYMMDDHHMMSS.NN.log[.backup]
+        # 2) ISO-like: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
         patterns = [
+            r'^Journal\.\d{14}\.\d{2}\.log$',
+            r'^Journal\.\d{14}\.\d{2}\.log\.backup$',
             r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log$',
             r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log\.backup$'
         ]
@@ -219,7 +222,7 @@ class JournalParser:
             Tuple[List[Dict], int]: (parsed entries, final file position)
         """
         try:
-            if not file_path.exists():
+            if not file_path or not Path(file_path).exists():
                 logger.error(f"Journal file does not exist: {file_path}")
                 return [], start_position
             
@@ -337,20 +340,25 @@ class JournalParser:
             datetime: Extracted timestamp (epoch if parsing fails)
         """
         try:
-            # Pattern: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
+            # Patterns:
+            # 1) Journal.YYYYMMDDHHMMSS.NN.log[.backup]
+            # 2) Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
             filename = file_path.name
 
-            # Extract timestamp part using regex - new ISO-like format
-            match = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
-            if not match:
-                logger.warning(f"Could not extract timestamp from filename: {filename}")
-                return datetime.fromtimestamp(0)  # Epoch as fallback
+            # Try ISO-like format first
+            match_iso = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
+            if match_iso:
+                timestamp_str = match_iso.group(1)
+                return datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
 
-            timestamp_str = match.group(1)
-            # Parse format like "2025-09-13T221119"
-            timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
+            # Try legacy compact format without dashes
+            match_legacy = re.search(r'Journal\.(\d{14})\.', filename)
+            if match_legacy:
+                legacy_str = match_legacy.group(1)
+                return datetime.strptime(legacy_str, "%Y%m%d%H%M%S")
 
-            return timestamp
+            logger.warning(f"Could not extract timestamp from filename: {filename}")
+            return datetime.fromtimestamp(0)  # Epoch as fallback
 
         except Exception as e:
             logger.warning(f"Error parsing timestamp from {file_path.name}: {e}")
