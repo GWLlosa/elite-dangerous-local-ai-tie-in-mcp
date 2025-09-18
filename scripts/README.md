@@ -41,7 +41,7 @@ This directory contains automation scripts for the Elite Dangerous Local AI Tie-
 
 **When to use**: To validate all functionality is working correctly
 
-### `generate_edcopilot.py` (Coming Soon)
+### `generate_edcopilot.py`
 **Purpose**: Headless EDCoPilot chatter generation without Claude Desktop  
 **Usage**: `python scripts/generate_edcopilot.py [options]`  
 **Defaults**:
@@ -54,7 +54,8 @@ This directory contains automation scripts for the Elite Dangerous Local AI Tie-
 - `python scripts/generate_edcopilot.py --from "2025-09-10" --to "2025-09-13 18:00" --output-dir C:\\temp\\edc --dry-run`
 **Notes**:
 - Dates are provided in local time and converted to UTC internally
-- ASCII-only output, grammar validation, and backups are enforced by default
+- ASCII-only output and backups are enforced by default
+- See `docs/HEADLESS_CLI.md` for all options and examples
 
 ##  Quick Start Workflow
 
