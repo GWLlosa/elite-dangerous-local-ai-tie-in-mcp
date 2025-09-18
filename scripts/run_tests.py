@@ -239,8 +239,8 @@ def main():
         ("src.utils.config", "Configuration system"),
         ("src.utils.data_store", "Data storage system"),
         ("src.server", "MCP server framework"),  # Milestone 7 addition
-        ("src.mcp", "MCP tools package"),  # Milestone 8 addition
-        ("src.mcp.mcp_tools", "MCP tools implementation")  # Milestone 8 addition
+        ("src.elite_mcp", "MCP tools package"),  # Milestone 8 addition
+        ("src.elite_mcp.mcp_tools", "MCP tools implementation")  # Milestone 8 addition
     ]
     
     all_imports_successful = True
@@ -526,4 +526,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n[ERROR] Unexpected error: {e}")
         sys.exit(1)
+
 
