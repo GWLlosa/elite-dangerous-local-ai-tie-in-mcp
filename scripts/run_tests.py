@@ -202,8 +202,8 @@ def main():
         "src/utils/config.py",
         "src/utils/data_store.py",
         "src/server.py",  # Milestone 7 addition
-        "src/mcp/__init__.py",  # Milestone 8 addition
-        "src/mcp/mcp_tools.py",  # Milestone 8 addition
+        "src/elite_mcp/__init__.py",  # Milestone 8 addition (updated path)
+        "src/elite_mcp/mcp_tools.py",  # Milestone 8 addition (updated path)
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
@@ -389,7 +389,7 @@ if result:
     # Milestone 8: MCP Tools functionality test
     print_substep("Testing MCP Tools functionality")
     mcp_tools_test = '''
-from src.mcp.mcp_tools import MCPTools, ActivityType
+from src.elite_mcp.mcp_tools import MCPTools, ActivityType
 from src.utils.data_store import DataStore
 import asyncio
 
@@ -526,3 +526,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n[ERROR] Unexpected error: {e}")
         sys.exit(1)
+
