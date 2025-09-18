@@ -1,5 +1,46 @@
 # AI Directives for Elite Dangerous Local AI Tie-In MCP
 
+## Agents.md And Cursor Rules (Read First)
+
+- What is `AGENTS.md`?
+  - A concise, enforceable ruleset for AI coding agents working in this repo.
+  - It lives at the repository root and applies to all files here. If nested `AGENTS.md` files exist, deeper ones take precedence for their folders.
+  - Agents must follow `AGENTS.md` and any direct user instructions.
+
+- What is `.cursorrules`?
+  - A portable subset of the same rules for the Cursor editor assistant.
+  - Mirrors the critical conventions in a format Cursor recognizes.
+
+- Critical rules (summary):
+  - Use feature branches + PRs; do not merge without explicit approval.
+  - ASCII-only program output; no Unicode/emoji in code or logs.
+  - Timezone-aware UTC datetimes (`datetime.now(timezone.utc)`).
+  - ProcessedEvent uses `raw_event`; use `key_data` for derived fields.
+  - Do not call `get_all_events()`; use `query_events()`/`get_recent_events(minutes)` etc.
+  - MCP resources return structured error objects, not `None`.
+  - FastMCP: register tools with `@app.tool()`; do not rely on `app.tools`.
+  - Template variable checks must handle formatted placeholders like `{credits:,}`.
+  - Follow EDCoPilot chatter grammar in `docs/edcopilot-chatter-grammar.md` and replace all tokens with safe fallbacks.
+
+- See also:
+  - `AGENTS.md` (root): repository-wide binding rules for agents.
+  - `.cursorrules` (root): Cursor-focused rule set.
+
+---
+
+## Folder Guide
+
+- `project_implementation_plan.md` — Milestones and implementation roadmap.
+- `code_quality_lessons.md` — Collected rules and pitfalls from past fixes.
+- `session-reports/` — Session logs, milestone notes, and knowledge preservation.
+
+Recommended reading order for new contributors:
+1) `AGENTS.md` (root) for ground rules
+2) This README for project status/context
+3) `project_implementation_plan.md` for roadmap
+4) `code_quality_lessons.md` for do/don't details
+5) `docs/` in the repo for API/features/testing guides
+
 ## 🚀 Quick Start for AI Assistants
 
 **Project Goal**: Create an MCP server that connects Elite Dangerous journal data to Claude Desktop, enabling real-time game state queries and AI assistance.
