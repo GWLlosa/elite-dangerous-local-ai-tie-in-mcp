@@ -153,6 +153,11 @@ class EDCoPilotContentGenerator:
         files = self._enhance_with_context(files, context)
 
         return files
+        
+    def _build_context(self) -> Dict[str, Any]:
+         \\\ \\\\\\Build and return the current context dict.\\\\\\\\\
+        return self.context_analyzer.analyze_current_context()
+
 
     def _enhance_with_context(self, files: Dict[str, str], context: Dict[str, Any]) -> Dict[str, str]:
         """Enhance template files with contextual entries."""
@@ -512,3 +517,4 @@ class EDCoPilotFileManager:
 
 # Backwards-compatible alias expected by some tests/integrations
 EDCoPilotGenerator = EDCoPilotContentGenerator
+
