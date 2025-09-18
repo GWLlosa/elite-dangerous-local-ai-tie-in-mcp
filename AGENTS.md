@@ -55,6 +55,19 @@ Purpose: Give AI coding agents concise, enforceable rules for working in this re
 - Update or add docs relevant to the code you change.
 - Maintain ASCII in code snippets and program output examples.
 
+## Documentation Update Protocol (MANDATORY)
+- When the user asks to "update the documentation" or to "add a rule":
+  - Update all three in lockstep:
+    - `AGENTS.md` (binding agent rules; repository‑wide)
+    - `.cursorrules` (portable mirror for Cursor)
+    - `ai-directives/` (project context: goals, strategies, status, reports)
+  - Place content correctly:
+    - Normative rules/process → `AGENTS.md` and `.cursorrules`
+    - Rationale, status, milestones, lessons → `ai-directives` (README or relevant file)
+  - Keep `.cursorrules` wording aligned with `AGENTS.md` where applicable.
+  - Add cross‑links to reduce duplication.
+  - Commit with a clear `docs:` message describing the tri‑file update.
+
 ## Testing & Scripts
 - Preferred scripts:
   - `python scripts/check_dependencies.py` — verifies environment.

@@ -17,6 +17,11 @@ rules:
   - Template variables: support formatted placeholders like `{credits:,}` and `{distance:.1f}` when validating.
   - EDCoPilot chatter must follow `docs/edcopilot-chatter-grammar.md`; replace all tokens with safe fallbacks.
   - Update docs when behavior changes.
+  - Documentation update protocol: when asked to "update docs" or "add a rule", update all three:
+    - `AGENTS.md` (binding rules)
+    - `.cursorrules` (this file; keep in sync with AGENTS.md wording)
+    - `ai-directives/` (project context: goals, strategies, status, reports)
+    - Place rules in AGENTS.md/.cursorrules, and project context in ai-directives.
 
 prohibited:
   - Introducing non-ASCII characters in code or logs.

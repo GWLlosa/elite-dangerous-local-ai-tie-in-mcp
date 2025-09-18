@@ -28,6 +28,23 @@
 
 ---
 
+## Documentation Update Protocol (MANDATORY)
+
+When asked to "update the documentation" or to "add a rule", update these in lockstep so information stays consistent:
+
+- `AGENTS.md` (root): binding agent rules and processes (short, enforceable).
+- `.cursorrules` (root): portable mirror of essential agent rules for Cursor; keep wording aligned with `AGENTS.md`.
+- `ai-directives/` (this folder): project context (goals, strategies, status, session reports, lessons, plans).
+
+Checklist for any doc/rule change:
+1) Add/modify the rule in `AGENTS.md`
+2) Mirror the relevant rule in `.cursorrules`
+3) Update context in `ai-directives` (this README or the right sub-file)
+4) Cross-link related docs to avoid duplication
+5) Commit with a clear `docs:` message describing the tri-file update
+
+---
+
 ## Folder Guide
 
 - `project_implementation_plan.md` — Milestones and implementation roadmap.
@@ -72,6 +89,34 @@ Recommended reading order for new contributors:
 - **Coverage**: 95%+
 - **Next Milestone**: 11 - EDCoPilot Integration
 - **All Systems**: Core functionality operational and tested
+
+### Current Project Status (Authoritative Update)
+
+This section supersedes older counts above and reflects the present state.
+
+Completed Milestones
+1. Project Structure
+2. Configuration Management
+3. Journal File Discovery
+4. Real-time Monitoring
+5. Event Processing (130+ types, 17 categories)
+6. Data Storage (thread-safe, game state tracking)
+7. MCP Server Framework (FastMCP + background monitoring)
+8. Core MCP Tools (comprehensive toolset)
+9. MCP Resources (dynamic endpoints with caching)
+10. MCP Prompts (context-aware templates)
+11. EDCoPilot Integration (templates/chatter + tokens/conditions)
+12. Historical Data Loading (last 24h on startup)
+13. Journal Parser Fixes (filename/timestamp extraction)
+14. AsyncIO Stability (reliable Claude Desktop connection)
+15. Dynamic Multi-Crew Theme System (AI themes, ship-specific crews)
+
+Current State
+- Status: Production Ready
+- Tests: 400+ passing (high coverage)
+- Coverage: 95%+
+- Next Milestone: None (core milestones complete); enhancements proceed via scoped feature branches
+- All Systems: Core functionality operational, documented, and tested
 
 ## 🔄 Development Workflow Standard
 
