@@ -429,7 +429,8 @@ class DataStore:
         """Handle FSD jump events."""
         # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
+        # Accept both 'system_name' and 'system'
+        self._game_state.current_system = data.get('system_name') or data.get('system')
         self._game_state.coordinates = {
             'x': data.get('star_pos_x'),
             'y': data.get('star_pos_y'),
@@ -460,7 +461,8 @@ class DataStore:
         self._game_state.supercruise = False
         # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
+        # Accept both 'station_name' and 'station'
+        self._game_state.current_station = data.get('station_name') or data.get('station')
     
     def _handle_undocked(self, event: ProcessedEvent) -> None:
         """Handle undocking events."""
@@ -552,9 +554,10 @@ class DataStore:
         """Handle location updates."""
         # FIXED: use key_data instead of extracted_data and correct field names
         data = event.key_data
-        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
-        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
-        self._game_state.current_body = data.get('body')  # Changed from 'body_name'
+        # Accept both legacy and new field variants
+        self._game_state.current_system = data.get('system_name') or data.get('system')
+        self._game_state.current_station = data.get('station_name') or data.get('station')
+        self._game_state.current_body = data.get('body_name') or data.get('body')
 
         # Update docked status from Location event
         if 'docked' in data:
