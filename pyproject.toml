@@ -102,6 +102,7 @@ pythonpath = ["."]
 asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "cli: marks CLI planning/implementation tests",
 ]
 
 [tool.coverage.run]
