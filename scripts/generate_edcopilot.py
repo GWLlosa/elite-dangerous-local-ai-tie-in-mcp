@@ -186,16 +186,16 @@ def generate_and_write(data_store: DataStore, output_dir: Path, backup: bool, ov
         # Ensure directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Backup existing if requested
+        # Backup existing if requested (always copy, never move)
         if backup and target.exists():
             backup_name = f"{target.stem}.backup.{timestamp}{target.suffix}"
             backup_path = target.parent / backup_name
-            target.replace(backup_path) if not overwrite else None  # If not overwrite, move current aside
-            if overwrite:
-                # If overwrite, copy original to backup instead of moving
-                import shutil
+            import shutil
+            try:
                 shutil.copy2(target, backup_path)
-            LOG.info(f"Backed up existing file to: {backup_path}")
+                LOG.info(f"Backed up existing file to: {backup_path}")
+            except Exception as e:
+                LOG.warning(f"Backup failed for {target}: {e}")
 
         if target.exists() and not overwrite:
             LOG.warning(f"File exists and --overwrite not set. Skipping: {target}")
@@ -268,4 +268,3 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
