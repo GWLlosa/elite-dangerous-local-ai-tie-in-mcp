@@ -329,13 +329,21 @@ class EDCoPilotContentGenerator:
     def _replace_tokens_in_content(self, content: str, context: Dict[str, Any]) -> str:
         """Replace tokens in content with actual values from context."""
         # Create token replacement mapping with null-safe values
+        # Safe numeric coalesce for formatted fields
+        credits_val = context.get('credits')
+        if not isinstance(credits_val, (int, float)):
+            credits_val = 0
+        fuel_val = context.get('fuel_level')
+        if not isinstance(fuel_val, (int, float)):
+            fuel_val = 100
+
         replacements = {
             '{SystemName}': context.get('current_system') or 'Unknown System',
             '{ShipName}': self._extract_ship_name(context.get('ship_type') or 'Unknown Ship'),
             '{ShipType}': context.get('ship_type') or 'Unknown Ship',
             '{CommanderName}': context.get('commander_name') or 'Commander',
-            '{Credits}': f"{context.get('credits', 0):,}",
-            '{FuelPercent}': f"{context.get('fuel_level', 100):.0f}",
+            '{Credits}': f"{credits_val:,}",
+            '{FuelPercent}': f"{fuel_val:.0f}",
             '{StationName}': context.get('current_station') or 'Station',
             '{BodyName}': context.get('current_body') or 'Body',
         }
@@ -493,6 +501,10 @@ class EDCoPilotFileManager:
                 if file_mtime < cutoff_time:
                     backup_file.unlink()
                     removed_count += 1
+    # Helper for tests and integrations expecting explicit context builder
+    def _build_context(self) -> Dict[str, Any]:
+        return self.context_analyzer.analyze_current_context()
+
                     logger.debug(f"Removed old backup: {backup_file.name}")
             except Exception as e:
                 logger.error(f"Error removing backup {backup_file}: {e}")
@@ -501,3 +513,5 @@ class EDCoPilotFileManager:
             logger.info(f"Cleaned up {removed_count} old backup files")
 
         return removed_count
+# Backwards-compatible alias expected by some tests/integrations
+EDCoPilotGenerator = EDCoPilotContentGenerator
