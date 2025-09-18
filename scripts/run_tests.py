@@ -470,13 +470,23 @@ if result:
         print("  [FAILED] MCP tools tests failed")
         sys.exit(1)
     
-    # Step 11: Full Test Suite with Coverage
-    print_step(11, total_steps, "Complete Test Suite with Coverage",
+    # Step 11: CLI Tests (Milestone 16 planning)
+    print_step(11, total_steps, "CLI Tests (Planning)",
+               "Including CLI test suite (skipped until implementation)")
+
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/cli/", "-v"],
+                               "CLI tests")
+    if not success:
+        print("  [FAILED] CLI tests failed")
+        sys.exit(1)
+
+    # Step 12: Full Test Suite with Coverage
+    print_step(12, total_steps, "Complete Test Suite with Coverage",
                "Running all tests together and generating coverage report")
     
     print_substep("Running complete test suite")
     success, _, _ = run_command([
-        venv_python, "-m", "pytest", "tests/unit/", "-v", 
+        venv_python, "-m", "pytest", "tests/unit/", "tests/cli/", "-v", 
         "--cov=src", "--cov-report=term", "--cov-report=html"
     ], "Complete test suite with coverage")
     
@@ -503,7 +513,7 @@ if result:
     print("  - Milestone 6: Data Storage")
     print("  - Milestone 7: MCP Server Framework")
     print("  - Milestone 8: Core MCP Tools Implementation")
-    print("\nReady for Milestone 9: MCP Resources Implementation")
+    print("  - Milestone 16: Headless EDCoPilot Generation CLI (planning tests included)")
     print("="*60)
 
 
