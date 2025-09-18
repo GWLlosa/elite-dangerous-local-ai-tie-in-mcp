@@ -133,7 +133,11 @@ class ThemeMCPTools:
             Dict with complete theme system status
         """
         try:
-            return self.theme_generator.get_theme_status()
+            status = self.theme_generator.get_theme_status()
+            if isinstance(status, dict):
+                status.setdefault("success", True)
+                return status
+            return {"success": True, "status": status}
 
         except Exception as e:
             logger.error(f"Error getting theme status: {e}")

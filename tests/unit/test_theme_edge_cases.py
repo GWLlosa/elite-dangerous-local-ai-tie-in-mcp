@@ -9,7 +9,7 @@ import tempfile
 import asyncio
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch, mock_open, Mock, AsyncMock
 
 from src.edcopilot.theme_storage import ThemeStorage, ShipCrewConfig, CrewMemberTheme, CrewRole
 from src.edcopilot.theme_generator import ThemeGenerator, TemplateValidator, ThemePromptContext

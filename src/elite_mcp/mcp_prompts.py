@@ -69,8 +69,31 @@ class PromptTemplate:
                 # Fill missing variables with placeholders
                 for var in missing_vars:
                     context[var] = f"[{var.upper()}_NOT_AVAILABLE]"
-            
-            return self.template.format(**context)
+
+            # Provide safe defaults for formatted variables
+            numeric_defaults = {
+                'credits': 0,
+                'exploration_earnings': 0,
+                'distance_ly': 0.0,
+                'time_range': 0,
+            }
+
+            safe_context: Dict[str, Any] = {}
+            for k, v in context.items():
+                if v is None:
+                    if k in numeric_defaults:
+                        safe_context[k] = numeric_defaults[k]
+                    else:
+                        safe_context[k] = ""
+                else:
+                    safe_context[k] = v
+
+            # Ensure numeric defaults exist even if not provided
+            for k, default_v in numeric_defaults.items():
+                if k not in safe_context or safe_context[k] in (None, ""):
+                    safe_context[k] = default_v
+
+            return self.template.format(**safe_context)
         except Exception as e:
             logger.error(f"Error rendering template {self.name}: {e}")
             return f"Error rendering prompt template: {e}"
