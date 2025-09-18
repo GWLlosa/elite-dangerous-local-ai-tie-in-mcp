@@ -20,6 +20,21 @@ A Model Context Protocol (MCP) server that provides real-time integration betwee
 
 ![Claude Desktop Working](docs/images/claude-desktop-working.bmp)
 
+## Headless EDCoPilot Generation (Coming Soon)
+
+Add a headless CLI to generate EDCoPilot chatter files without opening Claude Desktop.
+
+- Command: `python scripts/generate_edcopilot.py`
+- Defaults: last 7 days, theme "Grizzled Veteran Space Captain", context "Worn Hands, Endless Horizon".
+- Example:
+  - `python scripts/generate_edcopilot.py` (generate with defaults)
+  - `python scripts/generate_edcopilot.py --hours 12 --theme "Corporate Fixer" --context "Cold Calculus, Clean Ledger"`
+  - `python scripts/generate_edcopilot.py --from "2025-09-10" --to "2025-09-13 18:00" --output-dir C:\\temp\\edc --dry-run`
+
+Notes:
+- Dates are interpreted in local time and converted to UTC internally.
+- ASCII-only output, grammar validation, and backups are enforced by default.
+
 ##  Quick Start
 
 ### Automated Setup (Recommended)
