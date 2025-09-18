@@ -1,0 +1,34 @@
+name: Elite Dangerous MCP – Cursor Rules
+description: Concise rules for Cursor to follow in this repo.
+
+rules:
+  - Use feature branches and open PRs; do not merge without explicit approval.
+  - Run `python scripts/check_dependencies.py` before substantial changes.
+  - Run tests with `python scripts/run_tests.py`; maintain >90% coverage for new code.
+  - Produce ASCII-only program output and Python strings (no emojis/smart quotes/Unicode symbols).
+  - Create timezone-aware UTC datetimes: `datetime.now(timezone.utc)`.
+  - ProcessedEvent: use `raw_event` for original dict; use `key_data` for derived fields.
+  - JournalParser: `read_journal_file()` returns `(entries, position)`; always unpack both.
+  - JournalMonitor: provide required constructor params, including `journal_path` and `event_callback`.
+  - DataStore: use `query_events(...)`, `get_recent_events(minutes)`, `get_events_by_type(...)`, `get_events_by_category(...)`; never `get_all_events()`.
+  - Convert hours to minutes when calling `get_recent_events`.
+  - MCP resources: return structured error objects for unknown URIs; never return `None`.
+  - FastMCP: use `@app.tool()`; do not depend on `app.tools`.
+  - Template variables: support formatted placeholders like `{credits:,}` and `{distance:.1f}` when validating.
+  - EDCoPilot chatter must follow `docs/edcopilot-chatter-grammar.md`; replace all tokens with safe fallbacks.
+  - Update docs when behavior changes.
+
+prohibited:
+  - Introducing non-ASCII characters in code or logs.
+  - Using `event.data` or `get_all_events()`.
+  - Returning `None` for expected error objects.
+  - Creating naive datetimes or assuming local time.
+  - Depending on undocumented framework attributes.
+
+testing:
+  - Prefer `scripts/run_tests.py` for full runs.
+  - Mock external dependencies; keep tests deterministic and cross-platform.
+
+notes:
+  - This file complements AGENTS.md at the repo root. If rules conflict, follow AGENTS.md and direct human instructions.
+
