@@ -2,7 +2,7 @@
 
 The Dynamic Multi-Crew Theme System is an AI-powered feature that creates immersive personality themes for your Elite Dangerous crew members, providing contextual and ship-specific dialogue that adapts to your gameplay style.
 
-## 🎭 Overview
+##  Overview
 
 The theme system allows you to:
 - **Set AI-powered personality themes** for crew members
@@ -11,7 +11,7 @@ The theme system allows you to:
 - **Create themed EDCoPilot content** automatically
 - **Manage multiple ships** with different crew dynamics
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Basic Theme Setup
 
@@ -42,7 +42,7 @@ The theme system allows you to:
    "Set my navigator's theme to 'analytical navigator' with context 'former military officer focused on precision'"
    ```
 
-## 🛠️ Available MCP Tools
+##  Available MCP Tools
 
 ### Core Theme Management
 
@@ -238,7 +238,7 @@ backup = await backup_current_themes()
 print(f"Themes backed up to: {backup['backup_path']}")
 ```
 
-## 🎪 Usage Examples
+##  Usage Examples
 
 ### Example 1: Space Exploration Crew
 
@@ -387,7 +387,7 @@ backup = await backup_current_themes()
 print(f"Multi-ship fleet configuration backed up to: {backup['backup_path']}")
 ```
 
-## 🎯 Advanced Usage
+##  Advanced Usage
 
 ### Theme Coordination Workflow
 
@@ -418,7 +418,7 @@ When using the generated prompts in Claude Desktop:
 4. **Gradual Changes**: Modify themes incrementally for seamless transitions
 5. **Preview First**: Always preview content before applying to files
 
-## 🔧 Integration with Claude Desktop
+##  Integration with Claude Desktop
 
 ### Setting Up Themed Content Generation
 
@@ -473,12 +473,12 @@ User: Apply these generated templates to my EDCoPilot files: [paste templates]
 
 Claude: I'll apply these themed templates to your EDCoPilot files with validation...
 
-✅ Applied 15 templates successfully
-✅ Backed up existing files
-✅ All templates passed grammar validation
+[OK] Applied 15 templates successfully
+[OK] Backed up existing files
+[OK] All templates passed grammar validation
 ```
 
-## 🚀 Ship Type Defaults
+##  Ship Type Defaults
 
 The system automatically configures appropriate crew sizes based on ship types:
 
@@ -494,7 +494,7 @@ The system automatically configures appropriate crew sizes based on ship types:
 - **Anaconda, Corvette, Cutter**: Commander + Navigator + Science Officer + Engineer + Security Chief + Communications Officer
 - **Type-9, Type-10**: Commander + Navigator + Engineer + Cargo Specialist + Security Chief + Communications Officer
 
-## 🎭 Theme Categories and Examples
+##  Theme Categories and Examples
 
 ### Exploration Themes
 - **"scientific expedition"** - Research-focused, analytical, discovery-oriented
@@ -520,7 +520,7 @@ The system automatically configures appropriate crew sizes based on ship types:
 - **"ship modders"** - Creative, performance-focused, customization-obsessed
 - **"systems specialists"** - Technical, precise, optimization-focused
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -573,7 +573,7 @@ for ship in ships:
 backup = await backup_current_themes()
 ```
 
-## 📚 Integration Examples
+##  Integration Examples
 
 ### With Other MCP Tools
 
@@ -603,7 +603,7 @@ for event in recent_events:
         await set_edcopilot_theme("explorer", new_context)
 ```
 
-## 🎪 Advanced Theme Coordination
+##  Advanced Theme Coordination
 
 ### Multi-Ship Fleet Management
 
@@ -643,7 +643,7 @@ async def setup_exploration_fleet():
 await setup_exploration_fleet()
 ```
 
-## 📖 API Reference Summary
+##  API Reference Summary
 
 | Tool | Purpose | Key Parameters |
 |------|---------|----------------|

@@ -22,12 +22,12 @@ AttributeError: Mock object has no attribute 'get_all_events'
 ### 1. tests/unit/test_mcp_resources.py
 - **Issue**: Line 115 - `store.get_all_events.return_value = [mock_event]`
 - **Fix**: Changed to `store.query_events.return_value = [mock_event]`
-- **Status**: ✅ Fixed and committed
+- **Status**: [OK] Fixed and committed
 
 ### 2. tests/unit/test_mcp_prompts.py  
 - **Issue**: Line ~93 - `store.get_all_events.return_value = [mock_event]`
 - **Fix**: Changed to `store.query_events.return_value = [mock_event]`
-- **Status**: ✅ Fixed and committed
+- **Status**: [OK] Fixed and committed
 
 ### 3. src/mcp/mcp_prompts.py
 - **Issues Found**:
@@ -50,7 +50,7 @@ AttributeError: Mock object has no attribute 'get_all_events'
   NEW: e.key_data.get("field_name")
   ```
 
-- **Status**: ⚠️ Needs manual update
+- **Status**:  Needs manual update
 
 ## DataStore API Reference
 
@@ -101,6 +101,7 @@ python scripts/run_tests.py
 ```
 
 ## Status
-- Test file fixes: ✅ Complete
-- Implementation fixes: ⚠️ Pending (mcp_prompts.py needs manual update)
+- Test file fixes: [OK] Complete
+- Implementation fixes:  Pending (mcp_prompts.py needs manual update)
 - Expected outcome: All 227 tests should pass after mcp_prompts.py is fixed
+

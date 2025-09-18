@@ -4,7 +4,7 @@ Status: Production Ready. All core milestones are complete. This plan documents 
 
 ## Project Setup & Repository Structure
 
-### Milestone 1: Initialize Project Repository and Basic Structure Γ£à
+### Milestone 1: Initialize Project Repository and Basic Structure 
 **Status:** COMPLETED  
 **Branch:** `main`
 
@@ -23,11 +23,11 @@ Status: Production Ready. All core milestones are complete. This plan documents 
 - Python can import all created modules without errors
 
 **Test Review and Documentation (Completed):**
-- Γ£à Validate all unit tests are comprehensive and not stubs
-- Γ£à Create/update testing documentation
-- Γ£à Ensure test coverage meets quality standards
-- Γ£à Update automation scripts as needed
-- Γ£à Verify all tests pass reliably
+-  Validate all unit tests are comprehensive and not stubs
+-  Create/update testing documentation
+-  Ensure test coverage meets quality standards
+-  Update automation scripts as needed
+-  Verify all tests pass reliably
 
 **Commit Message:**
 ```
@@ -42,7 +42,7 @@ feat: initialize Elite Dangerous MCP server project structure
 Closes #1
 ```
 
-### Milestone 2: Implement Configuration Management Γ£à
+### Milestone 2: Implement Configuration Management 
 **Status:** COMPLETED  
 **Branch:** `main`
 
@@ -59,11 +59,11 @@ Closes #1
 - Configuration errors are handled gracefully
 
 **Test Review and Documentation (Completed):**
-- Γ£à Review configuration tests for edge cases and error scenarios
-- Γ£à Update testing documentation with configuration testing procedures
-- Γ£à Validate environment variable testing covers all use cases
-- Γ£à Ensure platform-specific path testing is comprehensive
-- Γ£à Update automation scripts to test configuration functionality
+-  Review configuration tests for edge cases and error scenarios
+-  Update testing documentation with configuration testing procedures
+-  Validate environment variable testing covers all use cases
+-  Ensure platform-specific path testing is comprehensive
+-  Update automation scripts to test configuration functionality
 
 **Commit Message:**
 ```
@@ -79,7 +79,7 @@ Closes #2
 
 ## Journal System Implementation
 
-### Milestone 3: Basic Journal File Discovery and Reading Γ£à
+### Milestone 3: Basic Journal File Discovery and Reading 
 **Status:** COMPLETED  
 **Branch:** `main`
 
@@ -97,11 +97,11 @@ Closes #2
 - Returns empty list when no journal files exist
 
 **Test Review and Documentation (Completed):**
-- Γ£à Comprehensive unit tests (27 test methods) covering all functionality
-- Γ£à Real pytest fixtures with mock Elite Dangerous data
-- Γ£à Error handling tests for edge cases and malformed JSON
-- Γ£à File discovery tests with timestamp validation
-- Γ£à Integration with automation scripts for validation
+-  Comprehensive unit tests (27 test methods) covering all functionality
+-  Real pytest fixtures with mock Elite Dangerous data
+-  Error handling tests for edge cases and malformed JSON
+-  File discovery tests with timestamp validation
+-  Integration with automation scripts for validation
 
 **Commit Message:**
 ```
@@ -116,7 +116,7 @@ feat: implement basic journal file discovery and parsing
 Closes #3
 ```
 
-### Milestone 4: Real-time Journal Monitoring Γ£à
+### Milestone 4: Real-time Journal Monitoring 
 **Status:** COMPLETED  
 **Branch:** `main`  
 **Completion Date:** September 6, 2025
@@ -135,17 +135,17 @@ Closes #3
 - Gracefully handles file access errors
 
 **Test Review and Documentation (Completed):**
-- Γ£à **39 comprehensive unit tests** covering all monitoring functionality
-- Γ£à **52% overall test coverage** with high coverage in core modules (81% monitor, 76% parser)
-- Γ£à **Real async operations testing** with proper event loop coordination
-- Γ£à **Critical test fixes completed**:
+-  **39 comprehensive unit tests** covering all monitoring functionality
+-  **52% overall test coverage** with high coverage in core modules (81% monitor, 76% parser)
+-  **Real async operations testing** with proper event loop coordination
+-  **Critical test fixes completed**:
   - Fixed async/threading issues with proper event loop management
   - Resolved Status.json throttling and file path handling
   - Eliminated Windows encoding errors with ASCII-only output
   - Corrected package import mapping across all scripts
   - Cleaned up obsolete test imports and functions
-- Γ£à **Enhanced automation scripts** with consistent package mapping and cross-platform compatibility
-- Γ£à **Updated AI directives** with new rules and problem-solving knowledge
+-  **Enhanced automation scripts** with consistent package mapping and cross-platform compatibility
+-  **Updated AI directives** with new rules and problem-solving knowledge
 
 **Final Test Results:**
 ```
@@ -173,7 +173,7 @@ feat: implement real-time journal monitoring with watchdog
 Closes #4
 ```
 
-### Milestone 5: Journal Event Processing and Classification Γ£à
+### Milestone 5: Journal Event Processing and Classification 
 **Status:** COMPLETED  
 **Branch:** `main`  
 **Completion Date:** September 8, 2025
@@ -192,15 +192,15 @@ Closes #4
 - Processes timestamps correctly across time zones
 
 **Test Review and Documentation (Completed):**
-- Γ£à **174+ comprehensive unit tests** across multiple test files covering all event processing functionality
-- Γ£à **91% overall test coverage** with 98% coverage for events module with extensive edge case testing
-- Γ£à **Performance tests** verifying real-time processing requirements (<1ms per event)
-- Γ£à **Stress tests** with 10,000+ event batches and concurrent processing
-- Γ£à **Integration tests** with journal parser and monitoring components
-- Γ£à **Category completeness verification** ensuring all 17 event categories are properly mapped
-- Γ£à **Comprehensive error handling** for malformed events, None values, and edge cases
-- Γ£à **Cross-platform compatibility** verified with timezone-aware timestamp processing
-- Γ£à **Critical test fixes completed**:
+-  **174+ comprehensive unit tests** across multiple test files covering all event processing functionality
+-  **91% overall test coverage** with 98% coverage for events module with extensive edge case testing
+-  **Performance tests** verifying real-time processing requirements (<1ms per event)
+-  **Stress tests** with 10,000+ event batches and concurrent processing
+-  **Integration tests** with journal parser and monitoring components
+-  **Category completeness verification** ensuring all 17 event categories are properly mapped
+-  **Comprehensive error handling** for malformed events, None values, and edge cases
+-  **Cross-platform compatibility** verified with timezone-aware timestamp processing
+-  **Critical test fixes completed**:
   - Fixed EventCategory.OTHER mapping by adding "Unknown" event type
   - Enhanced validation logic to properly detect malformed events (None values, empty strings, wrong types)
   - Improved validation to meet stress test requirements (5+ invalid events detected)
@@ -246,7 +246,7 @@ feat: complete journal event processing and classification system
 Closes #5
 ```
 
-### Milestone 6: Journal Data Storage and Retrieval Γ£à
+### Milestone 6: Journal Data Storage and Retrieval 
 **Status:** COMPLETED  
 **Branch:** `main`  
 **Completion Date:** September 8, 2025
@@ -265,16 +265,16 @@ Closes #5
 - Cleans up old events automatically
 
 **Test Review and Documentation (Completed):**
-- Γ£à **200+ comprehensive unit and integration tests** covering all data storage functionality
-- Γ£à **95%+ test coverage** for data store module with extensive edge case testing
-- Γ£à **Performance tests** with 1000+ events verifying sub-second processing times
-- Γ£à **Thread safety tests** for concurrent operations and multi-threaded access
-- Γ£à **Memory management tests** with automatic cleanup and size constraints
-- Γ£à **Integration tests** demonstrating end-to-end journal monitoring to data storage
-- Γ£à **Game state tracking tests** for all major Elite Dangerous event types
-- Γ£à **Cross-platform compatibility** verified with comprehensive filtering and querying
-- Γ£à **Global data store singleton** functionality with proper reset mechanisms
-- Γ£à **Error handling and malformed data** processing with graceful degradation
+-  **200+ comprehensive unit and integration tests** covering all data storage functionality
+-  **95%+ test coverage** for data store module with extensive edge case testing
+-  **Performance tests** with 1000+ events verifying sub-second processing times
+-  **Thread safety tests** for concurrent operations and multi-threaded access
+-  **Memory management tests** with automatic cleanup and size constraints
+-  **Integration tests** demonstrating end-to-end journal monitoring to data storage
+-  **Game state tracking tests** for all major Elite Dangerous event types
+-  **Cross-platform compatibility** verified with comprehensive filtering and querying
+-  **Global data store singleton** functionality with proper reset mechanisms
+-  **Error handling and malformed data** processing with graceful degradation
 
 **Final Test Results:**
 ```
@@ -320,7 +320,7 @@ Closes #6
 
 ## MCP Server Implementation
 
-### Milestone 7: Basic MCP Server Framework Γ£à
+### Milestone 7: Basic MCP Server Framework 
 **Status:** COMPLETED  
 **Branch:** `main`  
 **Completion Date:** September 8, 2025
@@ -339,16 +339,16 @@ Closes #6
 - Server shuts down gracefully
 
 **Test Review and Documentation (Completed):**
-- Γ£à **23+ comprehensive unit tests** covering all server functionality and lifecycle management
-- Γ£à **Server initialization and configuration** testing with mock setups
-- Γ£à **MCP tool functionality** testing for server_status, get_recent_events, clear_data_store
-- Γ£à **Journal monitoring integration** with event processing pipeline
-- Γ£à **Background task management** with proper async coordination
-- Γ£à **Signal handling and graceful termination** testing
-- Γ£à **Error handling and logging** verification for production use
-- Γ£à **Server lifecycle management** with startup/shutdown procedures
-- Γ£à **Integration tests** demonstrating end-to-end functionality from journal events to MCP tools
-- Γ£à **Singleton pattern testing** for server instance management
+-  **23+ comprehensive unit tests** covering all server functionality and lifecycle management
+-  **Server initialization and configuration** testing with mock setups
+-  **MCP tool functionality** testing for server_status, get_recent_events, clear_data_store
+-  **Journal monitoring integration** with event processing pipeline
+-  **Background task management** with proper async coordination
+-  **Signal handling and graceful termination** testing
+-  **Error handling and logging** verification for production use
+-  **Server lifecycle management** with startup/shutdown procedures
+-  **Integration tests** demonstrating end-to-end functionality from journal events to MCP tools
+-  **Singleton pattern testing** for server instance management
 
 **Final Test Results:**
 ```
@@ -499,22 +499,22 @@ Closes #10
 
 ## EDCoPilot Integration
 
-### Milestone 11: EDCoPilot File Templates Γ£à
+### Milestone 11: EDCoPilot File Templates 
 **Status:** COMPLETED
 **Branch:** `main`
 
 **Implementation Completed:**
-1. Γ£à Created `src/edcopilot/templates.py` with comprehensive file templates
-2. Γ£à Implemented 3 chatter types with 40+ contextual dialogue entries
-3. Γ£à Added dynamic token replacement system for game data
-4. Γ£à Created condition-based template selection and filtering
+1.  Created `src/edcopilot/templates.py` with comprehensive file templates
+2.  Implemented 3 chatter types with 40+ contextual dialogue entries
+3.  Added dynamic token replacement system for game data
+4.  Created condition-based template selection and filtering
 
 **Test Results:**
-- Γ£à 53/53 tests passing (100% success rate)
-- Γ£à Templates generate valid EDCoPilot file formats
-- Γ£à Token replacement preserves game data integration
-- Γ£à Conditions filter templates appropriately for game state
-- Γ£à Generated content integrates seamlessly with EDCoPilot
+-  53/53 tests passing (100% success rate)
+-  Templates generate valid EDCoPilot file formats
+-  Token replacement preserves game data integration
+-  Conditions filter templates appropriately for game state
+-  Generated content integrates seamlessly with EDCoPilot
 
 **Final Commit:**
 ```
@@ -529,17 +529,17 @@ feat: complete EDCoPilot integration with 4 MCP tools and contextual chatter
 Closes #11
 ```
 
-### Milestone 11.5: Dynamic Multi-Crew Theme System Γ£à
+### Milestone 11.5: Dynamic Multi-Crew Theme System 
 **Status:** COMPLETED
 **Branch:** `main` (merged)
 **Completion Date:** September 15, 2025
 
 **Implementation Completed:**
-1. Γ£à Dynamic AI-powered theme generation via Claude Desktop integration
-2. Γ£à Ship-specific multi-crew system with individual crew personalities
-3. Γ£à Theme and context parameter system for rich character development
-4. Γ£à Automatic ship detection and crew adaptation
-5. Γ£à Enhanced file organization with ship-specific crew configurations
+1.  Dynamic AI-powered theme generation via Claude Desktop integration
+2.  Ship-specific multi-crew system with individual crew personalities
+3.  Theme and context parameter system for rich character development
+4.  Automatic ship detection and crew adaptation
+5.  Enhanced file organization with ship-specific crew configurations
 
 **Core Features Delivered:**
 - **ThemeStorage System** (545 lines) - Complete JSON persistence for themes and crew configurations
@@ -549,11 +549,11 @@ Closes #11
 - **Multi-Ship Coordination** - Theme consistency across fleet management
 
 **Testing Results:**
-- Γ£à **159 comprehensive tests** across 6 test files (storage, generator, MCP tools, performance, edge cases, integration)
-- Γ£à **440+ total project tests** (100% success rate for theme system)
-- Γ£à **Performance verified** - handles 1000+ ships efficiently
-- Γ£à **Edge case coverage** - robust error handling and Unicode support
-- Γ£à **Integration validated** - end-to-end workflows tested
+-  **159 comprehensive tests** across 6 test files (storage, generator, MCP tools, performance, edge cases, integration)
+-  **440+ total project tests** (100% success rate for theme system)
+-  **Performance verified** - handles 1000+ ships efficiently
+-  **Edge case coverage** - robust error handling and Unicode support
+-  **Integration validated** - end-to-end workflows tested
 
 **Final Commit:**
 ```
@@ -746,12 +746,12 @@ Closes #15
 
 ### Test Review and Documentation Standards
 Each milestone must include:
-- Γ£à **Test Quality Review**: Validate tests are comprehensive, not stubs
-- Γ£à **Coverage Analysis**: Ensure adequate test coverage (>90%)
-- Γ£à **Documentation Updates**: Update testing guides and procedures
-- Γ£à **Automation Enhancement**: Update scripts to test new functionality
-- Γ£à **Integration Validation**: Ensure new tests work with existing suite
-- Γ£à **Performance Verification**: Validate test execution time and reliability
+-  **Test Quality Review**: Validate tests are comprehensive, not stubs
+-  **Coverage Analysis**: Ensure adequate test coverage (>90%)
+-  **Documentation Updates**: Update testing guides and procedures
+-  **Automation Enhancement**: Update scripts to test new functionality
+-  **Integration Validation**: Ensure new tests work with existing suite
+-  **Performance Verification**: Validate test execution time and reliability
 
 ### Code Quality Standards
 - Follow PEP 8 style guidelines
@@ -762,62 +762,63 @@ Each milestone must include:
 
 ## Current Project Status
 
-### Γ£à Completed Milestones (1-11.5):
-- **Milestone 1**: Project structure and foundation Γ£à
-- **Milestone 2**: Configuration management system Γ£à
-- **Milestone 3**: Journal file discovery and parsing Γ£à
-- **Milestone 4**: Real-time journal monitoring Γ£à
-- **Milestone 5**: Event processing and classification Γ£à
-- **Milestone 6**: Data storage and retrieval Γ£à
-- **Milestone 7**: Basic MCP server framework Γ£à
-- **Milestone 8**: Core MCP Tools Implementation Γ£à
-- **Milestone 9**: MCP Resources Implementation Γ£à
-- **Milestone 10**: MCP Prompts Implementation Γ£à
-- **Milestone 11**: EDCoPilot Integration Γ£à
-- **Milestone 11.5**: Dynamic Multi-Crew Theme System Γ£à **[JUST COMPLETED]**
+###  Completed Milestones (1-11.5):
+- **Milestone 1**: Project structure and foundation 
+- **Milestone 2**: Configuration management system 
+- **Milestone 3**: Journal file discovery and parsing 
+- **Milestone 4**: Real-time journal monitoring 
+- **Milestone 5**: Event processing and classification 
+- **Milestone 6**: Data storage and retrieval 
+- **Milestone 7**: Basic MCP server framework 
+- **Milestone 8**: Core MCP Tools Implementation 
+- **Milestone 9**: MCP Resources Implementation 
+- **Milestone 10**: MCP Prompts Implementation 
+- **Milestone 11**: EDCoPilot Integration 
+- **Milestone 11.5**: Dynamic Multi-Crew Theme System  **[JUST COMPLETED]**
 
 **Test Infrastructure:**
-- Γ£à **440+ comprehensive unit and integration tests** with 95%+ overall coverage
-- Γ£à **Advanced test suite** including performance, stress, integration, thread safety, edge cases, and MCP functionality tests
-- Γ£à **Real-time processing** verified (<1ms per event requirement maintained)
-- Γ£à **Cross-platform compatibility** ensured with comprehensive error handling
-- Γ£à **Complete automation scripts** for setup, checking, and testing
-- Γ£à **Extensive documentation** and testing procedures
-- Γ£à **Production-ready implementation** with comprehensive functionality
-- Γ£à **All test failures resolved** with enhanced validation and comprehensive coverage
+-  **440+ comprehensive unit and integration tests** with 95%+ overall coverage
+-  **Advanced test suite** including performance, stress, integration, thread safety, edge cases, and MCP functionality tests
+-  **Real-time processing** verified (<1ms per event requirement maintained)
+-  **Cross-platform compatibility** ensured with comprehensive error handling
+-  **Complete automation scripts** for setup, checking, and testing
+-  **Extensive documentation** and testing procedures
+-  **Production-ready implementation** with comprehensive functionality
+-  **All test failures resolved** with enhanced validation and comprehensive coverage
 
 **MCP Server Framework:**
-- Γ£à **FastMCP server integration** with Elite Dangerous monitoring and real-time processing
-- Γ£à **Automatic journal monitoring startup** with background task management and event processing pipeline
-- Γ£à **Comprehensive MCP tools**: server_status, get_recent_events, clear_data_store with error handling
-- Γ£à **Production-ready error handling and logging** for reliable operation
-- Γ£à **Server lifecycle management** with proper startup/shutdown procedures and signal handling
-- Γ£à **Integration with existing components** (journal monitoring, event processing, data storage)
-- Γ£à **Background task coordination** with proper async management and cleanup
-- Γ£à **Singleton pattern implementation** for server instance management
+-  **FastMCP server integration** with Elite Dangerous monitoring and real-time processing
+-  **Automatic journal monitoring startup** with background task management and event processing pipeline
+-  **Comprehensive MCP tools**: server_status, get_recent_events, clear_data_store with error handling
+-  **Production-ready error handling and logging** for reliable operation
+-  **Server lifecycle management** with proper startup/shutdown procedures and signal handling
+-  **Integration with existing components** (journal monitoring, event processing, data storage)
+-  **Background task coordination** with proper async management and cleanup
+-  **Singleton pattern implementation** for server instance management
 
 **Data Storage System:**
-- Γ£à **Comprehensive in-memory event storage** with automatic cleanup and size management
-- Γ£à **Current game state tracking** for location, ship, and status information
-- Γ£à **Flexible event querying and filtering** with multiple criteria (type, category, time, system, etc.)
-- Γ£à **Time-based event retrieval** and automatic memory management
-- Γ£à **Thread-safe operations** with proper locking for concurrent access
-- Γ£à **Global data store singleton** with reset functionality
-- Γ£à **Performance optimization** handling 1000+ events efficiently
-- Γ£à **Integration compatibility** with existing journal monitoring and event processing
+-  **Comprehensive in-memory event storage** with automatic cleanup and size management
+-  **Current game state tracking** for location, ship, and status information
+-  **Flexible event querying and filtering** with multiple criteria (type, category, time, system, etc.)
+-  **Time-based event retrieval** and automatic memory management
+-  **Thread-safe operations** with proper locking for concurrent access
+-  **Global data store singleton** with reset functionality
+-  **Performance optimization** handling 1000+ events efficiently
+-  **Integration compatibility** with existing journal monitoring and event processing
 
 **Event Processing System:**
-- Γ£à **17 event categories** with comprehensive mapping (System, Navigation, Exploration, Combat, Trading, Mission, Engineering, Mining, Ship, Squadron, Crew, Passenger, Powerplay, Carrier, Social, Suit, Other)
-- Γ£à **130+ event types** properly categorized and validated
-- Γ£à **Human-readable summaries** with contextual data extraction
-- Γ£à **Robust error handling** for malformed events, None values, timezone issues
-- Γ£à **Enhanced validation logic** detecting malformed events (5+ invalid events in stress tests)
-- Γ£à **EventCategory.OTHER mapping** fixed with "Unknown" event type
-- Γ£à **Performance optimization** meeting real-time requirements
-- Γ£à **Full integration** with data storage system for seamless operation
+-  **17 event categories** with comprehensive mapping (System, Navigation, Exploration, Combat, Trading, Mission, Engineering, Mining, Ship, Squadron, Crew, Passenger, Powerplay, Carrier, Social, Suit, Other)
+-  **130+ event types** properly categorized and validated
+-  **Human-readable summaries** with contextual data extraction
+-  **Robust error handling** for malformed events, None values, timezone issues
+-  **Enhanced validation logic** detecting malformed events (5+ invalid events in stress tests)
+-  **EventCategory.OTHER mapping** fixed with "Unknown" event type
+-  **Performance optimization** meeting real-time requirements
+-  **Full integration** with data storage system for seamless operation
 
 ### Next Steps
-- All core milestones (1–15) are complete.
+- All core milestones (1-15) are complete.
 - Future enhancements proceed via scoped feature branches (analytics, performance, new prompts/tools, docs).
 
 This enhanced implementation plan ensures that testing and documentation quality is maintained throughout the development process, with comprehensive review and updates at each milestone to maintain project quality and reliability.
+

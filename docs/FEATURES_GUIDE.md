@@ -2,7 +2,7 @@
 
 This comprehensive guide covers all features available in the Elite Dangerous MCP Server, including detailed usage examples and integration instructions.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [MCP Tools](#mcp-tools-15-available)
 2. [MCP Resources](#mcp-resources-17-dynamic-endpoints)
@@ -15,7 +15,7 @@ This comprehensive guide covers all features available in the Elite Dangerous MC
 9. [Configuration Options](#configuration-options)
 10. [Troubleshooting](#troubleshooting)
 
-## 🔧 MCP Tools (15+ Available)
+##  MCP Tools (15+ Available)
 
 MCP Tools provide function-based access to Elite Dangerous data through Claude Desktop or direct API calls.
 
@@ -317,7 +317,7 @@ exploration_prompt = await generate_analysis_prompt("exploration", 24)
 combat_prompt = await generate_analysis_prompt("combat", 12)
 ```
 
-## 📊 MCP Resources (17+ Dynamic Endpoints)
+##  MCP Resources (17+ Dynamic Endpoints)
 
 MCP Resources provide URI-based access to structured data with query parameter support.
 
@@ -459,7 +459,7 @@ Credit flow and financial analysis.
 credits = await get_resource_data("elite://metrics/credits?hours=12")
 ```
 
-## 🤖 MCP Prompts (9 Context-Aware Templates)
+##  MCP Prompts (9 Context-Aware Templates)
 
 MCP Prompts generate AI-assistance prompts tailored to your current game state and recent activities.
 
@@ -552,7 +552,7 @@ Comprehensive gameplay performance analysis.
 - Goal achievement tracking
 - Future recommendations
 
-## 🎭 EDCoPilot Integration
+##  EDCoPilot Integration
 
 The Elite Dangerous MCP Server provides comprehensive integration with EDCoPilot voice software, enabling dynamic generation of custom chatter files based on your current gameplay state.
 
@@ -660,7 +660,7 @@ The system analyzes your recent gameplay to generate appropriate chatter:
 - **Low Fuel**: Urgent fuel management warnings
 - **Current Location**: References to actual systems and stations
 
-## 🎪 Dynamic Theme System (Planned)
+##  Dynamic Theme System (Planned)
 
 *Milestone 11.5 - Planned Enhancement*
 
@@ -720,7 +720,7 @@ Assign individual personalities to crew members.
 
 See `docs/milestones/MILESTONE_11_5_PLANNED.md` for complete specification.
 
-## 🔄 Background Services
+##  Background Services
 
 **Includes:**
 - Overall statistics
@@ -757,7 +757,7 @@ combat_prompt = await generate_combat_prompt(time_range_hours=6)
 prompt = await generate_analysis_prompt("mining", 24)
 ```
 
-## 🔄 Background Services
+##  Background Services
 
 The MCP server runs several background services automatically:
 
@@ -781,7 +781,7 @@ The MCP server runs several background services automatically:
 - **Features**: Configurable event limits, garbage collection
 - **Performance**: Optimized for long-running sessions
 
-## 🖥️ Claude Desktop Integration
+##  Claude Desktop Integration
 
 ### Configuration
 Add to your Claude Desktop configuration file:
@@ -825,7 +825,7 @@ Once configured, you can interact naturally with Claude:
 - "What materials have I collected?"
 - "List my engineering progress"
 
-## 💻 Development API
+##  Development API
 
 ### Direct Server Usage
 ```python
@@ -871,7 +871,7 @@ processed = processor.process_event({
 })
 ```
 
-## ⚙️ Configuration Options
+##  Configuration Options
 
 ### Environment Variables
 - `ELITE_JOURNAL_PATH`: Journal directory path (auto-detected if not set)
@@ -892,7 +892,7 @@ Create `config.json` in project root:
 }
 ```
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -966,3 +966,4 @@ tail -f elite_mcp_server.log | grep "INFO\|ERROR\|WARNING"
 ---
 
 **This comprehensive features guide covers all capabilities of the Elite Dangerous MCP Server. For additional help, see the main [README](../README.md) or [Testing Guide](TESTING_GUIDE.md).**
+
