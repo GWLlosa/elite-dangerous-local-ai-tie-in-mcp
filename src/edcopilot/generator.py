@@ -501,10 +501,6 @@ class EDCoPilotFileManager:
                 if file_mtime < cutoff_time:
                     backup_file.unlink()
                     removed_count += 1
-    # Helper for tests and integrations expecting explicit context builder
-    def _build_context(self) -> Dict[str, Any]:
-        return self.context_analyzer.analyze_current_context()
-
                     logger.debug(f"Removed old backup: {backup_file.name}")
             except Exception as e:
                 logger.error(f"Error removing backup {backup_file}: {e}")
@@ -513,5 +509,6 @@ class EDCoPilotFileManager:
             logger.info(f"Cleaned up {removed_count} old backup files")
 
         return removed_count
+
 # Backwards-compatible alias expected by some tests/integrations
 EDCoPilotGenerator = EDCoPilotContentGenerator
