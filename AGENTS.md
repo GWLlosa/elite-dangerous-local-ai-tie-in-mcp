@@ -18,10 +18,15 @@ Purpose: Give AI coding agents concise, enforceable rules for working in this re
 - Error handling: Fail gracefully with clear messages; prefer structured error objects over `None` returns for error cases.
 - Character encoding: Use ASCIIonly in Python code and program output (no emojis/smart quotes/extended Unicode). ASCII status tags like `[SUCCESS]`, `[FAILED]` are allowed.
 
+## Input Semantics
+- Empty string defaults: Treat empty strings (e.g., "") as selecting the default value when a parameter is optional. Only raise errors when a field is explicitly required and the value is `None`.
+  - Example: ThemeMCPTools accepts "" for `theme`/`context` as defaults; `None` is invalid.
+
 ## Time & Datetime Rules
 - All datetimes must be timezoneaware and in UTC.
   - WRONG: `datetime.utcnow()` (naive)
   - CORRECT: `from datetime import datetime, timezone; datetime.now(timezone.utc)`
+  - When parsing or returning timestamps (e.g., file info, extracted journal timestamps), ensure timezone awareness. For parsed values, set `tzinfo=timezone.utc` if the source is known to be UTC.
 
 ## Elite Dangerous Data Model Rules
 - ProcessedEvent

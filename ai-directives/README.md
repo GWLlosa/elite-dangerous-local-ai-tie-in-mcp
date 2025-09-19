@@ -97,6 +97,22 @@ Current State
 - Next Milestone: None (core milestones complete); enhancements proceed via scoped feature branches
 - All Systems: Core functionality operational, documented, and tested
 
+### Recent Rule Update (Empty String Defaults)
+- New rule: Treat empty strings ("") as default selections for optional inputs; only `None` is an error for required fields.
+- Implementation impact:
+  - ThemeMCPTools now accepts empty `theme`/`context` and treats them as defaults; `None` still errors.
+  - Tests were updated to reflect this behavior across edge-case and core suites.
+- Rationale:
+  - Improves UX when callers intentionally pass empty strings to defer to current/default configuration.
+  - Keeps strict validation for truly missing values (`None`).
+- Crosslinks:
+  - See AGENTS.md (Input Semantics) and `.cursorrules` for binding rule text.
+
+### Merge Sync
+- Synchronized feature/headless-edcopilot-cli with origin/main and resolved conflicts in generator, theme storage, data store, journal parser, and tests.
+- Ensured timezone-aware UTC datetimes in public returns (e.g., journal parser file info and timestamps).
+- Full unit+CLI suite is green; coverage generated via scripts/run_tests.py.
+
 ##  Development Workflow Standard
 
 ### Pull Request Workflow (MANDATORY)
