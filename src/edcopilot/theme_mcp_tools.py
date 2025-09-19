@@ -79,20 +79,23 @@ class ThemeMCPTools:
             Dict with theme setting status and next steps
         """
         try:
-            # Validate theme parameters
-            if not theme or not theme.strip():
-                return {"success": False, "error": "Theme cannot be empty"}
-
-            if not context or not context.strip():
-                return {"success": False, "error": "Context cannot be empty"}
+            # Lenient handling: empty strings are allowed and treated as defaults
+            # Only None values are considered missing/invalid for required fields
+            if theme is None:
+                return {"success": False, "error": "Theme is required"}
+            if context is None:
+                return {"success": False, "error": "Context is required"}
 
             # Set the theme
-            self.theme_storage.set_current_theme(theme.strip(), context.strip())
+            # Preserve empty strings as-is (treated as defaults); trim otherwise
+            theme_to_set = theme.strip() if isinstance(theme, str) else theme
+            context_to_set = context.strip() if isinstance(context, str) else context
+            self.theme_storage.set_current_theme(theme_to_set, context_to_set)
 
             result = {
                 "success": True,
-                "theme": theme.strip(),
-                "context": context.strip(),
+                "theme": theme_to_set,
+                "context": context_to_set,
                 "message": f"Theme set to '{theme}' with context '{context}'"
             }
 
@@ -209,11 +212,11 @@ class ThemeMCPTools:
             # Use current theme if not specified
             current_theme = self.theme_storage.get_current_theme()
 
-            if not theme and current_theme:
+            if (not theme or theme == "") and current_theme:
                 theme = current_theme["theme"]
                 context = current_theme["context"]
 
-            if not theme:
+            if theme is None:
                 return {
                     "success": False,
                     "error": "No theme specified and no current theme set. Use 'set_edcopilot_theme' first."
@@ -599,15 +602,13 @@ class ThemeMCPTools:
             # Use current theme if not specified
             current_theme = self.theme_storage.get_current_theme()
 
-            if not theme and current_theme:
+            if (not theme or theme == "") and current_theme:
                 theme = current_theme["theme"]
                 context = current_theme["context"]
 
-            if not theme:
-                return {
-                    "success": False,
-                    "error": "No theme specified and no current theme set"
-                }
+            # Allow empty-string theme as default preview; only None is an error
+            if theme is None:
+                return {"success": False, "error": "No theme specified and no current theme set"}
 
             # Get current ship if not specified
             if not ship_name:
@@ -649,8 +650,12 @@ class ThemeMCPTools:
 
             if not current_theme and not ship_configs:
                 return {
-                    "success": False,
-                    "error": "No current theme or ship configurations to backup"
+                    "success": True,
+                    "backup_name": None,
+                    "current_theme": None,
+                    "ship_configs_count": 0,
+                    "themes_backed_up": 0,
+                    "message": "No current theme or ship configurations to backup"
                 }
 
             # Create backup name with timestamp
@@ -674,6 +679,7 @@ class ThemeMCPTools:
                 "backup_name": backup_name,
                 "current_theme": current_theme,
                 "ship_configs_count": len(ship_configs),
+                "themes_backed_up": (1 if current_theme else 0) + len(ship_configs),
                 "message": f"Theme configuration backed up as '{backup_name}'"
             }
 

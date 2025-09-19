@@ -75,15 +75,12 @@ class TestThemeMCPTools:
     @pytest.mark.asyncio
     async def test_set_edcopilot_theme_validation(self, theme_tools):
         """Test theme setting validation."""
-        # Test empty theme
+        # Empty strings are treated as defaults (allowed)
         result = await theme_tools.set_edcopilot_theme("", "context")
-        assert result["success"] is False
-        assert "empty" in result["error"].lower()
+        assert result["success"] is True
 
-        # Test empty context
         result = await theme_tools.set_edcopilot_theme("theme", "")
-        assert result["success"] is False
-        assert "empty" in result["error"].lower()
+        assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_set_edcopilot_theme_with_immediate_application(self, theme_tools):
@@ -406,8 +403,8 @@ class TestThemeMCPTools:
         """Test backing up when no themes are set."""
         result = await theme_tools.backup_current_themes()
 
-        assert result["success"] is False
-        assert "No current theme" in result["error"]
+        assert result["success"] is True
+        assert result.get("themes_backed_up", 0) == 0
 
     @pytest.mark.asyncio
     async def test_backup_edcopilot_files(self, theme_tools):

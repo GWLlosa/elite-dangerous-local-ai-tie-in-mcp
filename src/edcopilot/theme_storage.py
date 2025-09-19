@@ -340,15 +340,17 @@ class ThemeStorage:
         }
         self._theme_history.append(entry)
 
-        # Keep only last 100 entries
-        if len(self._theme_history) > 100:
-            self._theme_history = self._theme_history[-100:]
+        # Do not cap history here; retrieval applies limits
 
         self._save_theme_history()
 
     def get_theme_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get recent theme history."""
-        return self._theme_history[-limit:] if limit else self._theme_history
+        if limit is None or limit <= 0:
+            return []
+        if limit >= len(self._theme_history):
+            return list(self._theme_history)
+        return self._theme_history[-limit:]
 
     # Preset Management
 

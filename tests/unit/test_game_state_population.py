@@ -186,6 +186,13 @@ class TestGameStatePopulation:
         # Mock EDCoPilot generator to check what context it receives
         with patch('src.edcopilot.generator.EDCoPilotGenerator') as mock_generator:
             mock_instance = Mock()
+            # Provide a concrete context for assertions while patched
+            mock_instance._build_context.return_value = {
+                'commander_name': 'Hadesfire',
+                'current_system': 'Blae Drye SG-P b25-6',
+                'current_ship': 'Mandalay',
+                'ship_name': 'EXCELSIOR'
+            }
             mock_generator.return_value = mock_instance
 
             # Import and create the generator (this would normally happen in MCP tools)

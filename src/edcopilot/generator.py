@@ -155,7 +155,7 @@ class EDCoPilotContentGenerator:
         return files
         
     def _build_context(self) -> Dict[str, Any]:
-        \ \\Build and return the current context dict.\\\
+        """Build and return the current context dict."""
         return self.context_analyzer.analyze_current_context()
 
 

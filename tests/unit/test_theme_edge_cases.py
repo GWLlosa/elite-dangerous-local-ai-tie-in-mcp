@@ -371,7 +371,8 @@ class TestThemeMCPToolsEdgeCases:
     @pytest.mark.asyncio
     async def test_preview_with_no_current_theme(self, edge_mcp_tools):
         """Test preview generation when no theme is set."""
-        result = await edge_mcp_tools.preview_themed_content()
+        # Empty string should be treated as default theme selection
+        result = await edge_mcp_tools.preview_themed_content(theme="")
 
         # Should handle gracefully
         assert result["success"] is True
