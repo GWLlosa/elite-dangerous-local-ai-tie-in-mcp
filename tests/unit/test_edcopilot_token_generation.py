@@ -24,7 +24,7 @@ class TestEDCoPilotTokenGeneration:
             # SHOULD contain dynamic tokens when referencing systems directly
             if ("entering" in content.lower() or "welcome to" in content.lower() or
                 ("system" in content.lower() and "system" not in "systems secure")):
-                assert "{SystemName}" in content, f"Entry should use {{SystemName}} token: {content}"
+                assert "<SystemName>" in content, f"Entry should use <SystemName> token: {content}"
 
             # SHOULD NOT contain hardcoded system names
             assert "Blae Drye" not in content, f"Should not hardcode system names: {content}"
@@ -41,7 +41,7 @@ class TestEDCoPilotTokenGeneration:
             # Only check entries that explicitly mention specific stations
             if ("docking request" in content.lower() or "docked at" in content.lower()):
                 # Should use dynamic station token
-                assert "{StationName}" in content, f"Entry should use {{StationName}} token: {content}"
+                assert "<StationName>" in content, f"Entry should use <StationName> token: {content}"
 
             # Should not hardcode specific stations
             assert "K1F-37B" not in content, f"Should not hardcode station names: {content}"
@@ -58,11 +58,11 @@ class TestEDCoPilotTokenGeneration:
             # Only check entries that explicitly reference specific bodies
             if ("data from" in content.lower() and "body" in content.lower()):
                 # Should use dynamic body token when referencing bodies
-                assert "{BodyName}" in content, f"Entry should use {{BodyName}} token: {content}"
+                assert "<BodyName>" in content, f"Entry should use <BodyName> token: {content}"
 
             if "light years" in content.lower() and "sol" in content.lower():
                 # Should use distance token, not hardcoded distances
-                assert "{DistanceFromSol}" in content, f"Entry should use {{DistanceFromSol}} token: {content}"
+                assert "<DistanceFromSol>" in content, f"Entry should use <DistanceFromSol> token: {content}"
 
     def test_generated_content_follows_token_patterns(self):
         """Test that all generated content follows proper token patterns."""

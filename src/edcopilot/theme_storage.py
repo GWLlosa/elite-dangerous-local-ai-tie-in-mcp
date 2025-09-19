@@ -211,9 +211,14 @@ class ThemeStorage:
             theme: Theme identifier (e.g., "space pirate")
             context: Theme context (e.g., "owes debt to Space Mafia")
         """
+<<<<<<< HEAD
         # Validate inputs
         if theme is None or context is None:
             raise TypeError("theme and context must not be None")
+=======
+        if theme is None or context is None:
+            raise ValueError("Theme and context cannot be None")
+>>>>>>> origin/main
 
         self._current_theme = {
             "theme": theme,

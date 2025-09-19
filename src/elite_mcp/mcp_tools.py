@@ -1301,3 +1301,77 @@ class MCPTools:
         except Exception as e:
             logger.error(f"Error previewing EDCoPilot chatter: {e}")
             return {"error": str(e)}
+
+    async def server_status(self) -> Dict[str, Any]:
+        """
+        Get server status information.
+
+        Returns:
+            Dict containing server status information
+        """
+        try:
+            stats = self.data_store.get_statistics()
+            game_state = self.data_store.get_game_state()
+
+            return {
+                "server_running": True,
+                "journal_monitoring": True,  # Assume monitoring is active if we have stats
+                "uptime_seconds": stats.get('uptime_seconds', 0),
+                "total_events": stats.get('total_processed', 0),
+                "memory_usage_events": stats.get('memory_usage_events', 0),
+                "current_system": game_state.current_system,
+                "current_station": game_state.current_station,
+                "last_updated": game_state.last_updated.isoformat() if game_state.last_updated else None,
+                "data_store_stats": {
+                    "total_events": stats.get('total_processed', 0),
+                    "events_by_type": stats.get('events_by_type', {}),
+                    "events_by_category": stats.get('events_by_category', {}),
+                    "uptime_seconds": stats.get('uptime_seconds', 0),
+                    "memory_usage_events": stats.get('memory_usage_events', 0),
+                    "max_events": stats.get('max_events', 0),
+                    "storage_efficiency": stats.get('storage_efficiency', 0)
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting server status: {e}")
+            return {
+                "server_running": False,
+                "error": str(e)
+            }
+
+    def get_recent_events(self, minutes: int = 60) -> Dict[str, Any]:
+        """
+        Get recent events from specified time range.
+
+        Args:
+            minutes: Number of minutes to look back
+
+        Returns:
+            Dict containing recent events information
+        """
+        try:
+            from datetime import datetime, timezone, timedelta
+
+            cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+            events = self.data_store.get_recent_events(minutes)
+
+            return {
+                "event_count": len(events),
+                "time_range_minutes": minutes,
+                "cutoff_time": cutoff_time.isoformat(),
+                "events": [
+                    {
+                        "timestamp": event.timestamp.isoformat(),
+                        "event_type": event.event_type,
+                        "category": event.category.value,
+                        "summary": event.summary
+                    }
+                    for event in events
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Error getting recent events: {e}")
+            return {
+                "event_count": 0,
+                "error": str(e)
+            }

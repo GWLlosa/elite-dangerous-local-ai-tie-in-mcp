@@ -96,9 +96,7 @@ class JournalParser:
         """
         filename = file_path.name
         
-        # Valid patterns:
-        # 1) Legacy: Journal.YYYYMMDDHHMMSS.NN.log[.backup]
-        # 2) ISO-like: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
+        # Valid patterns: support both legacy and ISO-like formats
         patterns = [
             r'^Journal\.\d{14}\.\d{2}\.log$',
             r'^Journal\.\d{14}\.\d{2}\.log\.backup$',
@@ -345,6 +343,8 @@ class JournalParser:
             # 2) Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
             filename = file_path.name
 
+<<<<<<< HEAD
+            # Extract timestamp part using regex - handles both formats
             # Try ISO-like format first
             match_iso = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
             if match_iso:

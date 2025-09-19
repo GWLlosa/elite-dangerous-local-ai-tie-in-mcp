@@ -204,9 +204,10 @@ class TestMCPAPIIntegration:
                 except ValueError:
                     pytest.fail(f"Invalid timestamp format: {event['timestamp']}")
 
-    def test_get_current_location(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_get_current_location(self, mcp_tools, journal_data):
         """Test current location returns valid location data."""
-        result = mcp_tools.get_current_location()
+        result = await mcp_tools.get_current_location()
 
         assert isinstance(result, dict), "Current location should return a dictionary"
         assert 'current_system' in result, "Should include current system"
@@ -221,9 +222,10 @@ class TestMCPAPIIntegration:
                 assert current_system in journal_data['systems'], \
                     f"Current system '{current_system}' should be in journal systems: {journal_data['systems']}"
 
-    def test_get_ship_status(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_get_ship_status(self, mcp_tools, journal_data):
         """Test ship status returns valid ship information."""
-        result = mcp_tools.get_ship_status()
+        result = await mcp_tools.get_ship_status()
 
         assert isinstance(result, dict), "Ship status should return a dictionary"
         assert 'ship_type' in result, "Should include ship type"
@@ -244,37 +246,39 @@ class TestMCPAPIIntegration:
                 # Ship type should be reasonable (at least not empty)
                 assert len(ship_type) > 0, "Ship type should not be empty"
 
-    def test_search_events(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_search_events(self, mcp_tools, journal_data):
         """Test event search with various filters."""
         # Test basic search
-        result = mcp_tools.search_events(max_results=10)
+        result = await mcp_tools.search_events(max_results=10)
         assert isinstance(result, dict), "Search results should be a dictionary"
         assert 'results' in result, "Should include results"
         assert isinstance(result['results'], list), "Results should be a list"
 
         # Test search by event type if we have specific events
         if 'LoadGame' in journal_data['event_types']:
-            result = mcp_tools.search_events(event_types=['LoadGame'], max_results=5)
+            result = await mcp_tools.search_events(event_types=['LoadGame'], max_results=5)
             assert len(result['results']) > 0, "Should find LoadGame events"
             for event in result['results']:
                 assert event['event_type'] == 'LoadGame', "All results should be LoadGame events"
 
         # Test search by category
-        result = mcp_tools.search_events(categories=['navigation'], max_results=5)
+        result = await mcp_tools.search_events(categories=['navigation'], max_results=5)
         if result['results']:  # If we have navigation events
             for event in result['results']:
                 assert event['category'] == 'navigation', "All results should be navigation category"
 
         # Test time range search
-        result = mcp_tools.search_events(time_range_minutes=60, max_results=5)
+        result = await mcp_tools.search_events(time_range_minutes=60, max_results=5)
         # Should return recent events (can't easily validate timestamp without complex logic)
 
-    def test_get_activity_summary(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_get_activity_summary(self, mcp_tools, journal_data):
         """Test activity summaries for different activity types."""
         activities = ['exploration', 'trading', 'combat', 'mining', 'missions', 'engineering']
 
         for activity in activities:
-            result = mcp_tools.get_activity_summary(activity_type=activity, time_range_hours=24)
+            result = await mcp_tools.get_activity_summary(activity_type=activity, time_range_hours=24)
 
             assert isinstance(result, dict), f"Activity summary for {activity} should be a dictionary"
             assert 'activity_type' in result, "Should include activity type"
@@ -337,9 +341,10 @@ class TestMCPAPIIntegration:
         assert 'activity_type' in result, "Should include activity type"
         assert result['activity_type'] == 'combat', "Activity type should be combat"
 
-    def test_get_journey_summary(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_get_journey_summary(self, mcp_tools, journal_data):
         """Test journey summary with validation against known systems."""
-        result = mcp_tools.get_journey_summary(time_range_hours=24)
+        result = await mcp_tools.get_journey_summary(time_range_hours=24)
 
         assert isinstance(result, dict), "Journey summary should be a dictionary"
         assert 'total_jumps' in result, "Should include total jumps"
@@ -360,9 +365,10 @@ class TestMCPAPIIntegration:
                 overlap = visited_systems.intersection(journal_systems)
                 # Note: We can't assert overlap > 0 due to time range differences
 
-    def test_get_performance_metrics(self, mcp_tools, journal_data):
+    @pytest.mark.asyncio
+    async def test_get_performance_metrics(self, mcp_tools, journal_data):
         """Test performance metrics summary."""
-        result = mcp_tools.get_performance_metrics(time_range_hours=24)
+        result = await mcp_tools.get_performance_metrics(time_range_hours=24)
 
         assert isinstance(result, dict), "Performance metrics should be a dictionary"
 
