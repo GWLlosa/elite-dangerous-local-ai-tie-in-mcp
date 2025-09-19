@@ -427,13 +427,22 @@ class DataStore:
     
     def _handle_fsd_jump(self, event: ProcessedEvent) -> None:
         """Handle FSD jump events."""
-        # FIXED: use key_data instead of extracted_data and correct field names
-        data = event.key_data
-        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
+        # Use both key_data and raw_event to extract system information
+        data = event.key_data or {}
+        raw_data = event.raw_event or {}
+
+        # Try multiple field names to extract system name
+        system_name = (
+            data.get('system_name') or  # From key_data
+            data.get('system') or       # Alternative key_data field
+            raw_data.get('StarSystem')  # From raw_event
+        )
+
+        self._game_state.current_system = system_name
         self._game_state.coordinates = {
-            'x': data.get('star_pos_x'),
-            'y': data.get('star_pos_y'),
-            'z': data.get('star_pos_z')
+            'x': data.get('star_pos_x') or raw_data.get('StarPosX'),
+            'y': data.get('star_pos_y') or raw_data.get('StarPosY'),
+            'z': data.get('star_pos_z') or raw_data.get('StarPosZ')
         }
         self._game_state.current_station = None
         self._game_state.current_body = None
@@ -458,9 +467,19 @@ class DataStore:
         self._game_state.docked = True
         self._game_state.landed = False
         self._game_state.supercruise = False
-        # FIXED: use key_data instead of extracted_data and correct field names
-        data = event.key_data
-        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
+
+        # Use both key_data and raw_event to extract station information
+        data = event.key_data or {}
+        raw_data = event.raw_event or {}
+
+        # Try multiple field names to extract station name
+        station_name = (
+            data.get('station_name') or  # From key_data
+            data.get('station') or       # Alternative key_data field
+            raw_data.get('StationName')  # From raw_event
+        )
+
+        self._game_state.current_station = station_name
     
     def _handle_undocked(self, event: ProcessedEvent) -> None:
         """Handle undocking events."""
@@ -479,19 +498,47 @@ class DataStore:
     
     def _handle_load_game(self, event: ProcessedEvent) -> None:
         """Handle game load events."""
-        # FIXED: use key_data instead of extracted_data
-        data = event.key_data
-        self._game_state.commander_name = data.get('commander')
-        self._game_state.current_ship = data.get('ship_type')
-        self._game_state.ship_name = data.get('ship_name')
-        self._game_state.ship_id = data.get('ship_id')
-        self._game_state.game_mode = data.get('game_mode')
-        self._game_state.group = data.get('group')
-        self._game_state.credits = data.get('credits', 0)
-        self._game_state.loan = data.get('loan', 0)
+        # Use both key_data and raw_event to extract LoadGame information
+        data = event.key_data or {}
+        raw_data = event.raw_event or {}
+
+        # Extract commander name from multiple possible sources
+        commander_name = (
+            data.get('commander') or
+            data.get('commander_name') or
+            raw_data.get('Commander')
+        )
+
+        # Extract ship information from multiple sources
+        ship_type = (
+            data.get('ship_type') or
+            data.get('ship') or
+            raw_data.get('Ship')
+        )
+
+        ship_name = (
+            data.get('ship_name') or
+            raw_data.get('ShipName')
+        )
+
+        self._game_state.commander_name = commander_name
+        self._game_state.current_ship = ship_type
+        self._game_state.ship_name = ship_name
+        self._game_state.ship_id = data.get('ship_id') or raw_data.get('ShipID')
+        self._game_state.game_mode = data.get('game_mode') or raw_data.get('GameMode')
+        self._game_state.group = data.get('group') or raw_data.get('Group')
+        self._game_state.credits = data.get('credits') or raw_data.get('Credits', 0)
+        self._game_state.loan = data.get('loan') or raw_data.get('Loan', 0)
+
         # Store fuel info for contextual generation
-        self._game_state.fuel_level = data.get('fuel_level', 100.0)
-        self._game_state.fuel_capacity = data.get('fuel_capacity', 32.0)
+        self._game_state.fuel_level = (
+            data.get('fuel_level') or
+            raw_data.get('FuelLevel', 100.0)
+        )
+        self._game_state.fuel_capacity = (
+            data.get('fuel_capacity') or
+            raw_data.get('FuelCapacity', 32.0)
+        )
     
     def _handle_loadout(self, event: ProcessedEvent) -> None:
         """Handle ship loadout events."""

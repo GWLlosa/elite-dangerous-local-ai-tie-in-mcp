@@ -113,9 +113,13 @@ class TestEDCoPilotContextualGeneration:
         # Check that space chatter contains the specific system name
         space_chatter = files.get('EDCoPilot.SpaceChatter.Custom.txt', '')
 
-        # Should contain actual system name, not just {SystemName} token
-        assert "Blae Drye IC-S d5-15" in space_chatter, \
-            f"Generated chatter should contain specific system name 'Blae Drye IC-S d5-15', but content was:\n{space_chatter[:500]}..."
+        # Should use proper token format, not hardcoded system names
+        assert "<SystemName>" in space_chatter, \
+            f"Generated chatter should use <SystemName> token, but content was:\n{space_chatter[:500]}..."
+
+        # Should NOT contain hardcoded system names (proper token usage)
+        assert "Blae Drye IC-S d5-15" not in space_chatter, \
+            "Chatter should use tokens, not hardcoded system names"
 
     def test_generated_chatter_contains_ship_name_references(self):
         """Test that generated chatter contains references to the actual ship."""
@@ -125,10 +129,14 @@ class TestEDCoPilotContextualGeneration:
         space_chatter = files.get('EDCoPilot.SpaceChatter.Custom.txt', '')
         crew_chatter = files.get('EDCoPilot.CrewChatter.Custom.txt', '')
 
-        # Should contain actual ship name, not just {ShipName} token
+        # Should use proper token format, not hardcoded ship names
         combined_chatter = space_chatter + crew_chatter
-        assert "EXCELSIOR" in combined_chatter or "Mandalay" in combined_chatter, \
-            f"Generated chatter should contain ship name references, but content was:\n{combined_chatter[:500]}..."
+        assert "<ShipName>" in combined_chatter or "<CommanderName>" in combined_chatter, \
+            f"Generated chatter should use proper tokens, but content was:\n{combined_chatter[:500]}..."
+
+        # Should NOT contain hardcoded ship names (proper token usage)
+        assert "EXCELSIOR" not in combined_chatter and "Mandalay" not in combined_chatter, \
+            "Chatter should use tokens, not hardcoded ship names"
 
     def test_generated_chatter_contains_discovery_references(self):
         """Test that generated chatter references actual discoveries made."""

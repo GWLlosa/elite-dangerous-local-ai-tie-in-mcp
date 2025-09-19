@@ -96,10 +96,12 @@ class JournalParser:
         """
         filename = file_path.name
         
-        # Valid patterns: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
-        # Elite Dangerous uses ISO-like format with dashes and T separator
+        # Valid patterns: Journal.YYYYMMDDHHMMSS.NN.log[.backup] (Elite Dangerous format)
+        # Also support ISO-like format with dashes and T separator for compatibility
         patterns = [
-            r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log$',
+            r'^Journal\.\d{14}\.\d{2}\.log$',  # Elite Dangerous: YYYYMMDDHHMMSS
+            r'^Journal\.\d{14}\.\d{2}\.log\.backup$',
+            r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log$',  # ISO-like format
             r'^Journal\.\d{4}-\d{2}-\d{2}T\d{6}\.\d{2}\.log\.backup$'
         ]
         
@@ -340,15 +342,23 @@ class JournalParser:
             # Pattern: Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
             filename = file_path.name
 
-            # Extract timestamp part using regex - new ISO-like format
-            match = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
-            if not match:
-                logger.warning(f"Could not extract timestamp from filename: {filename}")
-                return datetime.fromtimestamp(0)  # Epoch as fallback
-
-            timestamp_str = match.group(1)
-            # Parse format like "2025-09-13T221119"
-            timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
+            # Extract timestamp part using regex - handles both formats
+            # Format 1: Journal.YYYYMMDDHHMMSS.NN.log (Elite Dangerous format)
+            match = re.search(r'Journal\.(\d{14})\.', filename)
+            if match:
+                timestamp_str = match.group(1)
+                # Parse format like "20240906120000"
+                timestamp = datetime.strptime(timestamp_str, "%Y%m%d%H%M%S")
+            else:
+                # Format 2: Journal.YYYY-MM-DDTHHMMSS.NN.log (ISO-like format)
+                match = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
+                if match:
+                    timestamp_str = match.group(1)
+                    # Parse format like "2025-09-13T221119"
+                    timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
+                else:
+                    logger.warning(f"Could not extract timestamp from filename: {filename}")
+                    return datetime.fromtimestamp(0)  # Epoch as fallback
 
             return timestamp
 
