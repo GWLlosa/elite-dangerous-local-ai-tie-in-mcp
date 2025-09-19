@@ -1,19 +1,19 @@
-# 🎭 Milestone 11.5: Dynamic Multi-Crew Theme System
+#  Milestone 11.5: Dynamic Multi-Crew Theme System
 
-**Status**: 📋 **PLANNED** - Ready for Implementation
+**Status**:  **PLANNED** - Ready for Implementation
 **Priority**: High User Value Enhancement
 **Estimated Complexity**: Low-Medium
-**Dependencies**: Milestone 11 (EDCoPilot Integration) ✅ Complete
+**Dependencies**: Milestone 11 (EDCoPilot Integration) [OK] Complete
 
-## 📋 Milestone Overview
+##  Milestone Overview
 
 **Objective**: Transform EDCoPilot integration from static templates to dynamic, AI-generated theme-based dialogue with ship-specific multi-crew personalities.
 
 **Core Innovation**: Enable users to set narrative themes (e.g., "space pirate", "corporate executive", "military veteran") and have all EDCoPilot chatter dynamically generated to match that theme while preserving game data integration and supporting realistic crew compositions based on ship size.
 
-## 🎯 Key Features
+##  Key Features
 
-### ✨ **1. Dynamic Theme Generation**
+###  **1. Dynamic Theme Generation**
 Transform EDCoPilot dialogue personality with user-defined themes while maintaining token functionality.
 
 **Examples:**
@@ -23,7 +23,7 @@ Pirate Theme: "Entering {SystemName}. Raise the Jolly Roger, matey! Scanning for
 Corporate Theme: "Entering {SystemName}. Analyzing market opportunities and profit potential."
 ```
 
-### 👥 **2. Ship-Specific Multi-Crew System**
+###  **2. Ship-Specific Multi-Crew System**
 Realistic crew compositions based on ship size with individual personalities per crew member.
 
 **Ship Categories:**
@@ -41,7 +41,7 @@ Realistic crew compositions based on ship size with individual personalities per
 - **Medical Officer**: Health, life support (large ships)
 - **Quartermaster**: Cargo, supplies (large ships)
 
-### 🎪 **3. Dual-Parameter Theme System**
+###  **3. Dual-Parameter Theme System**
 - **Theme**: Character archetype/personality (e.g., "space pirate", "corporate executive")
 - **Context**: Background story/circumstances (e.g., "owes debt to Space Mafia", "seeking revenge")
 
@@ -53,15 +53,15 @@ context="retired after 30 years, now exploring galaxy peacefully"
 Result: "Jump complete to {SystemName}. These old bones have seen enough combat - just here for the scenery, soldier."
 ```
 
-### 🤖 **4. AI-Powered Generation via Claude Desktop**
+###  **4. AI-Powered Generation via Claude Desktop**
 Leverages existing Claude Desktop connection without requiring external AI services or additional authentication.
 
 **No Additional Session Management Required:**
-- Uses existing MCP ↔ Claude Desktop connection
+- Uses existing MCP  Claude Desktop connection
 - No API keys, rate limiting, or external dependencies
 - AI generation happens in Claude Desktop context
 
-## 🛠️ Technical Implementation
+##  Technical Implementation
 
 ### **New MCP Tools**
 ```python
@@ -87,56 +87,56 @@ backup_current_themes() -> Dict
 ### **Enhanced Architecture**
 ```
 Elite Dangerous MCP Server
-├── Theme Generation System
-│   ├── AI Prompt Generation (leverages Claude Desktop)
-│   ├── Template Validation & Application
-│   ├── Theme Persistence & Management
-│   └── Fallback & Error Handling
-│
-├── Multi-Crew Management
-│   ├── Ship Detection & Crew Mapping
-│   ├── Role-Specific Dialogue Generation
-│   ├── Crew Theme Assignment & Storage
-│   └── Dynamic Crew Switching
-│
-└── Enhanced File Generation
-    ├── Ship-Specific File Organization
-    ├── Role-Based Dialogue Filtering
-    ├── Automatic Crew Adaptation
-    └── Contextual Enhancement Integration
+ Theme Generation System
+    AI Prompt Generation (leverages Claude Desktop)
+    Template Validation & Application
+    Theme Persistence & Management
+    Fallback & Error Handling
+
+ Multi-Crew Management
+    Ship Detection & Crew Mapping
+    Role-Specific Dialogue Generation
+    Crew Theme Assignment & Storage
+    Dynamic Crew Switching
+
+ Enhanced File Generation
+     Ship-Specific File Organization
+     Role-Based Dialogue Filtering
+     Automatic Crew Adaptation
+     Contextual Enhancement Integration
 ```
 
 ### **File Organization**
 ```
 EDCoPilot/User custom files/
-├── Ships/                              # Ship-specific crew configurations
-│   ├── Anaconda/
-│   │   ├── Navigator.Custom.txt
-│   │   ├── Science.Custom.txt
-│   │   └── [other crew roles]
-│   ├── AspExplorer/
-│   └── Sidewinder/
-├── Themes/                             # Theme backups and presets
-│   ├── current_theme.json
-│   ├── theme_history.json
-│   └── presets/
-├── EDCoPilot.SpaceChatter.Custom.txt   # Active ship's combined dialogue
-└── EDCoPilot.CrewChatter.Custom.txt    # Active ship's crew dialogue
+ Ships/                              # Ship-specific crew configurations
+    Anaconda/
+       Navigator.Custom.txt
+       Science.Custom.txt
+       [other crew roles]
+    AspExplorer/
+    Sidewinder/
+ Themes/                             # Theme backups and presets
+    current_theme.json
+    theme_history.json
+    presets/
+ EDCoPilot.SpaceChatter.Custom.txt   # Active ship's combined dialogue
+ EDCoPilot.CrewChatter.Custom.txt    # Active ship's crew dialogue
 ```
 
-## 🎭 User Experience Examples
+##  User Experience Examples
 
 ### **Setting Up Themed Crew**
 ```
 User: "Set up my Anaconda crew as a pirate crew. Make the navigator a by-the-book officer who reluctantly works for pirates, the science officer an excited treasure hunter, and the engineer a gruff old sea dog."
 
 System Response:
-✅ Anaconda crew configured with pirate theme
-✅ Navigator: "Reluctant professional officer working for pirates"
-✅ Science Officer: "Excited treasure hunter and researcher"
-✅ Engineer: "Gruff old sea dog with decades of experience"
-✅ Generating themed dialogue for 6 crew members...
-✅ EDCoPilot files updated with pirate crew personalities
+[OK] Anaconda crew configured with pirate theme
+[OK] Navigator: "Reluctant professional officer working for pirates"
+[OK] Science Officer: "Excited treasure hunter and researcher"
+[OK] Engineer: "Gruff old sea dog with decades of experience"
+[OK] Generating themed dialogue for 6 crew members...
+[OK] EDCoPilot files updated with pirate crew personalities
 
 Result: Rich, diverse crew with individual personalities that interact naturally while maintaining pirate theme consistency.
 ```
@@ -160,14 +160,14 @@ Sidewinder: "Well, it's just you and me again, old girl. Let's see what this sys
 User: "My character has gone from pirate to legitimate trader. Update the themes to reflect this change while keeping the crew personalities."
 
 System:
-✅ Updates theme from "space pirate" to "reformed pirate turned legitimate trader"
-✅ Preserves individual crew personalities but adjusts dialogue context
-✅ Generates new dialogue reflecting character growth and legal trading focus
+[OK] Updates theme from "space pirate" to "reformed pirate turned legitimate trader"
+[OK] Preserves individual crew personalities but adjusts dialogue context
+[OK] Generates new dialogue reflecting character growth and legal trading focus
 
 Result: Seamless character development while maintaining established crew relationships.
 ```
 
-## 🚀 Implementation Benefits
+##  Implementation Benefits
 
 ### **For Users**
 - **Personalized Experience**: Dialogue that matches their roleplay character
@@ -187,7 +187,7 @@ Result: Seamless character development while maintaining established crew relati
 - **Performance Efficient**: Only generates dialogue for active crew members
 - **Safe Operations**: Automatic backups and rollback capabilities
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### **Unit Tests**
 - Theme generation prompt creation and validation
@@ -207,29 +207,29 @@ Result: Seamless character development while maintaining established crew relati
 - File format compliance with EDCoPilot
 - Performance under various ship and crew configurations
 
-## 📊 Success Metrics
+##  Success Metrics
 
 ### **Functionality Goals**
-- ✅ Theme generation produces contextually appropriate dialogue
-- ✅ All generated templates maintain proper token syntax
-- ✅ Ship-specific crew configurations work automatically
-- ✅ Individual crew member personalities remain distinct and consistent
-- ✅ No breaking changes to existing EDCoPilot integration
+- [OK] Theme generation produces contextually appropriate dialogue
+- [OK] All generated templates maintain proper token syntax
+- [OK] Ship-specific crew configurations work automatically
+- [OK] Individual crew member personalities remain distinct and consistent
+- [OK] No breaking changes to existing EDCoPilot integration
 
 ### **Quality Standards**
-- ✅ Generated dialogue feels natural and immersive
-- ✅ Themes remain consistent across all game scenarios
-- ✅ Crew interactions feel authentic and professional
-- ✅ File generation performance remains under 2 seconds
-- ✅ Error recovery maintains system stability
+- [OK] Generated dialogue feels natural and immersive
+- [OK] Themes remain consistent across all game scenarios
+- [OK] Crew interactions feel authentic and professional
+- [OK] File generation performance remains under 2 seconds
+- [OK] Error recovery maintains system stability
 
 ### **User Experience Benchmarks**
-- ✅ Theme setup completed in single Claude Desktop conversation
-- ✅ Ship switching requires no manual intervention
-- ✅ Generated content approved by users in 90%+ of cases
-- ✅ System handles edge cases gracefully without user intervention
+- [OK] Theme setup completed in single Claude Desktop conversation
+- [OK] Ship switching requires no manual intervention
+- [OK] Generated content approved by users in 90%+ of cases
+- [OK] System handles edge cases gracefully without user intervention
 
-## 🎯 Implementation Phases
+##  Implementation Phases
 
 ### **Phase 1: Core Theme System**
 - Theme parameter definition and storage
@@ -255,7 +255,7 @@ Result: Seamless character development while maintaining established crew relati
 - Documentation and user guides
 - Final integration with existing MCP tools
 
-## 🔮 Future Enhancement Opportunities
+##  Future Enhancement Opportunities
 
 ### **Advanced Crew Features**
 - **Crew Relationships**: Dynamic interactions between crew members
@@ -277,14 +277,12 @@ Result: Seamless character development while maintaining established crew relati
 
 ---
 
-## 🏆 **Milestone 11.5 Achievement Goals**
-
-✅ **Dynamic Theme Generation**: AI-powered personality transformation while preserving game data integration
-✅ **Ship-Specific Multi-Crew**: Realistic crew compositions with individual personalities per role
-✅ **Seamless Integration**: Leverages existing Claude Desktop connection without additional complexity
-✅ **Rich User Experience**: Transform static chatter into personalized, immersive dialogue system
-✅ **Production Quality**: Comprehensive testing, error handling, and backward compatibility
+##  **Milestone 11.5 Achievement Goals** **Dynamic Theme Generation**: AI-powered personality transformation while preserving game data integration
+[OK] **Ship-Specific Multi-Crew**: Realistic crew compositions with individual personalities per role
+[OK] **Seamless Integration**: Leverages existing Claude Desktop connection without additional complexity
+[OK] **Rich User Experience**: Transform static chatter into personalized, immersive dialogue system
+[OK] **Production Quality**: Comprehensive testing, error handling, and backward compatibility
 
 **Total Enhancement Value**: Transform EDCoPilot from functional tool to immersive storytelling system that adapts to player's creative vision while maintaining all technical benefits.
 
-🎭 **This milestone will establish Elite Dangerous MCP Server as the premier AI-enhanced immersion system for Elite Dangerous, providing unparalleled personalization and roleplay depth.**
+ **This milestone will establish Elite Dangerous MCP Server as the premier AI-enhanced immersion system for Elite Dangerous, providing unparalleled personalization and roleplay depth.**

@@ -2,17 +2,17 @@
 
 This directory contains automation scripts for the Elite Dangerous Local AI Tie-In MCP project.
 
-## 🔧 Available Scripts
+##  Available Scripts
 
 ### `setup_dependencies.py`
 **Purpose**: Sets up all dependencies for the project  
 **Usage**: `python scripts/setup_dependencies.py`  
 **Features**:
-- ✅ Creates virtual environment if missing
-- ✅ Installs all required Python packages
-- ✅ Verifies installation with import tests
-- ✅ Safe to run multiple times
-- ✅ Cross-platform compatible (Windows/Linux/Mac)
+- [OK] Creates virtual environment if missing
+- [OK] Installs all required Python packages
+- [OK] Verifies installation with import tests
+- [OK] Safe to run multiple times
+- [OK] Cross-platform compatible (Windows/Linux/Mac)
 
 **When to use**: First time setup or when dependencies are missing
 
@@ -20,11 +20,11 @@ This directory contains automation scripts for the Elite Dangerous Local AI Tie-
 **Purpose**: Verifies all dependencies are properly installed  
 **Usage**: `python scripts/check_dependencies.py`  
 **Features**:
-- ✅ Checks Python version (requires 3.9+)
-- ✅ Verifies virtual environment status
-- ✅ Validates project structure
-- ✅ Tests all package imports
-- ✅ Checks Git repository status
+- [OK] Checks Python version (requires 3.9+)
+- [OK] Verifies virtual environment status
+- [OK] Validates project structure
+- [OK] Tests all package imports
+- [OK] Checks Git repository status
 
 **When to use**: To diagnose dependency issues or verify environment
 
@@ -32,16 +32,16 @@ This directory contains automation scripts for the Elite Dangerous Local AI Tie-
 **Purpose**: Runs the complete test suite with detailed progress  
 **Usage**: `python scripts/run_tests.py`  
 **Features**:
-- ✅ Step-by-step progress reporting
-- ✅ Environment verification
-- ✅ Individual component testing
-- ✅ Complete test suite execution
-- ✅ Coverage report generation
-- ✅ Clear success/failure feedback
+- [OK] Step-by-step progress reporting
+- [OK] Environment verification
+- [OK] Individual component testing
+- [OK] Complete test suite execution
+- [OK] Coverage report generation
+- [OK] Clear success/failure feedback
 
 **When to use**: To validate all functionality is working correctly
 
-## 🚀 Quick Start Workflow
+##  Quick Start Workflow
 
 ### For New Setup:
 ```powershell
@@ -71,7 +71,7 @@ python scripts/setup_dependencies.py
 python scripts/run_tests.py
 ```
 
-## 📋 Script Requirements
+##  Script Requirements
 
 ### Prerequisites:
 - **Python 3.9+** installed on system
@@ -79,45 +79,45 @@ python scripts/run_tests.py
 - **Internet connection** (for downloading packages)
 
 ### Platform Support:
-- ✅ **Windows 11** with PowerShell
-- ✅ **Linux** (Ubuntu, etc.)
-- ✅ **macOS**
+- [OK] **Windows 11** with PowerShell
+- [OK] **Linux** (Ubuntu, etc.)
+- [OK] **macOS**
 
-## 🛡️ Safety Features
+##  Safety Features
 
 All scripts include:
-- ✅ **Pre-flight checks** to verify environment
-- ✅ **Error handling** with helpful messages
-- ✅ **Safe re-execution** - won't break existing setups
-- ✅ **Clear progress reporting** with status indicators
-- ✅ **Graceful failure** with recovery suggestions
+- [OK] **Pre-flight checks** to verify environment
+- [OK] **Error handling** with helpful messages
+- [OK] **Safe re-execution** - won't break existing setups
+- [OK] **Clear progress reporting** with status indicators
+- [OK] **Graceful failure** with recovery suggestions
 
-## 📊 Expected Output
+##  Expected Output
 
 ### Successful Setup:
 ```
-🎉 SETUP COMPLETE!
-✅ Virtual environment created and configured
-✅ Dependencies installed
-✅ Project imports working
+ SETUP COMPLETE!
+[OK] Virtual environment created and configured
+[OK] Dependencies installed
+[OK] Project imports working
 ```
 
 ### Successful Dependency Check:
 ```
-🎉 ALL CHECKS PASSED!
-✅ Your environment is ready for development and testing
-🚀 You can now run: python scripts/run_tests.py
+ ALL CHECKS PASSED!
+[OK] Your environment is ready for development and testing
+ You can now run: python scripts/run_tests.py
 ```
 
 ### Successful Test Run:
 ```
-🎉 ALL TESTS COMPLETED SUCCESSFULLY!
-⏱️  Total execution time: 15.23 seconds
-📊 Coverage report generated in: htmlcov/index.html
-✅ All implemented functionality verified and working
+ ALL TESTS COMPLETED SUCCESSFULLY!
+  Total execution time: 15.23 seconds
+ Coverage report generated in: htmlcov/index.html
+[OK] All implemented functionality verified and working
 ```
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues:
 
@@ -143,9 +143,10 @@ All scripts include:
 3. Ensure you're running from the project root directory
 4. Verify Python 3.9+ is installed and accessible
 
-## 🎯 Integration with Testing Guide
+##  Integration with Testing Guide
 
 These scripts are referenced in the comprehensive testing guide located at:
 - `docs/TESTING_GUIDE.md`
 
 The testing guide provides detailed step-by-step instructions for manual setup, while these scripts provide automated alternatives for common tasks.
+

@@ -4,23 +4,23 @@ A Model Context Protocol (MCP) server that provides real-time integration betwee
 
 ## Features
 
-🚀 **Real-time Journal Monitoring**: Automatically monitors Elite Dangerous journal files for live gameplay events
+ **Real-time Journal Monitoring**: Automatically monitors Elite Dangerous journal files for live gameplay events
 
-📜 **Historical Data Loading**: Processes existing journal files on startup (last 24 hours) for immediate data availability
+ **Historical Data Loading**: Processes existing journal files on startup (last 24 hours) for immediate data availability
 
-🤖 **Claude Desktop Integration**: Provides MCP tools, resources, and prompts for AI-powered gameplay analysis
+ **Claude Desktop Integration**: Provides MCP tools, resources, and prompts for AI-powered gameplay analysis
 
-🎭 **EDCoPilot Integration**: Generates dynamic custom chatter, crew dialogue, and speech extensions based on your current game state
+ **EDCoPilot Integration**: Generates dynamic custom chatter, crew dialogue, and speech extensions based on your current game state
 
-🎪 **Dynamic Theme System** *(NEW!)*: AI-powered personality themes with ship-specific multi-crew support for immersive roleplay and dynamic character development
+ **Dynamic Theme System** *(NEW!)*: AI-powered personality themes with ship-specific multi-crew support for immersive roleplay and dynamic character development
 
-📊 **Comprehensive Analytics**: Track exploration progress, trading performance, combat statistics, and journey summaries
+ **Comprehensive Analytics**: Track exploration progress, trading performance, combat statistics, and journey summaries
 
-🔧 **Flexible Configuration**: Configurable paths, event limits, and integration options
+ **Flexible Configuration**: Configurable paths, event limits, and integration options
 
 ![Claude Desktop Working](docs/images/claude-desktop-working.bmp)
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Automated Setup (Recommended)
 
@@ -35,7 +35,7 @@ cd elite-dangerous-local-ai-tie-in-mcp
 python scripts/setup_dependencies.py
 
 # 3. Verify environment setup
-python scripts/check_environment.py
+python scripts/check_dependencies.py
 
 # 4. Run tests to verify everything works
 python scripts/run_tests.py
@@ -78,7 +78,7 @@ If you prefer manual setup:
 
 See the [Testing Guide](docs/TESTING_GUIDE.md) for detailed setup and verification instructions.
 
-## 🧪 Testing and Development
+##  Testing and Development
 
 ### Available Scripts
 - **`scripts/setup_dependencies.py`** - Automated environment setup with package verification
@@ -178,11 +178,11 @@ If configured correctly, Claude will respond with your current game state using 
 - `ELITE_DEBUG` - Enable debug logging (true/false)
 - `ELITE_MAX_RECENT_EVENTS` - Maximum recent events to store (default: 10000)
 
-## 📊 Project Status
+##  Project Status
 
-**Current Status**: Production Ready - All Core Milestones Completed ✅
+**Current Status**: Production Ready - All Core Milestones Completed [OK]
 
-### ✅ Completed Milestones:
+### [OK] Completed Milestones:
 1. **Project Structure** - Complete foundation and build system
 2. **Configuration Management** - Environment variables and path validation
 3. **Journal File Discovery** - File parsing with comprehensive tests
@@ -197,32 +197,32 @@ If configured correctly, Claude will respond with your current game state using 
 12. **Historical Data Loading** - Automatic processing of existing journal files (last 24 hours) on server startup
 13. **Journal Parser Fixes** - Fixed filename validation and timestamp extraction for all journal file formats
 14. **AsyncIO Stability** - Resolved FastMCP integration issues for stable Claude Desktop connection
-15. **Dynamic Multi-Crew Theme System** - ✨ **NEW** - AI-powered theme generation with ship-specific crew management
+15. **Dynamic Multi-Crew Theme System** -  **NEW** - AI-powered theme generation with ship-specific crew management
 
-### 🎯 Recent Achievements (September 2025):
-- **🎪 Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management
-- **⚡ 159 New Tests** - Comprehensive test coverage for performance, edge cases, and integration scenarios
-- **🚀 10+ New MCP Tools** - Enhanced theme management tools for Claude Desktop integration
-- **🎭 AI Theme Generation** - Intelligent prompt generation for creating immersive crew personalities
-- **🛸 Ship-Specific Themes** - Automatic crew configuration based on ship type and role
+###  Recent Achievements (September 2025):
+- ** Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management
+- ** 159 New Tests** - Comprehensive test coverage for performance, edge cases, and integration scenarios
+- ** 10+ New MCP Tools** - Enhanced theme management tools for Claude Desktop integration
+- ** AI Theme Generation** - Intelligent prompt generation for creating immersive crew personalities
+- ** Ship-Specific Themes** - Automatic crew configuration based on ship type and role
 - **258+ Historical Events** loaded automatically on server startup
 - **200+ Journal Files** now properly recognized and processed
 - **Zero-downtime Integration** - Works with existing journal files even when Elite Dangerous is offline
 - **Stable MCP Protocol** - Fixed asyncio conflicts for reliable Claude Desktop communication
 - **Production Ready** - All critical bugs resolved, comprehensive testing completed
 
-### 🤖 AI Development Efficiency:
+###  AI Development Efficiency:
 **This entire project was built with AI assistance using approximately 1.87 million tokens (~$15.57 in AI costs) over 3 months**, demonstrating the incredible efficiency of AI-powered development. The system includes 22,532 lines of Python code, 440+ comprehensive tests, and complete documentation - representing an estimated **99.97% cost reduction** compared to traditional development approaches.
 
-📊 **[View Complete Token Usage Analysis](docs/TOKEN_USAGE_ANALYSIS.md)** - Detailed breakdown of AI assistance costs, development efficiency, and ROI analysis.
+ **[View Complete Token Usage Analysis](docs/TOKEN_USAGE_ANALYSIS.md)** - Detailed breakdown of AI assistance costs, development efficiency, and ROI analysis.
 
-### 🛠️ Future Enhancements:
+###  Future Enhancements:
 - **Advanced Analytics Dashboard** - Web-based gameplay statistics
 - **Performance Optimizations** - Enhanced caching and batch processing
 - **Extended EDCoPilot Features** - More voice integration options
 - **Cross-platform Improvements** - Enhanced Linux and Mac support
 
-## 🛠️ MCP Server Features
+##  MCP Server Features
 
 ### MCP Tools (43+ Available)
 #### Core Data Access
@@ -303,7 +303,7 @@ If configured correctly, Claude will respond with your current game state using 
 - **State Tracking** - Current ship, location, and game mode tracking
 - **Automatic Cleanup** - Memory management for long-running sessions
 
-## 🎯 Usage Guide
+##  Usage Guide
 
 ### Starting the MCP Server
 ```bash
@@ -474,7 +474,7 @@ strategy_prompt = await prompts.generate_prompt("trading_strategy", 12)
 #### Common Issues
 ```bash
 # Check server status
-python scripts/check_environment.py
+python scripts/check_dependencies.py
 
 # Verify dependencies
 python scripts/setup_dependencies.py
@@ -509,22 +509,22 @@ await get_resource_data("elite://status/location", force_refresh=True)
 ### Development Workflow
 - Use the automation scripts for setup: `scripts/setup_dependencies.py`
 - Run tests frequently: `python scripts/run_tests.py`
-- Check environment: `python scripts/check_environment.py`
+- Check environment: `python scripts/check_dependencies.py`
 - Follow the [AI Directives](ai-directives/README.md) for consistency
 - Create session reports for knowledge preservation
 
 ### ChatGPT/Codex Integration
 
-Use ChatGPT (OpenAI) models with MCP‑capable clients to get the same tool/resource/prompt access as Claude Desktop. Recommended options:
+Use ChatGPT (OpenAI) models with MCPcapable clients to get the same tool/resource/prompt access as Claude Desktop. Recommended options:
 
 - Continue (VS Code/JetBrains) using OpenAI models
 - Cursor with MCP + OpenAI
 - Cline (VS Code) with MCP
 
 Quick start:
-- Configure the client’s `mcpServers` to run this repo’s Python with `src/server.py`
+- Configure the clients `mcpServers` to run this repos Python with `src/server.py`
 - Set `ELITE_JOURNAL_PATH` (and optional `ELITE_EDCOPILOT_PATH`, `ELITE_DEBUG`)
-- Ask it to use the Elite Dangerous MCP tools (e.g., “What’s my current status?”)
+- Ask it to use the Elite Dangerous MCP tools (e.g., Whats my current status?)
 
 Full setup and troubleshooting: see `docs/CHATGPT_CODEX_INTEGRATION.md`.
 
@@ -560,3 +560,4 @@ This project is licensed under the MIT License.
 ---
 
 **Note**: This project is not officially affiliated with Frontier Developments, Anthropic, or the EDCoPilot project. Elite Dangerous is a trademark of Frontier Developments plc.
+

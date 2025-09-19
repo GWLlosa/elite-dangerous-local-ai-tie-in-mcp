@@ -2,7 +2,7 @@
 
 Complete reference for all APIs, endpoints, and integration points.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [MCP Tools API](#mcp-tools-api)
 2. [MCP Resources API](#mcp-resources-api)
@@ -13,7 +13,7 @@ Complete reference for all APIs, endpoints, and integration points.
 7. [Error Handling](#error-handling)
 8. [Type Definitions](#type-definitions)
 
-## 🔧 MCP Tools API
+##  MCP Tools API
 
 All MCP Tools are async functions that return structured data.
 
@@ -222,7 +222,7 @@ Clears MCP resource cache.
 }
 ```
 
-## 📊 MCP Resources API
+##  MCP Resources API
 
 Resources are accessed via URI with query parameters.
 
@@ -362,7 +362,7 @@ Credit flow and financial analysis.
 }
 ```
 
-## 🤖 MCP Prompts API
+##  MCP Prompts API
 
 ### Template IDs
 - `exploration_analysis`
@@ -411,7 +411,7 @@ await generate_strategic_prompt(time_range_hours=72)
 }
 ```
 
-## 💾 Data Store API
+##  Data Store API
 
 Direct access to the underlying data storage system.
 
@@ -462,7 +462,7 @@ Gets storage statistics and metrics.
 }
 ```
 
-## 📝 Event Processing API
+##  Event Processing API
 
 ### ProcessedEvent Structure
 ```python
@@ -516,7 +516,7 @@ category = processor.categorize_event("FSDJump")
 summary = processor.summarize_event(processed_event)
 ```
 
-## ⚙️ Configuration API
+##  Configuration API
 
 ### EliteConfig Class
 ```python
@@ -548,7 +548,7 @@ config.to_dict() -> Dict[str, Any]  # Export as dictionary
 - `ELITE_MAX_RECENT_EVENTS`
 - `ELITE_LOG_LEVEL`
 
-## 🚨 Error Handling
+##  Error Handling
 
 ### Exception Types
 
@@ -591,7 +591,7 @@ except Exception as e:
         logger.error(f"Unexpected error: {e}")
 ```
 
-## 📚 Type Definitions
+##  Type Definitions
 
 ### Common Types
 ```python

@@ -1,8 +1,8 @@
 # ChatGPT and Codex Integration
 
-This guide explains how to use the Elite Dangerous Local AI Tie-In MCP server with ChatGPT-class models and developer tools so you get the same end‑to‑end experience as the existing Claude Desktop integration.
+This guide explains how to use the Elite Dangerous Local AI Tie-In MCP server with ChatGPT-class models and developer tools so you get the same endtoend experience as the existing Claude Desktop integration.
 
-Key idea: ChatGPT (OpenAI) models can be paired with an MCP‑capable client (Continue, Cursor, Cline, etc.). These clients speak MCP and let the model call your local MCP tools/resources/prompts, just like Claude Desktop.
+Key idea: ChatGPT (OpenAI) models can be paired with an MCPcapable client (Continue, Cursor, Cline, etc.). These clients speak MCP and let the model call your local MCP tools/resources/prompts, just like Claude Desktop.
 
 ## Prerequisites
 - Python 3.9+ with this repo set up and working
@@ -63,7 +63,7 @@ Cursor supports MCP integrations and OpenAI models.
 2) In Cursor Settings, configure your OpenAI API key.
 
 3) Add an MCP server pointing to this project:
-- Settings → MCP (or Integrations) → Add Server
+- Settings -> MCP (or Integrations) -> Add Server
 - Command: full path to your Python in the project venv
 - Args: `src/server.py`
 - Env: set `ELITE_JOURNAL_PATH` (and optional vars from above)
@@ -77,7 +77,7 @@ Use the Elite Dangerous MCP tools to summarize my recent activity.
 Cursor will invoke the MCP tools/resources to ground its response.
 
 ## Option 3: Cline (VS Code) with MCP
-Cline is an open‑source VS Code extension that supports MCP servers.
+Cline is an opensource VS Code extension that supports MCP servers.
 
 1) Install Cline: https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev
 
@@ -109,10 +109,10 @@ If you want to validate the server outside any IDE, you can use a generic MCP in
 Then list tools/resources and try `server_status`.
 
 ## Usage Tips
-- Natural language works best: “What system am I docked at?” or “Summarize my last 24 hours of activity.”
-- Ask the client to “use the Elite Dangerous MCP tools/resources” if it needs a hint.
+- Natural language works best: What system am I docked at? or Summarize my last 24 hours of activity.
+- Ask the client to use the Elite Dangerous MCP tools/resources if it needs a hint.
 - Useful tools include: `server_status`, `get_current_location`, `get_current_ship`, `get_recent_events`.
-- Prompts layer: ask for “generate an exploration analysis prompt for the last 24 hours.”
+- Prompts layer: ask for generate an exploration analysis prompt for the last 24 hours.
 
 ## Troubleshooting
 - If the client cannot connect:
@@ -126,5 +126,6 @@ Then list tools/resources and try `server_status`.
   - Set `ELITE_DEBUG=true` temporarily and review logs.
 
 ## About ChatGPT Desktop
-As of this writing, the official ChatGPT desktop/web clients do not expose a native MCP server configuration the way Claude Desktop does. To achieve equivalent capabilities with ChatGPT models, use an MCP‑capable client (Continue, Cursor, Cline, etc.) configured to use OpenAI as the model provider. This gives you Claude‑level MCP functionality with ChatGPT models.
+As of this writing, the official ChatGPT desktop/web clients do not expose a native MCP server configuration the way Claude Desktop does. To achieve equivalent capabilities with ChatGPT models, use an MCPcapable client (Continue, Cursor, Cline, etc.) configured to use OpenAI as the model provider. This gives you Claudelevel MCP functionality with ChatGPT models.
+
 

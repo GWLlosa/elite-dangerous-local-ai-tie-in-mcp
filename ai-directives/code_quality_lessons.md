@@ -10,7 +10,7 @@ This document captures critical lessons learned from recent bugfixes and test fa
 **Reference Document**: [`../docs/edcopilot-chatter-grammar.md`](../docs/edcopilot-chatter-grammar.md)
 
 ```python
-# CORRECT ✅ - Follow grammar spec exactly
+# CORRECT - Follow grammar spec exactly
 def generate_space_chatter(game_state):
     # Use proper token replacement
     content = "condition:Docked|Successfully docked at {StationName}. All systems secure."
@@ -20,7 +20,7 @@ def generate_space_chatter(game_state):
 
     return content
 
-# WRONG ❌ - Invalid format
+# WRONG [FORBIDDEN] - Invalid format
 def generate_space_chatter(game_state):
     # Wrong delimiter format
     content = "[condition=Docked] Successfully docked at {StationName}"
@@ -41,7 +41,7 @@ def generate_space_chatter(game_state):
 **CRITICAL**: Dynamic token replacement must handle missing data gracefully
 
 ```python
-# CORRECT ✅ - Safe token replacement with fallbacks
+# CORRECT - Safe token replacement with fallbacks
 def replace_tokens(content: str, game_state) -> str:
     replacements = {
         "{SystemName}": game_state.current_system or "Unknown System",
@@ -56,7 +56,7 @@ def replace_tokens(content: str, game_state) -> str:
 
     return content
 
-# WRONG ❌ - Will cause errors or None values in output
+# WRONG [FORBIDDEN] - Will cause errors or None values in output
 def replace_tokens(content: str, game_state) -> str:
     content = content.replace("{SystemName}", game_state.current_system)  # Could be None
     return content
@@ -74,7 +74,7 @@ def replace_tokens(content: str, game_state) -> str:
 **CRITICAL**: The `ProcessedEvent` class uses `raw_event` not `raw_data`
 
 ```python
-# CORRECT ✅
+# CORRECT
 class ProcessedEvent:
     def __init__(self, raw_event: Dict, event_type: str, ...):
         self.raw_event = raw_event  # NOT raw_data
@@ -93,10 +93,10 @@ event.raw_data.get('StarSystem')   # WRONG - will cause AttributeError
 **CRITICAL**: `JournalParser.read_journal_file()` returns a tuple `(entries, position)`
 
 ```python
-# CORRECT ✅
+# CORRECT
 entries, position = parser.read_journal_file(journal_path)
 
-# WRONG ❌ - This assigns a tuple to entries
+# WRONG [FORBIDDEN] - This assigns a tuple to entries
 entries = parser.read_journal_file(journal_path)
 ```
 
@@ -111,14 +111,14 @@ entries = parser.read_journal_file(journal_path)
 **CRITICAL**: `JournalMonitor` requires both `journal_path` and `event_callback` parameters
 
 ```python
-# CORRECT ✅
+# CORRECT
 def event_callback(event_data):
     # Process event
     pass
 
 monitor = JournalMonitor(journal_path, event_callback)
 
-# WRONG ❌
+# WRONG [FORBIDDEN]
 monitor = JournalMonitor()  # Missing required parameters
 ```
 
@@ -126,12 +126,12 @@ monitor = JournalMonitor()  # Missing required parameters
 **CRITICAL**: Use correct DataStore method names
 
 ```python
-# CORRECT ✅
+# CORRECT
 recent_events = data_store.get_recent_events(minutes=60)
 events_by_type = data_store.get_events_by_type("FSDJump")
 events_by_category = data_store.get_events_by_category(EventCategory.NAVIGATION)
 
-# WRONG ❌
+# WRONG [FORBIDDEN]
 all_events = data_store.get_all_events()  # This method doesn't exist
 ```
 
@@ -141,7 +141,7 @@ all_events = data_store.get_all_events()  # This method doesn't exist
 **CRITICAL**: Return error objects, not None, for unknown resources
 
 ```python
-# CORRECT ✅
+# CORRECT
 if base_uri not in self.resources:
     if "summary/" in base_uri:
         return {
@@ -153,7 +153,7 @@ if base_uri not in self.resources:
         "available_resources": list(self.resources.keys())
     }
 
-# WRONG ❌
+# WRONG [FORBIDDEN]
 if base_uri not in self.resources:
     return None  # Tests expect error objects
 ```
@@ -164,13 +164,13 @@ if base_uri not in self.resources:
 **CRITICAL**: Template variable checks must handle formatted variables
 
 ```python
-# CORRECT ✅ - Handle both {var} and {var:format}
+# CORRECT - Handle both {var} and {var:format}
 variable_found = (
     f"{{{variable}}}" in template.template or
     f"{{{variable}:" in template.template
 )
 
-# WRONG ❌ - Only checks exact match
+# WRONG [FORBIDDEN] - Only checks exact match
 assert f"{{{variable}}}" in template.template  # Fails for {credits:,}
 ```
 
@@ -185,10 +185,10 @@ assert f"{{{variable}}}" in template.template  # Fails for {credits:,}
 **IMPORTANT**: FastMCP doesn't expose tools collection
 
 ```python
-# WRONG ❌ - FastMCP doesn't have tools attribute
+# WRONG [FORBIDDEN] - FastMCP doesn't have tools attribute
 tools = list(server.app.tools.keys())
 
-# CORRECT ✅ - Note handler setup but don't try to access tools
+# CORRECT - Note handler setup but don't try to access tools
 print("MCP Tools: Handler setup completed successfully")
 ```
 
@@ -198,11 +198,11 @@ print("MCP Tools: Handler setup completed successfully")
 **CRITICAL**: All Python files must use ASCII-only characters
 
 ```python
-# WRONG ❌ - Unicode characters cause cp1252 errors on Windows
+# WRONG [FORBIDDEN] - Unicode characters cause cp1252 errors on Windows
 def print_status(message, success=True):
-    icon = "✅" if success else "❌"  # Unicode emoji
+    icon = "[OK]" if success else "[FORBIDDEN]"  # Unicode emoji
 
-# CORRECT ✅ - ASCII alternatives
+# CORRECT - ASCII alternatives
 def print_status(message, success=True):
     icon = "[SUCCESS]" if success else "[FAILED]"
 ```
@@ -230,16 +230,16 @@ def print_status(message, success=True):
 
 ### DataStore Time Conversions
 ```python
-# CORRECT ✅ - Convert hours to minutes for get_recent_events
+# CORRECT - Convert hours to minutes for get_recent_events
 recent_events = self.data_store.get_recent_events(time_range_hours * 60)
 
-# WRONG ❌ - Passing hours directly
+# WRONG [FORBIDDEN] - Passing hours directly
 recent_events = self.data_store.get_recent_events(time_range_hours)
 ```
 
 ### Event Category Enum Usage
 ```python
-# CORRECT ✅
+# CORRECT
 from ..journal.events import EventCategory
 events = [e for e in recent_events if e.category == EventCategory.NAVIGATION]
 
@@ -281,8 +281,8 @@ category = event.category.value  # Get string value when needed
 ```python
 # BUG: Events stored but game state not updated
 data_store.store_event(processed_event)
-recent_events = data_store.get_recent_events()  # ✅ Events found
-game_state = data_store.get_game_state()       # ❌ Fields still None
+recent_events = data_store.get_recent_events()  # [OK] Events found
+game_state = data_store.get_game_state()       # [FORBIDDEN] Fields still None
 ```
 
 **Root Cause**: The `_update_game_state()` method wasn't properly extracting data from `raw_event` fields into GameState attributes.
@@ -297,12 +297,12 @@ game_state = data_store.get_game_state()       # ❌ Fields still None
 
 **ALWAYS Test End-to-End Data Flow**:
 ```python
-# BAD ❌ - Only tests storage
+# BAD [FORBIDDEN] - Only tests storage
 def test_events_stored():
     data_store.store_event(event)
     assert len(data_store.get_recent_events()) > 0
 
-# GOOD ✅ - Tests storage AND extraction
+# GOOD - Tests storage AND extraction
 def test_events_populate_game_state():
     loadgame_event = ProcessedEvent(
         raw_event={"Commander": "Hadesfire", "Ship": "Mandalay"},
