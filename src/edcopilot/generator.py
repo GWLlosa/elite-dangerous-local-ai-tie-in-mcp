@@ -486,7 +486,7 @@ class EDCoPilotFileManager:
 
         for backup_file in backup_files:
             try:
-                if datetime.fromtimestamp(backup_file.stat().st_mtime) < cutoff_time:
+                if datetime.fromtimestamp(backup_file.stat().st_mtime, tz=timezone.utc) < cutoff_time:
                     backup_file.unlink()
                     removed_count += 1
                     logger.debug(f"Removed old backup: {backup_file.name}")

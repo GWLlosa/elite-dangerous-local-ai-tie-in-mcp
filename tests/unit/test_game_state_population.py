@@ -166,7 +166,8 @@ class TestGameStatePopulation:
             event_type="LoadGame",
             timestamp=datetime.now(timezone.utc),
             category=EventCategory.SYSTEM,
-            summary="Hadesfire loaded game in Mandalay"
+            summary="Hadesfire loaded game in Mandalay",
+            key_data={"commander": "Hadesfire", "ship": "Mandalay", "ship_name": "EXCELSIOR", "credits": 25962345}
         )
         data_store.store_event(loadgame_event)
 
@@ -179,27 +180,22 @@ class TestGameStatePopulation:
             event_type="Location",
             timestamp=datetime.now(timezone.utc),
             category=EventCategory.NAVIGATION,
-            summary="Located in Blae Drye SG-P b25-6"
+            summary="Located in Blae Drye SG-P b25-6",
+            key_data={"system_name": "Blae Drye SG-P b25-6"}
         )
         data_store.store_event(location_event)
 
-        # Mock EDCoPilot generator to check what context it receives
-        with patch('src.edcopilot.generator.EDCoPilotGenerator') as mock_generator:
-            mock_instance = Mock()
-            mock_generator.return_value = mock_instance
+        # Use the actual EDCoPilot context analyzer to verify game state population
+        from src.edcopilot.generator import EDCoPilotContextAnalyzer
+        analyzer = EDCoPilotContextAnalyzer(data_store)
 
-            # Import and create the generator (this would normally happen in MCP tools)
-            from src.edcopilot.generator import EDCoPilotGenerator
-            generator = EDCoPilotGenerator(data_store)
+        # Get the context that would be used for generation
+        context = analyzer.analyze_current_context()
 
-            # Get the context that would be used for generation
-            context = generator._build_context()
-
-            # Verify context contains the populated game state
-            assert context.get('commander_name') == 'Hadesfire'
-            assert context.get('current_system') == 'Blae Drye SG-P b25-6'
-            assert context.get('current_ship') == 'Mandalay'
-            assert context.get('ship_name') == 'EXCELSIOR'
+        # Verify context contains the populated game state
+        assert context.get('commander_name') == 'Hadesfire'
+        assert context.get('current_system') == 'Blae Drye SG-P b25-6'
+        assert context.get('ship_type') == 'Mandalay'
 
     def test_data_store_provides_recent_events_for_context(self, data_store):
         """Test that data store properly provides recent events for EDCoPilot context."""

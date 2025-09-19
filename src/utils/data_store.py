@@ -597,15 +597,41 @@ class DataStore:
     
     def _handle_location_update(self, event: ProcessedEvent) -> None:
         """Handle location updates."""
-        # FIXED: use key_data instead of extracted_data and correct field names
-        data = event.key_data
-        self._game_state.current_system = data.get('system')  # Changed from 'system_name'
-        self._game_state.current_station = data.get('station')  # Changed from 'station_name'
-        self._game_state.current_body = data.get('body')  # Changed from 'body_name'
+        # Extract data from both key_data and raw_event with multiple field name variants
+        data = event.key_data or {}
+        raw_data = event.raw_event or {}
+
+        # Try multiple field names for system
+        system_name = (
+            data.get('system') or
+            data.get('system_name') or
+            raw_data.get('StarSystem')
+        )
+        if system_name:
+            self._game_state.current_system = system_name
+
+        # Try multiple field names for station
+        station_name = (
+            data.get('station') or
+            data.get('station_name') or
+            raw_data.get('StationName')
+        )
+        if station_name:
+            self._game_state.current_station = station_name
+
+        # Try multiple field names for body
+        body_name = (
+            data.get('body') or
+            data.get('body_name') or
+            raw_data.get('Body')
+        )
+        if body_name:
+            self._game_state.current_body = body_name
 
         # Update docked status from Location event
-        if 'docked' in data:
-            self._game_state.docked = data['docked']
+        docked = data.get('docked') or raw_data.get('Docked')
+        if docked is not None:
+            self._game_state.docked = docked
 
         if 'star_pos' in data:
             self._game_state.coordinates = data['star_pos']

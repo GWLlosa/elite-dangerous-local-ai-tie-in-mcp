@@ -206,6 +206,9 @@ class ThemeStorage:
             theme: Theme identifier (e.g., "space pirate")
             context: Theme context (e.g., "owes debt to Space Mafia")
         """
+        if theme is None or context is None:
+            raise ValueError("Theme and context cannot be None")
+
         self._current_theme = {
             "theme": theme,
             "context": context,
@@ -339,7 +342,12 @@ class ThemeStorage:
 
     def get_theme_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get recent theme history."""
-        return self._theme_history[-limit:] if limit else self._theme_history
+        if limit == 0:
+            return []
+        elif limit > 0:
+            return self._theme_history[-limit:]
+        else:
+            return self._theme_history
 
     # Preset Management
 

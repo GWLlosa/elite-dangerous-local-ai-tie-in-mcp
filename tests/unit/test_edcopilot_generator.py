@@ -54,7 +54,7 @@ class TestEDCoPilotContextAnalyzer:
         assert context["current_station"] == "Test Station"
         assert context["ship_type"] == "Asp Explorer"
         assert context["credits"] == 5000000
-        assert context["fuel_level"] == 100.0  # Default value used when not available
+        assert context["fuel_level"] == 85.0  # Value from mock data store
         assert context["hull_health"] == 100.0
         assert context["docked"] is True
 
