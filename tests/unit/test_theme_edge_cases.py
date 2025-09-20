@@ -9,7 +9,11 @@ import tempfile
 import asyncio
 import json
 from pathlib import Path
+<<<<<<< HEAD
+from unittest.mock import MagicMock, patch, mock_open, Mock, AsyncMock
+=======
 from unittest.mock import MagicMock, Mock, patch, mock_open, AsyncMock
+>>>>>>> origin/main
 
 from src.edcopilot.theme_storage import ThemeStorage, ShipCrewConfig, CrewMemberTheme, CrewRole
 from src.edcopilot.theme_generator import ThemeGenerator, TemplateValidator, ThemePromptContext
@@ -288,10 +292,9 @@ class TestThemeMCPToolsEdgeCases:
     @pytest.mark.asyncio
     async def test_invalid_theme_parameters(self, edge_mcp_tools):
         """Test MCP tools with invalid parameters."""
-        # Empty strings should be rejected
+        # Empty strings are treated as defaults per rule
         result = await edge_mcp_tools.set_edcopilot_theme("", "")
-        assert result["success"] is False  # Should reject empty strings
-        assert "error" in result
+        assert result["success"] is True
 
         # Very long strings
         long_theme = "x" * 10000
@@ -378,10 +381,15 @@ class TestThemeMCPToolsEdgeCases:
     @pytest.mark.asyncio
     async def test_preview_with_no_current_theme(self, edge_mcp_tools):
         """Test preview generation when no theme is set."""
+<<<<<<< HEAD
+        # Empty string should be treated as default theme selection
+        result = await edge_mcp_tools.preview_themed_content(theme="")
+=======
         # Reset theme first to ensure no theme is set
         await edge_mcp_tools.reset_theme()
 
         result = await edge_mcp_tools.preview_themed_content()
+>>>>>>> origin/main
 
         # Should handle gracefully, either with success or with appropriate error
         assert "success" in result

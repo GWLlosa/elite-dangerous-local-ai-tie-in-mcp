@@ -202,8 +202,8 @@ def main():
         "src/utils/config.py",
         "src/utils/data_store.py",
         "src/server.py",  # Milestone 7 addition
-        "src/mcp/__init__.py",  # Milestone 8 addition
-        "src/mcp/mcp_tools.py",  # Milestone 8 addition
+        "src/elite_mcp/__init__.py",  # Milestone 8 addition (updated path)
+        "src/elite_mcp/mcp_tools.py",  # Milestone 8 addition (updated path)
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/unit/test_journal_parser.py",
@@ -239,8 +239,8 @@ def main():
         ("src.utils.config", "Configuration system"),
         ("src.utils.data_store", "Data storage system"),
         ("src.server", "MCP server framework"),  # Milestone 7 addition
-        ("src.mcp", "MCP tools package"),  # Milestone 8 addition
-        ("src.mcp.mcp_tools", "MCP tools implementation")  # Milestone 8 addition
+        ("src.elite_mcp", "MCP tools package"),  # Milestone 8 addition
+        ("src.elite_mcp.mcp_tools", "MCP tools implementation")  # Milestone 8 addition
     ]
     
     all_imports_successful = True
@@ -389,7 +389,7 @@ if result:
     # Milestone 8: MCP Tools functionality test
     print_substep("Testing MCP Tools functionality")
     mcp_tools_test = '''
-from src.mcp.mcp_tools import MCPTools, ActivityType
+from src.elite_mcp.mcp_tools import MCPTools, ActivityType
 from src.utils.data_store import DataStore
 import asyncio
 
@@ -470,13 +470,23 @@ if result:
         print("  [FAILED] MCP tools tests failed")
         sys.exit(1)
     
-    # Step 11: Full Test Suite with Coverage
-    print_step(11, total_steps, "Complete Test Suite with Coverage",
+    # Step 11: CLI Tests (Milestone 16 planning)
+    print_step(11, total_steps, "CLI Tests (Planning)",
+               "Including CLI test suite (skipped until implementation)")
+
+    success, _, _ = run_command([venv_python, "-m", "pytest", "tests/cli/", "-v"],
+                               "CLI tests")
+    if not success:
+        print("  [FAILED] CLI tests failed")
+        sys.exit(1)
+
+    # Step 12: Full Test Suite with Coverage
+    print_step(12, total_steps, "Complete Test Suite with Coverage",
                "Running all tests together and generating coverage report")
     
     print_substep("Running complete test suite")
     success, _, _ = run_command([
-        venv_python, "-m", "pytest", "tests/unit/", "-v", 
+        venv_python, "-m", "pytest", "tests/unit/", "tests/cli/", "-v", 
         "--cov=src", "--cov-report=term", "--cov-report=html"
     ], "Complete test suite with coverage")
     
@@ -503,7 +513,7 @@ if result:
     print("  - Milestone 6: Data Storage")
     print("  - Milestone 7: MCP Server Framework")
     print("  - Milestone 8: Core MCP Tools Implementation")
-    print("\nReady for Milestone 9: MCP Resources Implementation")
+    print("  - Milestone 16: Headless EDCoPilot Generation CLI (planning tests included)")
     print("="*60)
 
 
@@ -516,3 +526,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n[ERROR] Unexpected error: {e}")
         sys.exit(1)
+
+

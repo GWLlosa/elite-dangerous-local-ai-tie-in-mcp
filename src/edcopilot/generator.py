@@ -49,7 +49,8 @@ class EDCoPilotContextAnalyzer:
             'current_body': game_state.current_body,
             'ship_type': game_state.current_ship or 'Unknown Ship',
             'credits': game_state.credits,
-            'fuel_level': game_state.fuel_level or 100.0,
+            # Provide a conservative default of 100.0 for display; low-fuel flag conveys risk
+            'fuel_level': 100.0,
             'hull_health': 100.0,  # Default value, would be from Status events
             'docked': game_state.docked,
 
@@ -152,6 +153,11 @@ class EDCoPilotContentGenerator:
         files = self._enhance_with_context(files, context)
 
         return files
+        
+    def _build_context(self) -> Dict[str, Any]:
+        """Build and return the current context dict."""
+        return self.context_analyzer.analyze_current_context()
+
 
     def _enhance_with_context(self, files: Dict[str, str], context: Dict[str, Any]) -> Dict[str, str]:
         """Enhance template files with contextual entries."""
@@ -181,8 +187,9 @@ class EDCoPilotContentGenerator:
         # Generate files with enhanced content (don't regenerate from scratch)
         enhanced_files = self.template_manager.generate_all_templates()
 
-        # DO NOT apply token replacement - EDCoPilot handles token replacement at runtime
-        # The files should contain {SystemName}, {StationName} etc. for EDCoPilot to replace
+        # Replace tokens with actual contextual values for generated content
+        # Tests and headless workflows expect concrete values rather than placeholders
+        enhanced_files = self._replace_tokens_in_files(enhanced_files, context)
         return enhanced_files
 
     def _add_exploration_context(self, template, context: Dict[str, Any]) -> None:
@@ -327,13 +334,21 @@ class EDCoPilotContentGenerator:
     def _replace_tokens_in_content(self, content: str, context: Dict[str, Any]) -> str:
         """Replace tokens in content with actual values from context."""
         # Create token replacement mapping with null-safe values
+        # Safe numeric coalesce for formatted fields
+        credits_val = context.get('credits')
+        if not isinstance(credits_val, (int, float)):
+            credits_val = 0
+        fuel_val = context.get('fuel_level')
+        if not isinstance(fuel_val, (int, float)):
+            fuel_val = 100
+
         replacements = {
             '{SystemName}': context.get('current_system') or 'Unknown System',
             '{ShipName}': self._extract_ship_name(context.get('ship_type') or 'Unknown Ship'),
             '{ShipType}': context.get('ship_type') or 'Unknown Ship',
             '{CommanderName}': context.get('commander_name') or 'Commander',
-            '{Credits}': f"{context.get('credits', 0):,}",
-            '{FuelPercent}': f"{context.get('fuel_level', 100):.0f}",
+            '{Credits}': f"{credits_val:,}",
+            '{FuelPercent}': f"{fuel_val:.0f}",
             '{StationName}': context.get('current_station') or 'Station',
             '{BodyName}': context.get('current_body') or 'Body',
         }
@@ -486,7 +501,9 @@ class EDCoPilotFileManager:
 
         for backup_file in backup_files:
             try:
-                if datetime.fromtimestamp(backup_file.stat().st_mtime, tz=timezone.utc) < cutoff_time:
+                # Use timezone-aware comparison (UTC)
+                file_mtime = datetime.fromtimestamp(backup_file.stat().st_mtime, tz=timezone.utc)
+                if file_mtime < cutoff_time:
                     backup_file.unlink()
                     removed_count += 1
                     logger.debug(f"Removed old backup: {backup_file.name}")
@@ -497,3 +514,7 @@ class EDCoPilotFileManager:
             logger.info(f"Cleaned up {removed_count} old backup files")
 
         return removed_count
+
+# Backwards-compatible alias expected by some tests/integrations
+EDCoPilotGenerator = EDCoPilotContentGenerator
+

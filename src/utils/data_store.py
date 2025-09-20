@@ -467,7 +467,6 @@ class DataStore:
         self._game_state.docked = True
         self._game_state.landed = False
         self._game_state.supercruise = False
-
         # Use both key_data and raw_event to extract station information
         data = event.key_data or {}
         raw_data = event.raw_event or {}

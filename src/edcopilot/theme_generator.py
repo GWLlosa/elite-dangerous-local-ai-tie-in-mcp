@@ -51,7 +51,7 @@ class TemplateValidator:
 
     # Valid conditions
     VALID_CONDITIONS = {
-        'InSupercruise', 'Docked', 'ApproachingStation', 'FuelLow', 'UnderAttack',
+        'InSupercruise', 'Supercruise', 'Docked', 'ApproachingStation', 'FuelLow', 'UnderAttack',
         'Scanning', 'Exploring', 'FirstDiscovery', 'DeepSpace', 'Trading',
         'InDanger', 'ShieldsDown', 'InNormalSpace'
     }

@@ -822,3 +822,9 @@ Each milestone must include:
 
 This enhanced implementation plan ensures that testing and documentation quality is maintained throughout the development process, with comprehensive review and updates at each milestone to maintain project quality and reliability.
 
+
+### Milestone 16: Headless EDCoPilot Generation CLI
+Status: Planned  
+Summary: Add a standalone Python CLI to generate EDCoPilot chatter files without Claude Desktop, using direct parsing/processing and the existing generator/validator. Defaults: last 7 days, theme "Grizzled Veteran Space Captain", context "Worn Hands, Endless Horizon". Supports `--types`, `--output-dir`, backups, dry-run, and UTC handling.
+
+See full plan: [Milestone 16: Headless EDCoPilot Generation CLI](docs/milestones/MILESTONE_16_HEADLESS_EDCOPILOT_CLI.md)

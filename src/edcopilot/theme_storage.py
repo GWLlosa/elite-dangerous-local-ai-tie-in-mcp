@@ -109,7 +109,12 @@ class ThemeStorage:
             # Default to subdirectory in current working directory
             self.storage_path = Path.cwd() / "edcopilot_themes"
         else:
-            self.storage_path = Path(storage_path)
+            sp = Path(storage_path)
+            # If a file path is provided (exists as file), use its parent as storage directory
+            if sp.exists() and sp.is_file():
+                self.storage_path = sp.parent
+            else:
+                self.storage_path = sp
 
         self.storage_path.mkdir(exist_ok=True)
 
@@ -206,8 +211,14 @@ class ThemeStorage:
             theme: Theme identifier (e.g., "space pirate")
             context: Theme context (e.g., "owes debt to Space Mafia")
         """
+<<<<<<< HEAD
+        # Validate inputs
+        if theme is None or context is None:
+            raise TypeError("theme and context must not be None")
+=======
         if theme is None or context is None:
             raise ValueError("Theme and context cannot be None")
+>>>>>>> origin/main
 
         self._current_theme = {
             "theme": theme,
@@ -334,20 +345,17 @@ class ThemeStorage:
         }
         self._theme_history.append(entry)
 
-        # Keep only last 100 entries
-        if len(self._theme_history) > 100:
-            self._theme_history = self._theme_history[-100:]
+        # Do not cap history here; retrieval applies limits
 
         self._save_theme_history()
 
     def get_theme_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get recent theme history."""
-        if limit == 0:
+        if limit is None or limit <= 0:
             return []
-        elif limit > 0:
-            return self._theme_history[-limit:]
-        else:
-            return self._theme_history
+        if limit >= len(self._theme_history):
+            return list(self._theme_history)
+        return self._theme_history[-limit:]
 
     # Preset Management
 
