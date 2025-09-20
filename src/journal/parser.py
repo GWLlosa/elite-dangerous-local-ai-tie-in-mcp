@@ -343,15 +343,14 @@ class JournalParser:
             # 2) Journal.YYYY-MM-DDTHHMMSS.NN.log[.backup]
             filename = file_path.name
 
-<<<<<<< HEAD
             # Extract timestamp part using regex - handles both formats
-            # Try ISO-like format first
+            # Try ISO-like format first: Journal.YYYY-MM-DDTHHMMSS.NN.log
             match_iso = re.search(r'Journal\.(\d{4}-\d{2}-\d{2}T\d{6})\.', filename)
             if match_iso:
                 timestamp_str = match_iso.group(1)
                 return datetime.strptime(timestamp_str, "%Y-%m-%dT%H%M%S")
 
-            # Try legacy compact format without dashes
+            # Try legacy compact format without dashes: Journal.YYYYMMDDHHMMSS.NN.log
             match_legacy = re.search(r'Journal\.(\d{14})\.', filename)
             if match_legacy:
                 legacy_str = match_legacy.group(1)

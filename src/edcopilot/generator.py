@@ -49,8 +49,8 @@ class EDCoPilotContextAnalyzer:
             'current_body': game_state.current_body,
             'ship_type': game_state.current_ship or 'Unknown Ship',
             'credits': game_state.credits,
-            # Provide a conservative default of 100.0 for display; low-fuel flag conveys risk
-            'fuel_level': 100.0,
+            # Use reported fuel level from game state (defaults handled in GameState)
+            'fuel_level': getattr(game_state, 'fuel_level', 100.0),
             'hull_health': 100.0,  # Default value, would be from Status events
             'docked': game_state.docked,
 

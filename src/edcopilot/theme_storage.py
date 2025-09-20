@@ -211,14 +211,8 @@ class ThemeStorage:
             theme: Theme identifier (e.g., "space pirate")
             context: Theme context (e.g., "owes debt to Space Mafia")
         """
-<<<<<<< HEAD
-        # Validate inputs
-        if theme is None or context is None:
-            raise TypeError("theme and context must not be None")
-=======
         if theme is None or context is None:
             raise ValueError("Theme and context cannot be None")
->>>>>>> origin/main
 
         self._current_theme = {
             "theme": theme,
@@ -345,14 +339,19 @@ class ThemeStorage:
         }
         self._theme_history.append(entry)
 
-        # Do not cap history here; retrieval applies limits
+        # Keep only last 100 entries
+        if len(self._theme_history) > 100:
+            self._theme_history = self._theme_history[-100:]
 
         self._save_theme_history()
 
     def get_theme_history(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Get recent theme history."""
-        if limit is None or limit <= 0:
+        # limit == 0 returns empty; negative returns full (capped)
+        if limit == 0:
             return []
+        if limit is None or limit < 0:
+            return list(self._theme_history)
         if limit >= len(self._theme_history):
             return list(self._theme_history)
         return self._theme_history[-limit:]
