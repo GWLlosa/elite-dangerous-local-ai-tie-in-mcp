@@ -82,6 +82,7 @@ class EventProcessor:
         "StartJump": EventCategory.NAVIGATION,
         "SupercruiseEntry": EventCategory.NAVIGATION,
         "SupercruiseExit": EventCategory.NAVIGATION,
+        "SupercruiseDestinationDrop": EventCategory.NAVIGATION,
         "Docked": EventCategory.NAVIGATION,
         "Undocked": EventCategory.NAVIGATION,
         "DockingRequested": EventCategory.NAVIGATION,
@@ -96,12 +97,17 @@ class EventProcessor:
         "Touchdown": EventCategory.NAVIGATION,
         "NavRoute": EventCategory.NAVIGATION,
         "NavRouteClear": EventCategory.NAVIGATION,
+        "BookTaxi": EventCategory.NAVIGATION,
+        "FSDTarget": EventCategory.NAVIGATION,
+        "USSDrop": EventCategory.NAVIGATION,
+        "FetchRemoteModule": EventCategory.NAVIGATION,
         
         # Exploration events
         "Scan": EventCategory.EXPLORATION,
         "FSSDiscoveryScan": EventCategory.EXPLORATION,
         "FSSAllBodiesFound": EventCategory.EXPLORATION,
         "FSSBodySignals": EventCategory.EXPLORATION,
+        "FSSSignalDiscovered": EventCategory.EXPLORATION,
         "SAASignalsFound": EventCategory.EXPLORATION,
         "SAAScanComplete": EventCategory.EXPLORATION,
         "MaterialDiscovered": EventCategory.EXPLORATION,
@@ -112,6 +118,8 @@ class EventProcessor:
         "DiscoveryScan": EventCategory.EXPLORATION,
         "Screenshot": EventCategory.EXPLORATION,
         "Codex": EventCategory.EXPLORATION,
+        "NavBeaconScan": EventCategory.EXPLORATION,
+        "ScanBaryCentre": EventCategory.EXPLORATION,
         
         # Combat events
         "Bounty": EventCategory.COMBAT,
@@ -131,6 +139,11 @@ class EventProcessor:
         "ShipTargeted": EventCategory.COMBAT,
         "UnderAttack": EventCategory.COMBAT,
         "SRVDestroyed": EventCategory.COMBAT,
+        "DataScanned": EventCategory.COMBAT,
+        "HeatDamage": EventCategory.COMBAT,
+        "HeatWarning": EventCategory.COMBAT,
+        "LaunchDrone": EventCategory.COMBAT,
+        "Scanned": EventCategory.COMBAT,
         
         # Trading events
         "MarketBuy": EventCategory.TRADING,
@@ -141,6 +154,10 @@ class EventProcessor:
         "EjectCargo": EventCategory.TRADING,
         "Cargo": EventCategory.TRADING,
         "Trade": EventCategory.TRADING,
+        "RefuelAll": EventCategory.TRADING,
+        "RedeemVoucher": EventCategory.TRADING,
+        "BuyDrones": EventCategory.TRADING,
+        "CargoTransfer": EventCategory.TRADING,
         
         # Mission events
         "MissionAccepted": EventCategory.MISSION,
@@ -149,6 +166,8 @@ class EventProcessor:
         "MissionAbandoned": EventCategory.MISSION,
         "MissionRedirected": EventCategory.MISSION,
         "Missions": EventCategory.MISSION,
+        "CommunityGoal": EventCategory.MISSION,
+        "CommunityGoalJoin": EventCategory.MISSION,
         
         # Engineering events
         "EngineerContribution": EventCategory.ENGINEERING,
@@ -193,6 +212,13 @@ class EventProcessor:
         "DockFighter": EventCategory.SHIP,
         "VehicleSwitch": EventCategory.SHIP,
         "AfmuRepairs": EventCategory.SHIP,
+        "FuelScoop": EventCategory.SHIP,
+        "SetUserShipName": EventCategory.SHIP,
+        "ShipLocker": EventCategory.SHIP,
+        "ShipRedeemed": EventCategory.SHIP,
+        "ShipyardRedeem": EventCategory.SHIP,
+        "ModuleInfo": EventCategory.SHIP,
+        "StoredModules": EventCategory.SHIP,
         
         # Squadron events
         "SquadronCreated": EventCategory.SQUADRON,
@@ -215,6 +241,7 @@ class EventProcessor:
         "KickCrewMember": EventCategory.CREW,
         "ChangeCrewRole": EventCategory.CREW,
         "EndCrewSession": EventCategory.CREW,
+        "NpcCrewPaidWage": EventCategory.CREW,
         
         # Passenger events
         "PassengerManifest": EventCategory.PASSENGER,
@@ -230,6 +257,7 @@ class EventProcessor:
         "PowerplaySalary": EventCategory.POWERPLAY,
         "PowerplayVote": EventCategory.POWERPLAY,
         "PowerplayVoucher": EventCategory.POWERPLAY,
+        "Powerplay": EventCategory.POWERPLAY,
         
         # Fleet Carrier events
         "CarrierBuy": EventCategory.CARRIER,
@@ -248,6 +276,7 @@ class EventProcessor:
         "CarrierNameChange": EventCategory.CARRIER,
         "CarrierJumpRequest": EventCategory.CARRIER,
         "CarrierJumpCancelled": EventCategory.CARRIER,
+        "CarrierLocation": EventCategory.CARRIER,
         
         # Social events
         "Friends": EventCategory.SOCIAL,
@@ -272,9 +301,14 @@ class EventProcessor:
         "TransferMicroResources": EventCategory.SUIT,
         "UpgradeWeapon": EventCategory.SUIT,
         "UpgradeSuit": EventCategory.SUIT,
+        "Backpack": EventCategory.SUIT,
+        "ReservoirReplenished": EventCategory.SUIT,
         
         # Other/Unknown events - ensure this category has at least one mapping
         "Unknown": EventCategory.OTHER,
+        "CommitCrime": EventCategory.OTHER,
+        "CrimeVictim": EventCategory.OTHER,
+        "Materials": EventCategory.OTHER,
     }
     
     def __init__(self):
