@@ -386,11 +386,130 @@ class TestMCPTools:
 
         assert result["activity_type"] == "mining"
         assert result["total_events"] == 2  # mined_event + material_event
-        assert "Gold" in result["materials_mined"]
-        assert "Iron" in result["materials_mined"]
+
+        # After the fix for issue #8: materials are now separated
+        assert "Gold" in result["materials_mined"]  # From Mined event
+        assert "Iron" in result["raw_materials_collected"]  # From MaterialCollected event
+
         assert result["materials_mined"]["Gold"] == 2
-        assert result["materials_mined"]["Iron"] == 3
+        assert result["raw_materials_collected"]["Iron"] == 3
         assert len(result["recent_mining"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_mining_summary_materials_vs_commodities_issue_8(self, mcp_tools, mock_data_store):
+        """
+        Test for GitHub Issue #8: Mining summary should show commodities, not materials.
+
+        This test demonstrates the core issue: the mining summary should differentiate between:
+        - Raw materials (for engineering) from MaterialCollected events
+        - Refined commodities (sellable cargo) from MiningRefined events
+
+        Currently the summary conflates these two different game systems.
+        """
+        # Create MaterialCollected event (engineering materials - NOT sellable)
+        material_collected_event = ProcessedEvent(
+            raw_event={
+                "event": "MaterialCollected",
+                "Name": "manganese",
+                "Count": 36,
+                "Category": "Raw"
+            },
+            event_type="MaterialCollected",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.EXPLORATION,  # MaterialCollected is exploration category
+            summary="Collected manganese",
+            key_data={}
+        )
+
+        # Create MiningRefined event (sellable commodities - what users want to see)
+        # Note: MiningRefined events represent 1 unit each and don't have Count field
+        mining_refined_event = ProcessedEvent(
+            raw_event={
+                "event": "MiningRefined",
+                "Type": "Platinum"
+            },
+            event_type="MiningRefined",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.MINING,  # This should be in mining category
+            summary="Refined Platinum",
+            key_data={"material": "Platinum"}
+        )
+
+        def mock_query_events(filter_criteria):
+            # Return mining events for mining category filter
+            if hasattr(filter_criteria, 'categories') and filter_criteria.categories:
+                return [mining_refined_event]
+            # Return material events for MaterialCollected filter
+            elif hasattr(filter_criteria, 'event_types') and "MaterialCollected" in filter_criteria.event_types:
+                return [material_collected_event]
+            return []
+
+        mock_data_store.query_events.side_effect = mock_query_events
+
+        result = await mcp_tools.get_activity_summary("mining", 24)
+
+        # The issue: Currently materials_mined includes both materials and commodities
+        # It should ONLY show commodities (sellable cargo from MiningRefined events)
+
+        # What users expect (GitHub issue #8):
+        # - "Platinum (23)" from MiningRefined events (sellable commodities)
+        # NOT "manganese (36)" from MaterialCollected events (engineering materials)
+
+        assert result["activity_type"] == "mining"
+
+        # The fix should ensure:
+        # 1. materials_mined ONLY contains commodities from MiningRefined events
+        # 2. Raw materials from MaterialCollected should be separate or excluded
+        # 3. Users should see what they can actually sell at stations
+
+        # Current behavior (the bug): both materials and commodities are mixed
+        # Expected behavior (the fix): only commodities in materials_mined
+
+        # Verify the fix properly separates materials from commodities
+        assert "Platinum" in result["commodities_refined"], "Platinum should be in commodities_refined"
+        assert result["commodities_refined"]["Platinum"] == 1, "Should have 1 Platinum from MiningRefined (1 unit per event)"
+
+        assert "manganese" in result["raw_materials_collected"], "manganese should be in raw_materials_collected"
+        assert result["raw_materials_collected"]["manganese"] == 36, "Should have 36 manganese from MaterialCollected"
+
+        # The main fix: materials_mined should NOT contain raw materials, only mined fragments
+        assert "manganese" not in result["materials_mined"], "materials_mined should not contain MaterialCollected items"
+        assert "Platinum" not in result["materials_mined"], "materials_mined should not contain MiningRefined items"
+
+        # Verify recent mining tracks both types correctly
+        recent_types = [entry["type"] for entry in result["recent_mining"]]
+        assert "refined" in recent_types, "Should track refined commodity events"
+        assert "material_collected" in recent_types, "Should track material collection events"
+
+    @pytest.mark.asyncio
+    async def test_mining_refined_events_not_in_category_mapping_issue_8(self, mcp_tools, mock_data_store):
+        """
+        Test for GitHub Issue #8: MiningRefined events should be in MINING category.
+
+        This test demonstrates that MiningRefined events are not properly categorized,
+        which is part of the root cause of issue #8.
+        """
+        from src.journal.events import EventProcessor
+
+        processor = EventProcessor()
+
+        # MiningRefined should be in the EVENT_CATEGORIES mapping under MINING
+        # but currently it's missing, causing the events to be categorized as OTHER
+
+        mining_refined_event = {
+            "timestamp": "2024-01-15T10:00:00Z",
+            "event": "MiningRefined",
+            "Type": "Platinum"
+        }
+
+        processed_event = processor.process_event(mining_refined_event)
+
+        # This assertion will fail because MiningRefined is not in EVENT_CATEGORIES
+        # It should be EventCategory.MINING but will be EventCategory.OTHER
+        # This is part of the root cause of issue #8
+        from src.journal.events import EventCategory
+        assert processed_event.category == EventCategory.MINING, \
+            f"MiningRefined events should be MINING category, got {processed_event.category}"
     
     @pytest.mark.asyncio
     async def test_get_mission_summary(self, mcp_tools, mock_data_store):

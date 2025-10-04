@@ -159,6 +159,7 @@ class EventProcessor:
         
         # Mining events
         "Mined": EventCategory.MINING,
+        "MiningRefined": EventCategory.MINING,
         "AsteroidCracked": EventCategory.MINING,
         "ProspectedAsteroid": EventCategory.MINING,
         "RefineryOpen": EventCategory.MINING,

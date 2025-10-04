@@ -539,7 +539,10 @@ class MCPTools:
         summary = {
             "activity_type": "mining",
             "total_events": len(events),
-            "materials_mined": {},
+            # Separate commodities (sellable cargo from refinery) from materials (engineering resources)
+            "commodities_refined": {},  # From MiningRefined events - what users want to see
+            "raw_materials_collected": {},  # From MaterialCollected events - for engineering
+            "materials_mined": {},  # Legacy field, now populated from Mined events only
             "asteroids_cracked": 0,
             "asteroids_prospected": 0,
             "refineries_used": set(),
@@ -588,25 +591,41 @@ class MCPTools:
                 refinery = event.raw_event.get("Name", "Unknown Refinery")
                 summary["refineries_used"].add(refinery)
 
+            elif event.event_type == "MiningRefined":
+                # Handle refined commodities - sellable cargo from refinery (what users want to see)
+                commodity = event.raw_event.get("Type", "Unknown")
+                # MiningRefined events in Elite Dangerous don't have Count field, they represent 1 unit
+                count = 1
+
+                if commodity not in summary["commodities_refined"]:
+                    summary["commodities_refined"][commodity] = 0
+                summary["commodities_refined"][commodity] += count
+
+                summary["recent_mining"].append({
+                    "type": "refined",
+                    "commodity": commodity,
+                    "count": count,
+                    "timestamp": event.timestamp.isoformat()
+                })
+
             elif event.event_type == "MaterialCollected":
-                # Track materials collected during mining sessions
+                # Track raw materials collected (for engineering, not sellable)
                 material = event.raw_event.get("Name", "Unknown")
                 count = event.raw_event.get("Count", 1)
                 category = event.raw_event.get("Category", "")
 
-                # Only count materials that are typically mining-related
-                if category in ["Raw", "Encoded"] or "mine" in material.lower():
-                    if material not in summary["materials_mined"]:
-                        summary["materials_mined"][material] = 0
-                    summary["materials_mined"][material] += count
+                # Store raw materials separately from commodities
+                if material not in summary["raw_materials_collected"]:
+                    summary["raw_materials_collected"][material] = 0
+                summary["raw_materials_collected"][material] += count
 
-                    summary["recent_mining"].append({
-                        "type": "collected",
-                        "material": material,
-                        "count": count,
-                        "category": category,
-                        "timestamp": event.timestamp.isoformat()
-                    })
+                summary["recent_mining"].append({
+                    "type": "material_collected",
+                    "material": material,
+                    "count": count,
+                    "category": category,
+                    "timestamp": event.timestamp.isoformat()
+                })
         
         # Convert sets to lists
         summary["refineries_used"] = list(summary["refineries_used"])
