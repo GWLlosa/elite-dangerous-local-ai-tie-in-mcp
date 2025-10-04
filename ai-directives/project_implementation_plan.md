@@ -824,7 +824,173 @@ This enhanced implementation plan ensures that testing and documentation quality
 
 
 ### Milestone 16: Headless EDCoPilot Generation CLI
-Status: Planned  
+Status: Planned
 Summary: Add a standalone Python CLI to generate EDCoPilot chatter files without Claude Desktop, using direct parsing/processing and the existing generator/validator. Defaults: last 7 days, theme "Grizzled Veteran Space Captain", context "Worn Hands, Endless Horizon". Supports `--types`, `--output-dir`, backups, dry-run, and UTC handling.
 
 See full plan: [Milestone 16: Headless EDCoPilot Generation CLI](docs/milestones/MILESTONE_16_HEADLESS_EDCOPILOT_CLI.md)
+
+### Milestone 17: Comprehensive Event Coverage - Gap Analysis Implementation
+**Status:** Planned
+**Branch:** `feature/milestone-17-event-coverage-gaps`
+**Priority:** HIGH
+**Based on:** Gap Analysis Report (October 4, 2025)
+
+**Objective:** Achieve comprehensive Elite Dangerous event coverage by mapping all 34 currently unmapped event types discovered through real-world gameplay analysis. This milestone closes the event categorization gap, improving activity summaries, event filtering accuracy, and overall data organization.
+
+**Background:**
+Gap analysis of 17 journal files (14,372 events, 113 unique event types) revealed that 34 event types from actual gameplay are not mapped in EVENT_CATEGORIES. This represents 30% of active gameplay events being incorrectly categorized as EventCategory.OTHER, causing:
+- Incomplete activity summaries
+- Missed events in category-based filtering
+- Suboptimal data organization for AI analysis
+- Reduced accuracy in gameplay tracking
+
+**Implementation Tasks:**
+
+1. **Add Navigation Event Mappings** (Priority: HIGH)
+   - Add `BookTaxi` to EventCategory.NAVIGATION
+   - Add `FSDTarget` to EventCategory.NAVIGATION
+   - Add `SupercruiseDestinationDrop` to EventCategory.NAVIGATION
+   - Add `USSDrop` to EventCategory.NAVIGATION
+   - Add `NavBeaconScan` to EventCategory.EXPLORATION
+   - Add `FetchRemoteModule` to EventCategory.NAVIGATION
+
+2. **Add Combat Event Mappings** (Priority: HIGH)
+   - Add `DataScanned` to EventCategory.COMBAT
+   - Add `HeatDamage` to EventCategory.COMBAT
+   - Add `HeatWarning` to EventCategory.COMBAT
+   - Add `LaunchDrone` to EventCategory.COMBAT
+   - Add `Scanned` to EventCategory.COMBAT
+
+3. **Add Ship Management Event Mappings** (Priority: HIGH)
+   - Add `FuelScoop` to EventCategory.SHIP
+   - Add `SetUserShipName` to EventCategory.SHIP
+   - Add `ShipLocker` to EventCategory.SHIP
+   - Add `ShipRedeemed` to EventCategory.SHIP
+   - Add `ShipyardRedeem` to EventCategory.SHIP
+   - Add `ModuleInfo` to EventCategory.SHIP
+   - Add `StoredModules` to EventCategory.SHIP
+
+4. **Add Trading Event Mappings** (Priority: MEDIUM)
+   - Add `RefuelAll` to EventCategory.TRADING
+   - Add `RedeemVoucher` to EventCategory.TRADING
+   - Add `BuyDrones` to EventCategory.TRADING
+   - Add `CargoTransfer` to EventCategory.TRADING
+
+5. **Add Carrier Event Mappings** (Priority: MEDIUM)
+   - Add `CarrierLocation` to EventCategory.CARRIER
+
+6. **Add Crew/Social Event Mappings** (Priority: MEDIUM)
+   - Add `NpcCrewPaidWage` to EventCategory.CREW
+
+7. **Add Odyssey/On-Foot Event Mappings** (Priority: MEDIUM)
+   - Add `Backpack` to EventCategory.SUIT (or create EventCategory.ODYSSEY if needed)
+   - Add `ReservoirReplenished` to EventCategory.SUIT
+
+8. **Add Community Goals/Powerplay Event Mappings** (Priority: MEDIUM)
+   - Add `CommunityGoal` to EventCategory.MISSION (or create EventCategory.COMMUNITY)
+   - Add `CommunityGoalJoin` to EventCategory.MISSION
+   - Add `Powerplay` to EventCategory.POWERPLAY (verify category exists)
+
+9. **Add Crime/Legal Event Mappings** (Priority: LOW)
+   - Add `CommitCrime` to EventCategory.OTHER or create EventCategory.LEGAL
+   - Add `CrimeVictim` to EventCategory.OTHER or create EventCategory.LEGAL
+
+10. **Add Exploration Event Mappings** (Priority: MEDIUM)
+    - Add `FSSSignalDiscovered` to EventCategory.EXPLORATION
+    - Add `ScanBaryCentre` to EventCategory.EXPLORATION
+
+11. **Add Miscellaneous Event Mappings** (Priority: LOW)
+    - Add `Materials` to EventCategory.OTHER
+    - Review and categorize any remaining unmapped events
+
+12. **Create Comprehensive Unit Tests** (Priority: HIGH)
+    - Create test cases for each newly mapped event type
+    - Verify events are categorized correctly (not EventCategory.OTHER)
+    - Test event summarization for new event types
+    - Verify key_data extraction for important fields
+    - Create integration tests with real journal data samples
+
+13. **Verify Activity Summaries** (Priority: HIGH)
+    - Test navigation summaries include new navigation events
+    - Test combat summaries include heat damage/warning events
+    - Test ship summaries include fuel scoop and ship management events
+    - Test trading summaries include refuel/voucher events
+    - Verify all summaries reflect newly categorized events
+
+14. **Update Documentation** (Priority: MEDIUM)
+    - Update EVENT_CATEGORIES documentation with new mappings
+    - Add examples of newly supported events to API docs
+    - Update activity summary documentation
+    - Document Odyssey-specific features if supported
+    - Update testing guide with new event test patterns
+
+15. **Performance Validation** (Priority: MEDIUM)
+    - Verify event processing performance remains <1ms per event
+    - Test with 10,000+ event batches including new event types
+    - Validate memory usage with expanded categorization
+    - Ensure no performance regression in real-time monitoring
+
+**Testing Criteria:**
+- All 34 previously unmapped events are now in EVENT_CATEGORIES
+- Each new event type has comprehensive unit test coverage
+- All events categorize correctly (none incorrectly assigned to OTHER)
+- Activity summaries include data from newly mapped events
+- Integration tests pass with real journal data
+- No performance regression in event processing (<1ms per event)
+- Test coverage remains >90% for events module
+- All existing tests continue to pass (no regressions)
+
+**Test Review and Documentation:**
+-  Comprehensive unit tests for all 34 new event mappings
+-  Integration tests with real journal data from gap analysis
+-  Activity summary validation across all categories
+-  Performance benchmarks with expanded event coverage
+-  Documentation updated with new event support
+-  Gap analysis validation (re-run to verify 0 unmapped events)
+
+**Expected Outcomes:**
+- **Before**: 113 events in gameplay, 34 unmapped (30% gap)
+- **After**: ~98% of active gameplay events properly categorized
+- **Impact**: More accurate activity summaries, better filtering, improved AI analysis
+
+**Success Metrics:**
+- Zero unmapped events from recent gameplay sessions
+- All activity summaries show complete data
+- Event categorization accuracy: 98%+
+- Test coverage: >90% maintained
+- Performance: <1ms per event maintained
+- Gap analysis re-run shows 0 HIGH priority issues
+
+**Commit Message:**
+```
+feat: implement Milestone 17 - comprehensive event coverage from gap analysis
+
+- Add all 34 previously unmapped event types to EVENT_CATEGORIES
+- Map navigation events: BookTaxi, FSDTarget, SupercruiseDestinationDrop, USSDrop, NavBeaconScan, FetchRemoteModule
+- Map combat events: DataScanned, HeatDamage, HeatWarning, LaunchDrone, Scanned
+- Map ship events: FuelScoop, SetUserShipName, ShipLocker, ShipRedeemed, ShipyardRedeem, ModuleInfo, StoredModules
+- Map trading events: RefuelAll, RedeemVoucher, BuyDrones, CargoTransfer
+- Map carrier, crew, Odyssey, community goals, and exploration events
+- Create comprehensive unit tests for all newly mapped events (100+ new tests)
+- Verify activity summaries include newly categorized events
+- Update documentation with expanded event support
+- Validate performance remains <1ms per event with expanded coverage
+- Gap analysis validation: 0 unmapped events remaining
+
+Based on gap analysis of 14,372 events across 113 unique event types.
+Closes critical event coverage gap (30% of active events now properly categorized).
+
+Closes #17
+```
+
+**Dependencies:**
+- Gap Analysis Report (completed October 4, 2025)
+- Existing EVENT_CATEGORIES mapping in `src/journal/events.py`
+- EventProcessor and EventCategory infrastructure (Milestone 5)
+- Activity summary system (Milestone 8)
+
+**Follow-up Actions:**
+- Monitor for new event types in future Elite Dangerous updates
+- Consider periodic gap analysis (monthly or quarterly)
+- Evaluate need for new EventCategory types (ODYSSEY, LEGAL, COMMUNITY)
+- Review event summarization quality for newly mapped events

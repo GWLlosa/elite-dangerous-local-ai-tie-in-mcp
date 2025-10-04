@@ -67,11 +67,14 @@ A comprehensive gap analysis was conducted comparing Elite Dangerous journal fil
 
 ### Immediate Actions (High Priority)
 
+**ACTION PLAN CREATED**: See [Milestone 17: Comprehensive Event Coverage](../ai-directives/project_implementation_plan.md#milestone-17-comprehensive-event-coverage---gap-analysis-implementation)
+
 1. **Add Unmapped Events to EVENT_CATEGORIES**
    - File: `src/journal/events.py`
    - Add all 34 unmapped events with appropriate categories
    - Create unit tests to verify categorization
    - Estimated effort: 2-3 hours
+   - **Status**: Documented in Milestone 17
 
 2. **Verify Activity Summaries**
    - After adding events, verify that activity summaries now include data from newly mapped events

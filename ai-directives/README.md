@@ -94,8 +94,9 @@ Current State
 - Status: Production Ready
 - Tests: 400+ passing (high coverage)
 - Coverage: 95%+
-- Next Milestone: None (core milestones complete); enhancements proceed via scoped feature branches
+- Next Milestone: Milestone 17 - Comprehensive Event Coverage (HIGH priority gap closure)
 - All Systems: Core functionality operational, documented, and tested
+- Known Issues: 34 unmapped event types identified via gap analysis (30% of active events)
 
 ### Recent Rule Update (Empty String Defaults)
 - New rule: Treat empty strings ("") as default selections for optional inputs; only `None` is an error for required fields.
