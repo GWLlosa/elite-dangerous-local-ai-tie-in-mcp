@@ -519,12 +519,22 @@ class MCPTools:
     
     async def _get_mining_summary(self, cutoff_time: datetime) -> Dict[str, Any]:
         """Generate mining activity summary."""
-        filter_criteria = EventFilter(
+        # Get mining events
+        mining_filter = EventFilter(
             categories={EventCategory.MINING},
             start_time=cutoff_time
         )
-        
-        events = self.data_store.query_events(filter_criteria)
+        mining_events = self.data_store.query_events(mining_filter)
+
+        # Also get material collection events that might be mining-related
+        material_filter = EventFilter(
+            event_types={"MaterialCollected"},
+            start_time=cutoff_time
+        )
+        material_events = self.data_store.query_events(material_filter)
+
+        # Combine events for comprehensive analysis
+        events = mining_events + material_events
         
         summary = {
             "activity_type": "mining",
@@ -538,30 +548,65 @@ class MCPTools:
         }
         
         for event in events:
-            if event.event_type == "MiningRefined":
+            if event.event_type == "Mined":
+                # Handle actual Elite Dangerous mining events
                 material = event.raw_event.get("Type", "Unknown")
+                count = event.raw_event.get("Count", 1)
                 if material not in summary["materials_mined"]:
                     summary["materials_mined"][material] = 0
-                summary["materials_mined"][material] += 1
-                
+                summary["materials_mined"][material] += count
+
                 summary["recent_mining"].append({
-                    "type": "refined",
+                    "type": "mined",
                     "material": material,
+                    "count": count,
                     "timestamp": event.timestamp.isoformat()
                 })
-                
+
             elif event.event_type == "AsteroidCracked":
                 summary["asteroids_cracked"] += 1
-                
+
+                # Track cracked asteroids in recent mining
+                summary["recent_mining"].append({
+                    "type": "cracked",
+                    "body": event.raw_event.get("Body"),
+                    "timestamp": event.timestamp.isoformat()
+                })
+
             elif event.event_type == "ProspectedAsteroid":
                 summary["asteroids_prospected"] += 1
-                
+
                 summary["recent_mining"].append({
                     "type": "prospected",
                     "content": event.raw_event.get("Content"),
                     "remaining": event.raw_event.get("Remaining"),
                     "timestamp": event.timestamp.isoformat()
                 })
+
+            elif event.event_type == "RefineryOpen":
+                # Track refinery usage
+                refinery = event.raw_event.get("Name", "Unknown Refinery")
+                summary["refineries_used"].add(refinery)
+
+            elif event.event_type == "MaterialCollected":
+                # Track materials collected during mining sessions
+                material = event.raw_event.get("Name", "Unknown")
+                count = event.raw_event.get("Count", 1)
+                category = event.raw_event.get("Category", "")
+
+                # Only count materials that are typically mining-related
+                if category in ["Raw", "Encoded"] or "mine" in material.lower():
+                    if material not in summary["materials_mined"]:
+                        summary["materials_mined"][material] = 0
+                    summary["materials_mined"][material] += count
+
+                    summary["recent_mining"].append({
+                        "type": "collected",
+                        "material": material,
+                        "count": count,
+                        "category": category,
+                        "timestamp": event.timestamp.isoformat()
+                    })
         
         # Convert sets to lists
         summary["refineries_used"] = list(summary["refineries_used"])

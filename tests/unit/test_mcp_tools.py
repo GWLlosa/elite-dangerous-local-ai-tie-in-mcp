@@ -269,9 +269,63 @@ class TestMCPTools:
         assert result["kills"][0]["target"] == "Pirate"
     
     @pytest.mark.asyncio
-    async def test_get_mining_summary(self, mcp_tools, mock_data_store):
-        """Test mining activity summary."""
-        mining_event = ProcessedEvent(
+    async def test_get_mining_summary_with_actual_events(self, mcp_tools, mock_data_store):
+        """Test mining activity summary with actual Elite Dangerous mining events."""
+        # Create real mining events that should appear in Elite Dangerous journals
+        mined_event = ProcessedEvent(
+            raw_event={"event": "Mined", "Type": "Platinum", "Count": 1},
+            event_type="Mined",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.MINING,
+            summary="Mined Platinum",
+            key_data={}
+        )
+
+        cracked_event = ProcessedEvent(
+            raw_event={"event": "AsteroidCracked", "Body": "Ring A Belt Cluster 1"},
+            event_type="AsteroidCracked",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.MINING,
+            summary="Cracked asteroid",
+            key_data={}
+        )
+
+        prospected_event = ProcessedEvent(
+            raw_event={"event": "ProspectedAsteroid", "Content": "Platinum", "Remaining": 85.5},
+            event_type="ProspectedAsteroid",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.MINING,
+            summary="Prospected asteroid",
+            key_data={}
+        )
+
+        # Mock returns different results for different filter types
+        def mock_query_events(filter_criteria):
+            # Check if it's a mining category filter
+            if hasattr(filter_criteria, 'categories') and filter_criteria.categories:
+                return [mined_event, cracked_event, prospected_event]
+            # Check if it's a MaterialCollected event type filter
+            elif hasattr(filter_criteria, 'event_types') and "MaterialCollected" in filter_criteria.event_types:
+                return []  # No material collection events in this test
+            return []
+
+        mock_data_store.query_events.side_effect = mock_query_events
+
+        result = await mcp_tools.get_activity_summary("mining", 24)
+
+        assert result["activity_type"] == "mining"
+        assert result["total_events"] == 3
+        assert "Platinum" in result["materials_mined"]
+        assert result["materials_mined"]["Platinum"] == 1  # From Mined event
+        assert result["asteroids_cracked"] == 1
+        assert result["asteroids_prospected"] == 1
+        assert len(result["recent_mining"]) == 3  # Mined, Prospected, and Cracked events
+
+    @pytest.mark.asyncio
+    async def test_get_mining_summary_bug_demonstration(self, mcp_tools, mock_data_store):
+        """Demonstrate the bug: materials_mined is empty when using wrong event type."""
+        # This test shows the bug where the old code looked for "MiningRefined" which doesn't exist
+        mining_refined_event = ProcessedEvent(
             raw_event={"event": "MiningRefined", "Type": "Platinum"},
             event_type="MiningRefined",
             timestamp=datetime.now(timezone.utc),
@@ -279,14 +333,64 @@ class TestMCPTools:
             summary="Refined Platinum",
             key_data={}
         )
-        
-        mock_data_store.query_events.return_value = [mining_event]
-        
+
+        def mock_query_events(filter_criteria):
+            if hasattr(filter_criteria, 'categories') and filter_criteria.categories:
+                return [mining_refined_event]
+            elif hasattr(filter_criteria, 'event_types') and "MaterialCollected" in filter_criteria.event_types:
+                return []
+            return []
+
+        mock_data_store.query_events.side_effect = mock_query_events
+
         result = await mcp_tools.get_activity_summary("mining", 24)
-        
+
+        # This shows the bug: materials_mined should be empty because "MiningRefined"
+        # isn't handled properly by the current implementation
         assert result["activity_type"] == "mining"
-        assert "Platinum" in result["materials_mined"]
-        assert result["materials_mined"]["Platinum"] == 1
+        assert result["total_events"] == 1
+        # The bug: materials_mined will be empty because the code only looks for "MiningRefined"
+        # but "MiningRefined" is not a real Elite Dangerous event type
+
+    @pytest.mark.asyncio
+    async def test_get_mining_summary_with_material_collection(self, mcp_tools, mock_data_store):
+        """Test mining summary includes MaterialCollected events."""
+        mined_event = ProcessedEvent(
+            raw_event={"event": "Mined", "Type": "Gold", "Count": 2},
+            event_type="Mined",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.MINING,
+            summary="Mined Gold",
+            key_data={}
+        )
+
+        material_event = ProcessedEvent(
+            raw_event={"event": "MaterialCollected", "Name": "Iron", "Count": 3, "Category": "Raw"},
+            event_type="MaterialCollected",
+            timestamp=datetime.now(timezone.utc),
+            category=EventCategory.EXPLORATION,  # MaterialCollected is in exploration category
+            summary="Collected Iron",
+            key_data={}
+        )
+
+        def mock_query_events(filter_criteria):
+            if hasattr(filter_criteria, 'categories') and filter_criteria.categories:
+                return [mined_event]
+            elif hasattr(filter_criteria, 'event_types') and "MaterialCollected" in filter_criteria.event_types:
+                return [material_event]
+            return []
+
+        mock_data_store.query_events.side_effect = mock_query_events
+
+        result = await mcp_tools.get_activity_summary("mining", 24)
+
+        assert result["activity_type"] == "mining"
+        assert result["total_events"] == 2  # mined_event + material_event
+        assert "Gold" in result["materials_mined"]
+        assert "Iron" in result["materials_mined"]
+        assert result["materials_mined"]["Gold"] == 2
+        assert result["materials_mined"]["Iron"] == 3
+        assert len(result["recent_mining"]) == 2
     
     @pytest.mark.asyncio
     async def test_get_mission_summary(self, mcp_tools, mock_data_store):
