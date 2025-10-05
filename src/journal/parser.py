@@ -258,27 +258,32 @@ class JournalParser:
         Args:
             file_path: Path to journal file
             last_position: Last known file position
-            
+
         Returns:
             Tuple[List[Dict], int]: (new entries, current file position)
         """
         try:
             if not file_path.exists():
                 return [], last_position
-            
-            # Check if file has grown
-            current_size = file_path.stat().st_size
-            if current_size <= last_position:
-                return [], last_position
-            
+
+            # REMOVED: File size check that causes race condition (Issue #12)
+            # The previous implementation checked if current_size <= last_position
+            # and returned early. This caused a race condition where watchdog events
+            # could fire before the OS flushed writes to disk, causing the size check
+            # to fail and discard events.
+            #
+            # Fix: Always attempt to read from last_position. If no new data exists,
+            # read() will return empty string and we'll get 0 entries, which is correct.
+            # This is a cheap operation and eliminates the race condition entirely.
+
             # Read only new content
             new_entries, new_position = self.read_journal_file(file_path, last_position)
-            
+
             if new_entries:
                 logger.debug(f"Read {len(new_entries)} new entries from {file_path.name}")
-            
+
             return new_entries, new_position
-            
+
         except Exception as e:
             logger.error(f"Error reading incremental updates from {file_path}: {e}")
             return [], last_position
