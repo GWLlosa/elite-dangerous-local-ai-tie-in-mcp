@@ -382,7 +382,7 @@ class EliteDangerousServer:
         ) -> Dict[str, Any]:
             """
             Search for events with flexible filtering criteria.
-            
+
             Args:
                 event_types: List of event types to filter (e.g., ["FSDJump", "Docked"])
                 categories: List of categories to filter (e.g., ["exploration", "combat"])
@@ -399,7 +399,52 @@ class EliteDangerousServer:
                 contains_text=contains_text,
                 max_results=max_results
             )
-        
+
+        @self.app.tool()
+        async def search_historical_events(
+            start_date: Optional[str] = None,
+            end_date: Optional[str] = None,
+            event_types: Optional[List[str]] = None,
+            categories: Optional[List[str]] = None,
+            system_name: Optional[str] = None,
+            limit: Optional[int] = 1000,
+            sort_order: str = "desc"
+        ) -> Dict[str, Any]:
+            """
+            Search historical journal events with flexible date range support.
+
+            Enables querying events using natural language date expressions and absolute dates,
+            making it easy to retrieve historical gameplay data from any time period.
+
+            Args:
+                start_date: Start of date range (inclusive). Supports:
+                           - ISO format: "2025-01-15" or "2025-01-15T10:30:00Z"
+                           - Natural language: "today", "yesterday", "last week", "last month"
+                           - Relative: "3 days ago", "2 weeks ago", "30 days ago"
+                           - If omitted, searches from beginning of available data
+                end_date: End of date range (inclusive). Supports same formats as start_date.
+                         If omitted, searches up to present time.
+                event_types: Filter by specific event types (e.g., ["FSDJump", "Scan"])
+                categories: Filter by event categories (e.g., ["exploration", "combat"])
+                system_name: Filter by system name
+                limit: Maximum number of events to return (default: 1000)
+                sort_order: "asc" (oldest first) or "desc" (newest first, default)
+
+            Examples:
+                - Get all events from last month: start_date="last month", end_date="today"
+                - Find exploration scans in January 2025: start_date="2025-01-01", end_date="2025-01-31", categories=["exploration"]
+                - Systems visited between Christmas and New Year: start_date="2024-12-25", end_date="2025-01-01", event_types=["FSDJump"]
+            """
+            return await self.mcp_tools.search_historical_events(
+                start_date=start_date,
+                end_date=end_date,
+                event_types=event_types,
+                categories=categories,
+                system_name=system_name,
+                limit=limit,
+                sort_order=sort_order
+            )
+
         # ==================== Activity Summary Tools ====================
         
         @self.app.tool()

@@ -8,6 +8,8 @@ A Model Context Protocol (MCP) server that provides real-time integration betwee
 
  **Historical Data Loading**: Processes existing journal files on startup (last 24 hours) for immediate data availability
 
+ **Historical Data Search** *(NEW!)*: Search your complete gameplay history with flexible date ranges using natural language (e.g., "last month to two weeks ago") or absolute dates
+
  **Claude Desktop Integration**: Provides MCP tools, resources, and prompts for AI-powered gameplay analysis
 
  **EDCoPilot Integration**: Generates dynamic custom chatter, crew dialogue, and speech extensions based on your current game state
@@ -110,10 +112,11 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **516 tests** passing with **83% code coverage**
+- **577+ tests** passing with **83% code coverage**
 - **Real-time monitoring** validated with mock journal events
 - **Event processing** tested with 213 event types across 17 categories
 - **Comprehensive event coverage** with 98% categorization accuracy (Milestone 17)
+- **Historical data search** with 61 tests covering date parsing, natural language queries, and range filtering (Milestone 18)
 - **Data storage** verified with concurrent access patterns and thread safety
 - **MCP server** tested with comprehensive unit and integration tests
 - **MCP tools, resources, and prompts** extensively tested with edge cases
@@ -214,8 +217,18 @@ If configured correctly, Claude will respond with your current game state using 
 15. **Dynamic Multi-Crew Theme System** - AI-powered theme generation with ship-specific crew management
 16. **Headless EDCoPilot CLI** - Standalone command-line tool for chatter generation without Claude Desktop
 17. **Comprehensive Event Coverage** - Closed 30% event gap, all 213 event types properly categorized (Milestone 17 complete)
+18. **Historical Data Search with Date Ranges** - Flexible date range queries with natural language and ISO 8601 support (Milestone 18 complete)
 
 ###  Recent Achievements (October 2025):
+
+- **Milestone 18: Historical Data Search with Date Range Support** - Query gameplay history with flexible date ranges
+  - **Natural language dates**: "last month", "two weeks ago", "yesterday"
+  - **Relative expressions**: "3 days ago", "2 weeks ago", "30 days ago"
+  - **ISO 8601 format**: "2025-01-15", "2025-01-15T10:30:00Z"
+  - **Flexible queries**: Search by event types, categories, systems, and date ranges
+  - **577+ Tests Passing** - Added 61 comprehensive tests for date parsing and historical queries
+  - **New MCP Tool**: `search_historical_events` for time-based gameplay analysis
+
 - **Milestone 17: Comprehensive Event Coverage** - Closed 30% event gap with 34 new event mappings
   - 213 total event types now properly categorized (98% accuracy)
   - Navigation: Added BookTaxi, FSDTarget, SupercruiseDestinationDrop, USSDrop, FetchRemoteModule
@@ -223,9 +236,7 @@ If configured correctly, Claude will respond with your current game state using 
   - Trading: Added RefuelAll, RedeemVoucher, BuyDrones, CargoTransfer
   - Ship Management: Added FuelScoop, SetUserShipName, ShipLocker, ModuleInfo, StoredModules, and more
   - Community Goals, Odyssey/on-foot events, Powerplay, Carrier events
-- **516 Tests Passing** - Up from 440, maintaining 83% code coverage
-- **37 New Milestone 17 Tests** - Comprehensive validation of all newly mapped events
-- **Gap Analysis System** - Automated detection of unmapped event types from real gameplay
+  - **Gap Analysis System** - Automated detection of unmapped event types from real gameplay
 
 ###  Recent Achievements (September 2025):
 - **Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management

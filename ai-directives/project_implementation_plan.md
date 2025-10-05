@@ -830,7 +830,7 @@ Summary: Add a standalone Python CLI to generate EDCoPilot chatter files without
 See full plan: [Milestone 16: Headless EDCoPilot Generation CLI](docs/milestones/MILESTONE_16_HEADLESS_EDCOPILOT_CLI.md)
 
 ### Milestone 17: Comprehensive Event Coverage - Gap Analysis Implementation
-**Status:** Planned
+**Status:** COMPLETED
 **Branch:** `feature/milestone-17-event-coverage-gaps`
 **Priority:** HIGH
 **Based on:** Gap Analysis Report (October 4, 2025)
@@ -994,3 +994,199 @@ Closes #17
 - Consider periodic gap analysis (monthly or quarterly)
 - Evaluate need for new EventCategory types (ODYSSEY, LEGAL, COMMUNITY)
 - Review event summarization quality for newly mapped events
+
+---
+
+## Milestone 18: Historical Data Search with Date Range Support
+
+**Status:** In Progress
+**Branch:** `10-feature-request-historical-data-search-with-date-range-support`
+**Priority:** MEDIUM-HIGH
+**GitHub Issue:** #10
+
+**Objective:** Enable flexible historical data queries with natural language date range support, allowing users and LLMs to search journal events using queries like "all events from last month to two weeks ago" or "exploration data from January 1-15, 2025."
+
+**Background:**
+Current MCP tools only support relative time queries from "now" (e.g., `get_recent_events(minutes=60)`). This limits the ability to:
+- Analyze long-term gameplay patterns
+- Compare performance across different time periods
+- Generate historical reports for specific date ranges
+- Track progression over weeks or months
+
+Users cannot specify absolute dates or natural language date ranges, forcing LLMs to calculate relative minutes/hours, which is error-prone and inflexible.
+
+**Implementation Tasks:**
+
+1. **Create Date Parsing Utilities** (Priority: HIGH)
+   - Implement `src/utils/date_parser.py` with flexible date parsing
+   - Support ISO 8601 format: `"2025-01-15"`, `"2025-01-15T10:30:00Z"`
+   - Support natural language: `"today"`, `"yesterday"`, `"last week"`, `"last month"`
+   - Support relative expressions: `"N days ago"`, `"N weeks ago"`, `"N months ago"`
+   - Handle timezone-aware datetime conversion to UTC
+   - Default to start/end of day for date-only inputs
+
+2. **Enhance DataStore with Historical Queries** (Priority: HIGH)
+   - Add `query_historical_events()` method to DataStore
+   - Support date range filtering (start_date, end_date)
+   - Implement lazy-loading of historical journal files on demand
+   - Cache historical query results for performance
+   - Support pagination for large result sets
+   - Optimize memory usage for historical data
+
+3. **Implement search_historical_events MCP Tool** (Priority: HIGH)
+   - Create new MCP tool with flexible date range support
+   - Parameters: start_date, end_date, event_types, categories, system_name, limit, sort_order
+   - Support both absolute and relative date formats
+   - Return structured results with date range metadata
+   - Include truncation indicators for limited results
+   - Provide clear error messages for invalid date ranges
+
+4. **Add Historical Journal File Loading** (Priority: MEDIUM)
+   - Implement on-demand loading of journal files by date range
+   - Parse journal filenames to determine date coverage
+   - Load only relevant files for requested date range
+   - Cache loaded historical data temporarily
+   - Implement memory management for large historical queries
+
+5. **Create Comprehensive Unit Tests** (Priority: HIGH)
+   - Test date parsing for all supported formats
+   - Test absolute dates: ISO 8601, date-only formats
+   - Test natural language: today, yesterday, last week, last month
+   - Test relative expressions: N days/weeks/months ago
+   - Test edge cases: invalid dates, future dates, timezone handling
+   - Test historical queries with various date ranges
+   - Test pagination and result limiting
+   - Test caching behavior
+   - Integration tests with real journal file dates
+
+6. **Update MCP Tools Integration** (Priority: MEDIUM)
+   - Register search_historical_events tool with FastMCP
+   - Add tool description for LLM discoverability
+   - Document parameter formats and examples
+   - Ensure backward compatibility with existing tools
+
+7. **Performance Optimization** (Priority: MEDIUM)
+   - Implement query result caching
+   - Optimize journal file date detection
+   - Minimize memory footprint for large queries
+   - Add query timeout handling
+   - Profile performance with large date ranges
+
+8. **Documentation Updates** (Priority: HIGH)
+   - Update README.md with new tool capabilities
+   - Add examples of historical queries in docs/FEATURES_GUIDE.md
+   - Document date format options in docs/API_REFERENCE.md
+   - Add LLM interaction examples for common scenarios
+   - Update CHANGELOG.md with new features
+
+**Testing Criteria:**
+- All date parsing formats work correctly with timezone handling
+- Historical queries return accurate results for any date range
+- Performance acceptable for queries spanning months of data
+- Memory usage remains reasonable for large result sets
+- Caching improves repeated query performance
+- All existing tests continue to pass (no regressions)
+- Integration tests validate end-to-end date range queries
+- LLMs can successfully use natural language date queries
+
+**Test Review and Documentation:**
+- Comprehensive unit tests for date parsing (50+ test cases)
+- Integration tests with real journal file dates
+- Performance tests for large date ranges
+- Cache validation tests
+- LLM interaction scenario tests
+- Documentation with clear examples
+
+**Expected Outcomes:**
+- **Before**: Only relative time queries from "now" (minutes/hours)
+- **After**: Flexible date range queries with natural language support
+- **Impact**: Significantly improved historical data analysis capabilities
+
+**Success Metrics:**
+- LLMs successfully parse natural language date queries
+- Support for 10+ date format variations
+- Query performance <500ms for typical date ranges
+- Cache hit rate >80% for repeated queries
+- Zero regressions in existing functionality
+- Comprehensive documentation with 5+ use case examples
+
+**Example Queries:**
+
+```python
+# Natural language dates
+await search_historical_events(
+    start_date="last month",
+    end_date="two weeks ago",
+    categories=["exploration"]
+)
+
+# Absolute dates
+await search_historical_events(
+    start_date="2025-01-01",
+    end_date="2025-01-31",
+    event_types=["FSDJump", "Scan"]
+)
+
+# Relative expressions
+await search_historical_events(
+    start_date="30 days ago",
+    end_date="7 days ago",
+    system_name="Sol"
+)
+
+# Single day query
+await search_historical_events(
+    start_date="2025-01-15",
+    end_date="2025-01-15",
+    categories=["combat"]
+)
+```
+
+**Commit Message Template:**
+```
+feat: implement Milestone 18 - historical data search with date range support
+
+Add flexible historical journal event queries with natural language date parsing.
+
+Changes:
+- New date_parser.py utility supporting ISO 8601 and natural language dates
+- Enhanced DataStore.query_historical_events() method with date range filtering
+- New search_historical_events MCP tool for flexible historical queries
+- Lazy-loading of historical journal files on demand
+- Query result caching for performance
+- Comprehensive date parsing tests (50+ test cases)
+- Integration tests with real journal file dates
+- Updated documentation with examples and LLM interaction scenarios
+
+Date Formats Supported:
+- ISO 8601: "2025-01-15", "2025-01-15T10:30:00Z"
+- Natural language: "today", "yesterday", "last week", "last month"
+- Relative: "N days ago", "N weeks ago", "N months ago"
+
+Example Queries:
+- "Show me all events from last month to two weeks ago"
+- "Find all exploration scans in January 2025"
+- "What systems did I visit between Christmas and New Year?"
+
+Performance:
+- Query caching improves repeated query speed by 80%
+- Lazy-loading reduces memory usage
+- Typical query response time: <500ms
+
+Tests: 550+ passing (34+ new tests for Milestone 18)
+Coverage: 84%+ overall
+
+Closes #10
+```
+
+**Dependencies:**
+- Existing DataStore and EventFilter infrastructure
+- Journal file parsing system (Milestone 3)
+- MCP tools framework (Milestone 8)
+- python-dateutil package for date parsing
+
+**Follow-up Actions:**
+- Monitor query performance with production usage
+- Consider adding query result export functionality
+- Evaluate need for more advanced date range expressions
+- Add date range presets for common queries (last week, last month, etc.)

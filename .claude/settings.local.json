@@ -39,7 +39,11 @@
       "Bash(\"venv\\Scripts\\python.exe\" \"src\\server.py\")",
       "Bash(timeout:*)",
       "Bash(\"venv\\Scripts\\python.exe\" scripts/run_tests.py)",
-      "Bash(\"venv\\Scripts\\python.exe\" -m pytest tests/ -v --tb=short)"
+      "Bash(\"venv\\Scripts\\python.exe\" -m pytest tests/ -v --tb=short)",
+      "Bash(git reset:*)",
+      "Read(//c/C/**)",
+      "Bash(gh issue create:*)",
+      "Bash(venv/Scripts/pip.exe install:*)"
     ],
     "deny": [],
     "ask": []

@@ -169,7 +169,121 @@ class MCPTools:
             return {"error": str(e)}
     
     # ==================== Event Search and Filter Tools ====================
-    
+
+    async def search_historical_events(
+        self,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        event_types: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        system_name: Optional[str] = None,
+        limit: Optional[int] = 1000,
+        sort_order: str = "desc"
+    ) -> Dict[str, Any]:
+        """
+        Search historical journal events with flexible date range support.
+
+        This tool enables querying events using natural language date expressions
+        and absolute dates, making it easy for LLMs to retrieve historical gameplay data.
+
+        Args:
+            start_date: Start of date range (inclusive). Supports:
+                       - ISO format: "2025-01-15" or "2025-01-15T10:30:00Z"
+                       - Natural language: "today", "yesterday", "last week", "last month"
+                       - Relative: "3 days ago", "2 weeks ago", "30 days ago"
+                       - If omitted, searches from beginning of available data
+            end_date: End of date range (inclusive). Supports same formats as start_date.
+                     If omitted, searches up to present time.
+            event_types: Filter by specific event types (e.g., ["FSDJump", "Scan"])
+            categories: Filter by event categories (e.g., ["exploration", "combat"])
+            system_name: Filter by system name
+            limit: Maximum number of events to return (default: 1000)
+            sort_order: "asc" (oldest first) or "desc" (newest first, default)
+
+        Returns:
+            Dict containing:
+                - events: List of matching events with full details
+                - total_count: Total number of matching events
+                - date_range: Parsed start and end dates
+                - truncated: Whether results were limited
+                - search_criteria: Echo of search parameters used
+
+        Examples:
+            >>> # Get all events from last month to two weeks ago
+            >>> await search_historical_events(
+            ...     start_date="last month",
+            ...     end_date="two weeks ago"
+            ... )
+
+            >>> # Find all exploration scans in January 2025
+            >>> await search_historical_events(
+            ...     start_date="2025-01-01",
+            ...     end_date="2025-01-31",
+            ...     categories=["exploration"],
+            ...     event_types=["Scan"]
+            ... )
+
+            >>> # What systems did I visit between Christmas and New Year?
+            >>> await search_historical_events(
+            ...     start_date="2024-12-25",
+            ...     end_date="2025-01-01",
+            ...     event_types=["FSDJump", "Location"]
+            ... )
+        """
+        try:
+            # Convert category strings to EventCategory enums
+            category_enums = None
+            if categories:
+                category_enums = set()
+                for cat_str in categories:
+                    try:
+                        category_enums.add(EventCategory(cat_str.lower()))
+                    except ValueError:
+                        logger.warning(f"Invalid category: {cat_str}")
+
+            # Query historical events
+            result = self.data_store.query_historical_events(
+                start_date=start_date,
+                end_date=end_date,
+                event_types=set(event_types) if event_types else None,
+                categories=category_enums,
+                system_name=system_name,
+                limit=limit,
+                sort_order=sort_order
+            )
+
+            # Format events for response
+            formatted_events = []
+            for event in result["events"]:
+                formatted_events.append({
+                    "timestamp": event.timestamp.isoformat(),
+                    "event_type": event.event_type,
+                    "category": event.category.value,
+                    "summary": event.summary,
+                    "key_data": event.key_data,
+                    "is_valid": event.is_valid
+                })
+
+            return {
+                "events": formatted_events,
+                "total_count": result["total_count"],
+                "date_range": result["date_range"],
+                "truncated": result["truncated"],
+                "search_criteria": {
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "event_types": event_types,
+                    "categories": categories,
+                    "system_name": system_name,
+                    "limit": limit,
+                    "sort_order": sort_order
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error searching historical events: {e}")
+            return {"error": str(e)}
+
     async def search_events(
         self,
         event_types: Optional[List[str]] = None,
