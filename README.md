@@ -112,8 +112,8 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **577+ tests** passing with **83% code coverage**
-- **Real-time monitoring** validated with mock journal events
+- **580 tests** passing with **83% code coverage**
+- **Real-time monitoring** validated with mock journal events and race condition fixes
 - **Event processing** tested with 213 event types across 17 categories
 - **Comprehensive event coverage** with 98% categorization accuracy (Milestone 17)
 - **Historical data search** with 61 tests covering date parsing, natural language queries, and range filtering (Milestone 18)
@@ -121,6 +121,7 @@ pytest tests/integration/ -v   # Integration tests only
 - **MCP server** tested with comprehensive unit and integration tests
 - **MCP tools, resources, and prompts** extensively tested with edge cases
 - **Dynamic Theme System** tested with 159 comprehensive tests covering performance, edge cases, and integration scenarios
+- **File monitoring race conditions** tested and fixed (Issue #12)
 
 ### Documentation
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions

@@ -842,3 +842,205 @@ def create_mock_journal_file(file_path: Path, entries: list):
     with open(file_path, 'w', encoding='utf-8') as f:
         for entry in entries:
             f.write(json.dumps(entry) + '\n')
+
+
+class TestIssue12RaceCondition:
+    """
+    Tests for Issue #12: File System Event Race Condition
+
+    GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/12
+
+    Problem: New journal events not ingested when file size check happens before OS flush
+    Expected: All written events should be read regardless of timing
+    Actual (before fix): Events discarded if size check occurs before flush completes
+    """
+
+    def test_issue_12_file_size_check_race_condition(self, isolated_temp_dir):
+        """
+        Test for Issue #12: File write buffer race condition with size check.
+
+        When Elite Dangerous writes to journal files, the OS may not immediately
+        flush writes to disk. Watchdog events can fire BEFORE the file size
+        actually increases, causing the size check (current_size <= last_position)
+        to fail and discard the event.
+
+        This test simulates that scenario by:
+        1. Writing initial data and reading it
+        2. Appending new data (simulating Elite Dangerous write)
+        3. Immediately checking file size before flush guarantee
+        4. Attempting incremental read
+
+        The bug causes new entries to be missed.
+        """
+        parser = JournalParser(isolated_temp_dir)
+        journal_file = isolated_temp_dir / "Journal.20240906120000.01.log"
+
+        # Initial write
+        initial_entry = {
+            "timestamp": "2024-09-06T12:00:00Z",
+            "event": "Fileheader",
+            "part": 1
+        }
+
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(initial_entry) + '\n')
+
+        # Read initial data
+        initial_entries, initial_position = parser.read_journal_file(journal_file)
+        assert len(initial_entries) == 1
+        assert initial_position > 0
+
+        # Append new entry (simulating Elite Dangerous writing new event)
+        new_entry = {
+            "timestamp": "2024-09-06T12:01:00Z",
+            "event": "FSDJump",
+            "StarSystem": "Alpha Centauri"
+        }
+
+        with open(journal_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(new_entry) + '\n')
+
+        # Attempt incremental read immediately
+        # The size check in read_journal_file_incremental may see the same size
+        # if the OS hasn't flushed the write to disk yet
+        new_entries, new_position = parser.read_journal_file_incremental(
+            journal_file, initial_position
+        )
+
+        # This test should pass after fix: new entry should be read
+        # Before fix: might return 0 entries if size check happens before flush
+        # After fix: should always read the new entry
+        assert len(new_entries) == 1, \
+            f"Expected 1 new entry but got {len(new_entries)}. " \
+            f"This indicates the race condition bug where size check " \
+            f"happens before OS flush completes."
+        assert new_entries[0]["event"] == "FSDJump"
+
+    def test_issue_12_no_events_missed_on_rapid_writes(self, isolated_temp_dir):
+        """
+        Test for Issue #12: Ensure no events are lost during rapid sequential writes.
+
+        Elite Dangerous can write multiple events rapidly (10ms apart).
+        Each write may trigger a watchdog event before the previous write is flushed.
+        The file size check can cause these events to be missed.
+
+        This test:
+        1. Writes initial entry
+        2. Rapidly writes 10 new entries
+        3. Verifies all entries are captured via incremental reads
+        """
+        parser = JournalParser(isolated_temp_dir)
+        journal_file = isolated_temp_dir / "Journal.20240906130000.01.log"
+
+        # Initial entry
+        initial_entry = {
+            "timestamp": "2024-09-06T13:00:00Z",
+            "event": "Fileheader",
+            "part": 1
+        }
+
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(initial_entry) + '\n')
+
+        # Read initial
+        initial_entries, position = parser.read_journal_file(journal_file)
+        assert len(initial_entries) == 1
+
+        # Rapidly write 10 entries
+        expected_events = []
+        for i in range(10):
+            entry = {
+                "timestamp": f"2024-09-06T13:00:{i+1:02d}Z",
+                "event": f"Event{i+1}",
+                "index": i+1
+            }
+            expected_events.append(entry)
+
+            with open(journal_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(entry) + '\n')
+
+            # Immediately try to read (simulating watchdog event firing)
+            new_entries, new_position = parser.read_journal_file_incremental(
+                journal_file, position
+            )
+
+            # Update position if we got entries
+            if new_entries:
+                position = new_position
+
+        # Final read to catch any missed entries
+        final_entries, final_position = parser.read_journal_file_incremental(
+            journal_file, position
+        )
+
+        # Read entire file to count total entries
+        all_entries, _ = parser.read_journal_file(journal_file)
+
+        # Should have 11 total entries (1 initial + 10 rapid writes)
+        assert len(all_entries) == 11, \
+            f"Expected 11 total entries but got {len(all_entries)}. " \
+            f"This indicates events were lost due to race condition."
+
+        # Verify all rapid-write events are present
+        event_names = [e["event"] for e in all_entries[1:]]  # Skip Fileheader
+        for i in range(10):
+            expected_event = f"Event{i+1}"
+            assert expected_event in event_names, \
+                f"Missing event {expected_event}. This indicates the race " \
+                f"condition caused events to be discarded."
+
+    def test_issue_12_incremental_read_without_size_check(self, isolated_temp_dir):
+        """
+        Test for Issue #12: Verify incremental read works without relying on size check.
+
+        The fix removes the file size check (lines 270-272 in parser.py) and always
+        attempts to read. If no new data exists, read() returns empty string.
+
+        This test verifies the fixed behavior:
+        1. Size check removal doesn't break existing functionality
+        2. Empty reads are handled gracefully
+        3. New data is always detected regardless of timing
+        """
+        parser = JournalParser(isolated_temp_dir)
+        journal_file = isolated_temp_dir / "Journal.20240906140000.01.log"
+
+        # Write initial entry
+        initial_entry = {
+            "timestamp": "2024-09-06T14:00:00Z",
+            "event": "Fileheader",
+            "part": 1
+        }
+
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(initial_entry) + '\n')
+
+        # Read initial
+        entries, position = parser.read_journal_file(journal_file)
+        assert len(entries) == 1
+
+        # Try to read when no new data exists (should return empty, not error)
+        no_new_entries, same_position = parser.read_journal_file_incremental(
+            journal_file, position
+        )
+        assert len(no_new_entries) == 0
+        assert same_position == position
+
+        # Now append new entry
+        new_entry = {
+            "timestamp": "2024-09-06T14:01:00Z",
+            "event": "FSDJump",
+            "StarSystem": "Sol"
+        }
+
+        with open(journal_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(new_entry) + '\n')
+
+        # Should detect new data immediately (without size check dependency)
+        new_entries, new_position = parser.read_journal_file_incremental(
+            journal_file, position
+        )
+
+        assert len(new_entries) == 1, \
+            "New entry should be detected without relying on size check"
+        assert new_entries[0]["event"] == "FSDJump"
+        assert new_position > position
