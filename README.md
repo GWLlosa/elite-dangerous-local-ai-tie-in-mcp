@@ -110,9 +110,10 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **440+ tests** passing with **95%+ code coverage**
+- **516 tests** passing with **83% code coverage**
 - **Real-time monitoring** validated with mock journal events
-- **Event processing** tested with 130+ event types across 17 categories
+- **Event processing** tested with 213 event types across 17 categories
+- **Comprehensive event coverage** with 98% categorization accuracy (Milestone 17)
 - **Data storage** verified with concurrent access patterns and thread safety
 - **MCP server** tested with comprehensive unit and integration tests
 - **MCP tools, resources, and prompts** extensively tested with edge cases
@@ -120,7 +121,9 @@ pytest tests/integration/ -v   # Integration tests only
 
 ### Documentation
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
-- **[Dynamic Theme System Guide](docs/THEME_SYSTEM_GUIDE.md)** - Complete guide to AI-powered crew themes *(NEW!)*
+- **[Journal Events Reference](docs/JOURNAL_EVENTS.md)** - Complete reference of all 213 supported event types *(NEW!)*
+- **[Dynamic Theme System Guide](docs/THEME_SYSTEM_GUIDE.md)** - Complete guide to AI-powered crew themes
+- **[Headless CLI Guide](docs/HEADLESS_CLI.md)** - Standalone EDCoPilot generation without Claude Desktop
 - **[Scripts Documentation](scripts/README.md)** - Automation script details
 - **[AI Directives](ai-directives/README.md)** - Development guidelines for AI assistants
 
@@ -198,7 +201,7 @@ If configured correctly, Claude will respond with your current game state using 
 2. **Configuration Management** - Environment variables and path validation
 3. **Journal File Discovery** - File parsing with comprehensive tests
 4. **Real-time Monitoring** - File system watching with position tracking
-5. **Event Processing** - 130+ event types across 17 categories
+5. **Event Processing** - 213 event types across 17 categories (98% categorization accuracy)
 6. **Data Storage** - In-memory storage with thread safety and game state tracking
 7. **MCP Server Framework** - FastMCP integration with background monitoring
 8. **Core MCP Tools** - 43+ tools for game data queries and analysis
@@ -208,14 +211,28 @@ If configured correctly, Claude will respond with your current game state using 
 12. **Historical Data Loading** - Automatic processing of existing journal files (last 24 hours) on server startup
 13. **Journal Parser Fixes** - Fixed filename validation and timestamp extraction for all journal file formats
 14. **AsyncIO Stability** - Resolved FastMCP integration issues for stable Claude Desktop connection
-15. **Dynamic Multi-Crew Theme System** -  **NEW** - AI-powered theme generation with ship-specific crew management
+15. **Dynamic Multi-Crew Theme System** - AI-powered theme generation with ship-specific crew management
+16. **Headless EDCoPilot CLI** - Standalone command-line tool for chatter generation without Claude Desktop
+17. **Comprehensive Event Coverage** - Closed 30% event gap, all 213 event types properly categorized (Milestone 17 complete)
+
+###  Recent Achievements (October 2025):
+- **Milestone 17: Comprehensive Event Coverage** - Closed 30% event gap with 34 new event mappings
+  - 213 total event types now properly categorized (98% accuracy)
+  - Navigation: Added BookTaxi, FSDTarget, SupercruiseDestinationDrop, USSDrop, FetchRemoteModule
+  - Combat: Added HeatDamage, HeatWarning, LaunchDrone, Scanned, DataScanned
+  - Trading: Added RefuelAll, RedeemVoucher, BuyDrones, CargoTransfer
+  - Ship Management: Added FuelScoop, SetUserShipName, ShipLocker, ModuleInfo, StoredModules, and more
+  - Community Goals, Odyssey/on-foot events, Powerplay, Carrier events
+- **516 Tests Passing** - Up from 440, maintaining 83% code coverage
+- **37 New Milestone 17 Tests** - Comprehensive validation of all newly mapped events
+- **Gap Analysis System** - Automated detection of unmapped event types from real gameplay
 
 ###  Recent Achievements (September 2025):
-- ** Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management
-- ** 159 New Tests** - Comprehensive test coverage for performance, edge cases, and integration scenarios
-- ** 10+ New MCP Tools** - Enhanced theme management tools for Claude Desktop integration
-- ** AI Theme Generation** - Intelligent prompt generation for creating immersive crew personalities
-- ** Ship-Specific Themes** - Automatic crew configuration based on ship type and role
+- **Dynamic Multi-Crew Theme System** - Complete AI-powered theme generation with ship-specific crew management
+- **159 New Tests** - Comprehensive test coverage for performance, edge cases, and integration scenarios
+- **10+ New MCP Tools** - Enhanced theme management tools for Claude Desktop integration
+- **AI Theme Generation** - Intelligent prompt generation for creating immersive crew personalities
+- **Ship-Specific Themes** - Automatic crew configuration based on ship type and role
 - **258+ Historical Events** loaded automatically on server startup
 - **200+ Journal Files** now properly recognized and processed
 - **Zero-downtime Integration** - Works with existing journal files even when Elite Dangerous is offline
