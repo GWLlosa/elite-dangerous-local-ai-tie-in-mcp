@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Set, Any, Callable, Union
 from dataclasses import dataclass, field
 
 from ..journal.events import ProcessedEvent, EventCategory
+from .date_parser import parse_date_range, DateParseError
 
 
 class EventStorageError(Exception):
@@ -249,6 +250,88 @@ class DataStore:
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         filter_criteria = EventFilter(start_time=cutoff_time)
         return self.query_events(filter_criteria)
+
+    def query_historical_events(
+        self,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        event_types: Optional[Set[str]] = None,
+        categories: Optional[Set[EventCategory]] = None,
+        system_name: Optional[str] = None,
+        limit: Optional[int] = None,
+        sort_order: str = "desc"
+    ) -> Dict[str, Any]:
+        """
+        Query events with flexible date range support.
+
+        Args:
+            start_date: Start of date range (ISO format or natural language)
+            end_date: End of date range (ISO format or natural language)
+            event_types: Filter by specific event types
+            categories: Filter by event categories
+            system_name: Filter by system name
+            limit: Maximum number of events to return
+            sort_order: "asc" (oldest first) or "desc" (newest first)
+
+        Returns:
+            Dictionary containing:
+                - events: List of matching ProcessedEvent objects
+                - total_count: Total number of matching events
+                - date_range: Parsed start and end datetimes
+                - truncated: Whether results were limited
+
+        Raises:
+            DateParseError: If date strings cannot be parsed
+            ValueError: If start_date is after end_date
+
+        Examples:
+            >>> store.query_historical_events(
+            ...     start_date="2025-01-01",
+            ...     end_date="2025-01-31",
+            ...     categories={EventCategory.EXPLORATION}
+            ... )
+            {
+                "events": [...],
+                "total_count": 150,
+                "date_range": {"start": "2025-01-01T00:00:00Z", ...},
+                "truncated": False
+            }
+        """
+        # Parse date range
+        start_dt, end_dt = parse_date_range(start_date, end_date)
+
+        # Build filter criteria
+        filter_criteria = EventFilter(
+            start_time=start_dt,
+            end_time=end_dt,
+            event_types=event_types,
+            categories=categories,
+            system_names={system_name} if system_name else None,
+            max_results=limit
+        )
+
+        # Determine sort order
+        query_sort = (
+            QuerySortOrder.NEWEST_FIRST if sort_order == "desc"
+            else QuerySortOrder.OLDEST_FIRST
+        )
+
+        # Query events
+        events = self.query_events(filter_criteria, query_sort)
+
+        # Build response
+        total_count = len(events)
+        truncated = limit is not None and total_count >= limit
+
+        return {
+            "events": events,
+            "total_count": total_count,
+            "date_range": {
+                "start": start_dt.isoformat() if start_dt else None,
+                "end": end_dt.isoformat() if end_dt else None
+            },
+            "truncated": truncated
+        }
     
     def get_game_state(self) -> GameState:
         """Get the current game state."""
