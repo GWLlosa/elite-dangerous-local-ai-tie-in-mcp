@@ -6,6 +6,7 @@ rules:
   - Run `python scripts/check_dependencies.py` before substantial changes.
   - Run tests with `python scripts/run_tests.py`; maintain >90% coverage for new code.
   - Produce ASCII-only program output and Python strings (no emojis/smart quotes/Unicode symbols).
+  - Issue bugfix workflow: When asked to investigate/fix an issue: (1) Read issue via `gh issue view`, (2) Validate with reproduction tests, (3) Create branch `bugfix/<number>-<description>`, (4) Write failing tests with issue links, (5) Fix code, (6) Update docs, (7) Create PR with `Fixes #<number>`, (8) Provide PR link. See `ai-directives/issue_investigation_workflow.md`.
   - Create timezone-aware UTC datetimes: `datetime.now(timezone.utc)`.
   - Empty string defaults: treat "" as selecting defaults for optional inputs; only `None` is an error for required fields.
   - ProcessedEvent: use `raw_event` for original dict; use `key_data` for derived fields.

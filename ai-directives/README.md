@@ -49,14 +49,16 @@ Checklist for any doc/rule change:
 
 - `project_implementation_plan.md`  Milestones and implementation roadmap.
 - `code_quality_lessons.md`  Collected rules and pitfalls from past fixes.
+- `issue_investigation_workflow.md`  **Mandatory workflow for investigating and fixing GitHub issues.**
 - `session-reports/`  Session logs, milestone notes, and knowledge preservation.
 
 Recommended reading order for new contributors:
 1) `AGENTS.md` (root) for ground rules
 2) This README for project status/context
-3) `project_implementation_plan.md` for roadmap
-4) `code_quality_lessons.md` for do/don't details
-5) `docs/` in the repo for API/features/testing guides
+3) `issue_investigation_workflow.md` for bugfix procedures
+4) `project_implementation_plan.md` for roadmap
+5) `code_quality_lessons.md` for do/don't details
+6) `docs/` in the repo for API/features/testing guides
 
 ##  Quick Start for AI Assistants
 

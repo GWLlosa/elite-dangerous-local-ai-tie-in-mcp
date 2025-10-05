@@ -11,6 +11,23 @@ Purpose: Give AI coding agents concise, enforceable rules for working in this re
 - Run tests via: `python scripts/run_tests.py` (preferred) or `pytest`.
 - Keep changes minimal, targeted, and aligned with existing style.
 
+### Issue Investigation & Bugfix Workflow (MANDATORY)
+When asked to "investigate", "resolve", "address", or "fix" a GitHub issue, follow this workflow:
+
+1. **Read the Issue**: Use `gh issue view <number>` to understand the problem, reproduction steps, and context.
+2. **Validate**: Create reproduction tests. If reproduced, continue. If not, post a comment explaining what was tested and why reproduction failed - **do NOT close the issue**.
+3. **Create Bugfix Branch**: Use naming convention `bugfix/<issue-number>-<brief-description>` (e.g., `bugfix/12-file-monitoring-race-condition`).
+4. **Write Failing Tests**: Create unit tests that capture the root cause with:
+   - Clear test names describing the failure
+   - Comment linking to GitHub issue: `# GitHub Issue: https://github.com/<owner>/<repo>/issues/<number>`
+   - Brief summary of problem, expected behavior, and actual behavior
+5. **Fix the Code**: Implement the fix and verify tests pass.
+6. **Update Documentation**: Update test counts, changelog, and relevant docs.
+7. **Create PR**: Use `gh pr create` with comprehensive description linking to issue with `Fixes #<number>`.
+8. **Provide PR Link**: Give user the PR URL and wait for approval.
+
+For complete workflow details, see `ai-directives/issue_investigation_workflow.md`.
+
 ## Code Quality & Compatibility
 - Python style: PEP 8 with type hints and helpful docstrings.
 - Tests: Provide real assertions and aim for >90% coverage for new/changed code.
