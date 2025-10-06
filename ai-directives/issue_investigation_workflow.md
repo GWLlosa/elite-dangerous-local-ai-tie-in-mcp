@@ -207,7 +207,29 @@ Use this workflow when the user requests:
    )"
    ```
 
-### Step 8: Provide PR Link to User
+### Step 8: Post PR Link to GitHub Issue
+
+**Post comment linking to the PR**:
+```bash
+gh issue comment <issue-number> --body "## Fix Implemented
+
+This issue has been resolved in PR #<pr-number>.
+
+### Changes Made
+<Brief list of changes>
+
+### Testing
+- X new comprehensive tests covering all aspects of the fix
+- All tests passing with no regressions
+- Total: X tests (up from Y)
+
+### Pull Request
+**PR #<pr-number>**: <PR URL>
+
+Ready for review and testing."
+```
+
+### Step 9: Provide PR Link to User
 
 **Response format**:
 ```
@@ -331,6 +353,7 @@ PR: https://github.com/user/repo/pull/46
 - [ ] Verify all tests pass
 - [ ] Update documentation and test counts
 - [ ] Create comprehensive pull request
+- [ ] Post PR link as comment on GitHub issue
 - [ ] Provide PR link to user
 - [ ] Wait for user approval before merging
 
