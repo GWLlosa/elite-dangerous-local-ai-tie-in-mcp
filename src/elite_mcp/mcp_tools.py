@@ -1190,6 +1190,7 @@ class MCPTools:
             
             summary = {
                 "cargo": {},
+                "carrier_cargo": {},
                 "materials": {
                     "raw": {},
                     "manufactured": {},
@@ -1216,7 +1217,12 @@ class MCPTools:
                         category_key = category.lower()
                         for material in latest_materials.raw_event[category]:
                             summary["materials"][category_key][material["Name"]] = material["Count"]
-            
+
+            # Get fleet carrier cargo from game state
+            game_state = self.data_store.get_game_state()
+            if hasattr(game_state, 'carrier_cargo') and game_state.carrier_cargo:
+                summary["carrier_cargo"] = dict(game_state.carrier_cargo)
+
             # Track recent material collection
             material_filter = EventFilter(
                 event_types={"MaterialCollected", "MaterialDiscarded", "MaterialTrade"},

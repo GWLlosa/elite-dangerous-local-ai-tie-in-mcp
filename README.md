@@ -112,11 +112,12 @@ pytest tests/integration/ -v   # Integration tests only
 ```
 
 ### Test Coverage
-- **580 tests** passing with **83% code coverage**
+- **584 tests** passing with **83% code coverage**
 - **Real-time monitoring** validated with mock journal events and race condition fixes
 - **Event processing** tested with 213 event types across 17 categories
 - **Comprehensive event coverage** with 98% categorization accuracy (Milestone 17)
 - **Historical data search** with 61 tests covering date parsing, natural language queries, and range filtering (Milestone 18)
+- **Fleet carrier cargo tracking** with 9 tests for CargoTransfer events and inventory management (Issue #15)
 - **Data storage** verified with concurrent access patterns and thread safety
 - **MCP server** tested with comprehensive unit and integration tests
 - **MCP tools, resources, and prompts** extensively tested with edge cases
