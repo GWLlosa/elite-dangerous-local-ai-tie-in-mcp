@@ -531,6 +531,19 @@ class EventProcessor:
         elif event_type == "MiningRefined":
             key_data["material"] = event.get("Type")
 
+        # Trading events - CargoTransfer
+        elif event_type == "CargoTransfer":
+            # Extract transfers from the Transfers array
+            transfers = []
+            for transfer in event.get("Transfers", []):
+                transfers.append({
+                    "commodity": transfer.get("Type", "").lower(),
+                    "commodity_localized": transfer.get("Type_Localised", ""),
+                    "count": transfer.get("Count", 0),
+                    "direction": transfer.get("Direction", "")
+                })
+            key_data["transfers"] = transfers
+
         # System events
         elif event_type == "LoadGame":
             key_data["commander"] = event.get("Commander")
@@ -616,7 +629,39 @@ class EventProcessor:
             count = key_data.get("count") or 0
             total = key_data.get("total") or 0
             return f"Sold {count}t of {commodity} for {total:,} credits"
-            
+
+        # CargoTransfer summaries
+        elif event_type == "CargoTransfer":
+            transfers = key_data.get("transfers", [])
+            if not transfers:
+                return "Cargo transfer occurred"
+
+            # Single transfer - detailed summary
+            if len(transfers) == 1:
+                transfer = transfers[0]
+                commodity = transfer.get("commodity_localized") or transfer.get("commodity", "cargo")
+                count = transfer.get("count", 0)
+                direction = transfer.get("direction", "")
+
+                if direction == "tocarrier":
+                    return f"Transferred {count}t {commodity} to carrier"
+                elif direction == "toship":
+                    return f"Transferred {count}t {commodity} from carrier to ship"
+                else:
+                    return f"Transferred {count}t {commodity}"
+
+            # Multiple transfers - summary
+            else:
+                total_count = sum(t.get("count", 0) for t in transfers)
+                direction = transfers[0].get("direction", "")
+
+                if direction == "tocarrier":
+                    return f"Transferred {len(transfers)} items ({total_count}t total) to carrier"
+                elif direction == "toship":
+                    return f"Transferred {len(transfers)} items ({total_count}t total) from carrier to ship"
+                else:
+                    return f"Transferred {len(transfers)} items ({total_count}t total)"
+
         # Mission summaries
         elif event_type == "MissionAccepted":
             name = key_data.get("name", "mission")

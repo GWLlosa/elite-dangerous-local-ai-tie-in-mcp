@@ -91,6 +91,9 @@ class GameState:
     cargo_capacity: int = 0
     cargo_count: int = 0
 
+    # Fleet carrier cargo inventory (commodity: count)
+    carrier_cargo: Dict[str, int] = field(default_factory=dict)
+
     # Fuel information
     fuel_level: float = 100.0
     fuel_capacity: float = 32.0
@@ -161,6 +164,7 @@ class DataStore:
             'ShipyardSwap': self._handle_ship_swap,
             'Status': self._handle_status_update,
             'Location': self._handle_location_update,
+            'CargoTransfer': self._handle_cargo_transfer,
             'Statistics': self._handle_statistics_update,
         }
     
@@ -369,6 +373,7 @@ class DataStore:
                 loan=self._game_state.loan,
                 cargo_capacity=self._game_state.cargo_capacity,
                 cargo_count=self._game_state.cargo_count,
+                carrier_cargo=self._game_state.carrier_cargo.copy(),
                 fuel_level=self._game_state.fuel_level,
                 fuel_capacity=self._game_state.fuel_capacity,
                 last_updated=self._game_state.last_updated
@@ -717,7 +722,35 @@ class DataStore:
 
         if 'star_pos' in data:
             self._game_state.coordinates = data['star_pos']
-    
+
+    def _handle_cargo_transfer(self, event: ProcessedEvent) -> None:
+        """Handle cargo transfer events to/from fleet carrier."""
+        # Get transfers from key_data
+        transfers = event.key_data.get('transfers', [])
+
+        for transfer in transfers:
+            commodity = transfer.get('commodity', '').lower()
+            count = transfer.get('count', 0)
+            direction = transfer.get('direction', '')
+
+            if not commodity:
+                continue
+
+            # Update carrier cargo based on direction
+            if direction == 'tocarrier':
+                # Transfer to carrier - increase carrier cargo
+                current_count = self._game_state.carrier_cargo.get(commodity, 0)
+                self._game_state.carrier_cargo[commodity] = current_count + count
+            elif direction == 'toship':
+                # Transfer from carrier to ship - decrease carrier cargo
+                current_count = self._game_state.carrier_cargo.get(commodity, 0)
+                new_count = max(0, current_count - count)
+                if new_count > 0:
+                    self._game_state.carrier_cargo[commodity] = new_count
+                else:
+                    # Remove commodity if count reaches zero
+                    self._game_state.carrier_cargo.pop(commodity, None)
+
     def _handle_statistics_update(self, event: ProcessedEvent) -> None:
         """Handle statistics updates."""
         # FIXED: use key_data instead of extracted_data
