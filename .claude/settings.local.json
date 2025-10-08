@@ -44,7 +44,9 @@
       "Read(//c/C/**)",
       "Bash(gh issue create:*)",
       "Bash(venv/Scripts/pip.exe install:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)"
     ],
     "deny": [],
     "ask": []
