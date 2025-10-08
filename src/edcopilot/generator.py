@@ -133,11 +133,12 @@ class EDCoPilotContextAnalyzer:
 class EDCoPilotContentGenerator:
     """Generates contextual EDCoPilot chatter content based on game state."""
 
-    def __init__(self, data_store: DataStore, edcopilot_path: Path):
+    def __init__(self, data_store: DataStore, edcopilot_path: Path, theme_storage=None):
         self.data_store = data_store
         self.edcopilot_path = edcopilot_path
         self.template_manager = EDCoPilotTemplateManager()
         self.context_analyzer = EDCoPilotContextAnalyzer(data_store)
+        self.theme_storage = theme_storage  # Optional theme storage for themed content generation
 
     def generate_contextual_chatter(self) -> Dict[str, str]:
         """Generate contextual chatter based on current game state."""
@@ -146,10 +147,22 @@ class EDCoPilotContentGenerator:
         # Analyze current context
         context = self.context_analyzer.analyze_current_context()
 
+        # Check if theme is available
+        if self.theme_storage:
+            current_theme = self.theme_storage.get_current_theme()
+            if current_theme:
+                logger.info(f"Using theme: {current_theme['theme']}")
+                context['theme'] = current_theme['theme']
+                context['theme_context'] = current_theme['context']
+            else:
+                logger.info("No theme set in storage, generating generic content")
+        else:
+            logger.info("No theme storage available, generating generic content")
+
         # Generate base templates
         files = self.template_manager.generate_all_templates()
 
-        # Enhance with contextual content
+        # Enhance with contextual content (and theme if available)
         files = self._enhance_with_context(files, context)
 
         return files
@@ -165,6 +178,12 @@ class EDCoPilotContentGenerator:
 
         # Add contextual entries to space chatter
         space_template = self.template_manager.space_chatter
+        crew_template = self.template_manager.crew_chatter
+
+        # Add theme-specific entries if theme is available
+        if 'theme' in context and 'theme_context' in context:
+            self._add_themed_context(space_template, context)
+            self._add_themed_crew_chatter(crew_template, context)
 
         # Add activity-specific entries
         if context['primary_activity'] == 'exploration':
@@ -320,6 +339,173 @@ class EDCoPilotContentGenerator:
             ),
         ]
         template.entries.extend(deep_space_entries)
+
+    def _add_themed_context(self, template, context: Dict[str, Any]) -> None:
+        """Add theme-specific contextual chatter based on theme storage."""
+        from .templates import ChatterType, ChatterEntry
+
+        theme = context.get('theme', '')
+        theme_context = context.get('theme_context', '')
+
+        logger.info(f"Adding themed context: {theme}")
+
+        # Extract key elements from theme context (names, places, events)
+        # This is a simple implementation that looks for common patterns
+        themed_entries = []
+
+        # Try to extract crew names from context
+        # Look for patterns like "Chad Gallagher", "Eiza", etc.
+        crew_names = self._extract_crew_names_from_context(theme_context)
+
+        # Try to extract ship/carrier names
+        ship_carrier_names = self._extract_ship_carrier_names_from_context(theme_context)
+
+        # Try to extract locations/events mentioned in context
+        locations_events = self._extract_locations_events_from_context(theme_context)
+
+        # Add themed entries that reference the context
+        if crew_names:
+            themed_entries.append(ChatterEntry(
+                text=f"{crew_names[0]} here, all stations reporting normal. Ready for your orders, Skip.",
+                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
+                chatter_type=ChatterType.SPACE_CHATTER
+            ))
+
+        if ship_carrier_names:
+            for name in ship_carrier_names[:2]:  # Limit to first 2
+                themed_entries.append(ChatterEntry(
+                    text=f"{name} is in range. We're within defensive coverage, Commander.",
+                    conditions=[EDCoPilotConditions.IN_NORMAL_SPACE],
+                    chatter_type=ChatterType.SPACE_CHATTER
+                ))
+
+        if locations_events:
+            for loc_event in locations_events[:2]:  # Limit to first 2
+                themed_entries.append(ChatterEntry(
+                    text=f"Remembering {loc_event}. We've come a long way since then.",
+                    conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
+                    chatter_type=ChatterType.SPACE_CHATTER
+                ))
+
+        # Add general themed flavor based on theme keywords
+        theme_lower = theme.lower()
+        if "professional" in theme_lower or "crew" in theme_lower:
+            themed_entries.append(ChatterEntry(
+                text=f"Professional operations as always, Commander. Team is ready.",
+                conditions=[EDCoPilotConditions.DOCKED],
+                chatter_type=ChatterType.SPACE_CHATTER
+            ))
+
+        if "carrier" in theme_lower:
+            themed_entries.append(ChatterEntry(
+                text=f"Carrier operations nominal. Fleet support standing by.",
+                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE],
+                chatter_type=ChatterType.SPACE_CHATTER
+            ))
+
+        if "veteran" in theme_lower or "war" in theme_lower:
+            themed_entries.append(ChatterEntry(
+                text=f"Veteran crews don't panic. We've seen worse than this.",
+                conditions=[EDCoPilotConditions.UNDER_ATTACK],
+                chatter_type=ChatterType.SPACE_CHATTER
+            ))
+
+        if themed_entries:
+            logger.info(f"Added {len(themed_entries)} themed chatter entries")
+            template.entries.extend(themed_entries)
+
+    def _add_themed_crew_chatter(self, template, context: Dict[str, Any]) -> None:
+        """Add theme-specific crew conversations based on theme storage and ship config."""
+        from .templates import ChatterEntry, ChatterType
+
+        theme_context = context.get('theme_context', '')
+
+        # Extract crew names from context
+        crew_names = self._extract_crew_names_from_context(theme_context)
+
+        themed_crew_entries = []
+
+        # Check if we have ship config available with crew member themes
+        if self.theme_storage:
+            ship_name = context.get('ship_type', '')
+            ship_config = self.theme_storage.get_ship_config(ship_name) if ship_name else None
+
+            if ship_config and ship_config.crew_themes:
+                # Generate chatter using actual crew member names/themes
+                for role, crew_member_theme in ship_config.crew_themes.items():
+                    # Extract name from crew member context
+                    crew_name = crew_member_theme.context.split(',')[0] if ',' in crew_member_theme.context else role.title()
+
+                    # Add chatter entry with this crew member
+                    themed_crew_entries.append(ChatterEntry(
+                        text=f"[<EDCoPilot>] {crew_name}, status report?\n[<Operations>] All systems nominal, EDCoPilot. {crew_member_theme.theme} standing by.",
+                        chatter_type=ChatterType.CREW_CHATTER
+                    ))
+
+        # Add general themed crew conversations
+        if crew_names:
+            # Create chatter using extracted names
+            themed_crew_entries.append(ChatterEntry(
+                text=f"[<EDCoPilot>] All stations, report in.\n[<Operations>] {crew_names[0]} here, all nominal.",
+                chatter_type=ChatterType.CREW_CHATTER
+            ))
+
+        if themed_crew_entries:
+            logger.info(f"Added {len(themed_crew_entries)} themed crew chatter entries")
+            template.entries.extend(themed_crew_entries)
+
+    def _extract_crew_names_from_context(self, context: str) -> List[str]:
+        """Extract crew member names from theme context."""
+        import re
+        # Look for capitalized names (first + last name patterns)
+        # Pattern: capital letter followed by lowercase letters, space, capital letter followed by lowercase letters
+        name_pattern = r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b'
+        matches = re.findall(name_pattern, context)
+        # Also look for single names commonly used (Chad, Eiza, etc.)
+        single_name_pattern = r'\b([A-Z][a-z]{2,10})\b(?=\s+(?:here|flies|learned|is))'
+        single_matches = re.findall(single_name_pattern, context)
+        all_names = list(set(matches + single_matches))
+        return all_names[:5]  # Limit to 5 names
+
+    def _extract_ship_carrier_names_from_context(self, context: str) -> List[str]:
+        """Extract ship/carrier names from theme context."""
+        import re
+        # Look for patterns like "Fleet Carrier X" or "'Name'" or ship IDs
+        patterns = [
+            r"Fleet Carrier\s+([A-Z0-9-]+\s+'[^']+')]",  # Fleet Carrier K1F-37B 'Name'
+            r"'([^']+)'",  # Anything in single quotes
+            r"\b([A-Z0-9]{3,}-[A-Z0-9]+)\b",  # IDs like K1F-37B
+        ]
+        names = []
+        for pattern in patterns:
+            matches = re.findall(pattern, context)
+            names.extend(matches)
+        return list(set(names))[:3]  # Limit to 3 ship/carrier names
+
+    def _extract_locations_events_from_context(self, context: str) -> List[str]:
+        """Extract locations and events mentioned in theme context."""
+        import re
+        # Look for system names (pattern: letters + numbers) and significant events
+        system_pattern = r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+[A-Z]{1,2}-[A-Z]\s+[a-z]\d+-\d+)\b'  # HR 8461 style
+        simple_system_pattern = r'\b([A-Z][A-Z\s]+\d+)\b'  # HR 8461 style simpler
+        event_keywords = ["ambush", "expedition", "success", "attack", "operations", "mission"]
+
+        locations = re.findall(system_pattern, context) + re.findall(simple_system_pattern, context)
+
+        events = []
+        for keyword in event_keywords:
+            if keyword in context.lower():
+                # Find the phrase containing the keyword
+                sentences = context.split('.')
+                for sent in sentences:
+                    if keyword in sent.lower():
+                        # Extract a short phrase
+                        words = sent.strip().split()
+                        if len(words) > 2:
+                            events.append(' '.join(words[:6]))  # First 6 words
+                        break
+
+        return list(set(locations + events))[:3]  # Limit to 3 items
 
     def _replace_tokens_in_files(self, files: Dict[str, str], context: Dict[str, Any]) -> Dict[str, str]:
         """Replace placeholder tokens with actual contextual values."""
