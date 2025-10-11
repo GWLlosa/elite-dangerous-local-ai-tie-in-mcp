@@ -359,7 +359,7 @@ class MCPResources:
                     "system": game_state.current_system,
                     "station": game_state.current_station,
                     "docked": game_state.docked,
-                    "coordinates": game_state.current_coordinates
+                    "coordinates": game_state.coordinates
                 },
                 "ship": {
                     "type": game_state.current_ship,
@@ -392,7 +392,7 @@ class MCPResources:
                 "current_system": game_state.current_system,
                 "current_station": game_state.current_station,
                 "docked": game_state.docked,
-                "coordinates": game_state.current_coordinates,
+                "coordinates": game_state.coordinates,
                 "recently_visited": visited_systems[:5],
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }

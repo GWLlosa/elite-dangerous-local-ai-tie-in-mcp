@@ -556,6 +556,50 @@ class EventProcessor:
             key_data["game_mode"] = event.get("GameMode")
             key_data["loan"] = event.get("Loan")
 
+        # Carrier events
+        elif event_type == "CarrierStats":
+            key_data["carrier_id"] = event.get("CarrierID")
+            key_data["callsign"] = event.get("Callsign")
+            key_data["name"] = event.get("Name")
+            key_data["docking_access"] = event.get("DockingAccess")
+            key_data["allow_notorious"] = event.get("AllowNotorious", False)
+            key_data["fuel_level"] = event.get("FuelLevel")
+            key_data["jump_range_curr"] = event.get("JumpRangeCurr")
+            key_data["jump_range_max"] = event.get("JumpRangeMax")
+            key_data["finance"] = event.get("Finance", {})
+            key_data["crew"] = event.get("Crew", [])
+            key_data["ship_packs"] = event.get("ShipPacks", [])
+            key_data["module_packs"] = event.get("ModulePacks", [])
+
+        elif event_type == "CarrierFinance":
+            key_data["carrier_id"] = event.get("CarrierID")
+            key_data["carrier_balance"] = event.get("CarrierBalance")
+            key_data["reserve_balance"] = event.get("ReserveBalance")
+            key_data["available_balance"] = event.get("AvailableBalance")
+            key_data["reserve_percent"] = event.get("ReservePercent")
+            # Extract tax rates
+            key_data["tax_rates"] = {
+                "pioneersupplies": event.get("TaxRate_pioneersupplies", 0),
+                "shipyard": event.get("TaxRate_shipyard", 0),
+                "rearm": event.get("TaxRate_rearm", 0),
+                "outfitting": event.get("TaxRate_outfitting", 0),
+                "refuel": event.get("TaxRate_refuel", 0),
+                "repair": event.get("TaxRate_repair", 0)
+            }
+
+        elif event_type == "CarrierCrewServices":
+            key_data["carrier_id"] = event.get("CarrierID")
+            key_data["crew_name"] = event.get("CrewName")
+            key_data["operation"] = event.get("Operation")
+            key_data["crew_role"] = event.get("CrewRole")
+
+        elif event_type == "CarrierModulePack":
+            key_data["carrier_id"] = event.get("CarrierID")
+            key_data["operation"] = event.get("Operation")
+            key_data["pack_theme"] = event.get("PackTheme")
+            key_data["pack_tier"] = event.get("PackTier")
+            key_data["cost"] = event.get("Cost")
+
         return key_data
     
     def _generate_summary(self, event: Dict[str, Any], event_type: str, 
@@ -707,7 +751,38 @@ class EventProcessor:
                 return f"Located at {station} in {system}"
             else:
                 return f"Located in {system}"
-        
+
+        # Carrier summaries
+        elif event_type == "CarrierStats":
+            callsign = key_data.get("callsign", "carrier")
+            name = key_data.get("name", "")
+            if name:
+                return f"Carrier {callsign} ({name}) statistics updated"
+            else:
+                return f"Carrier {callsign} statistics updated"
+
+        elif event_type == "CarrierFinance":
+            balance = key_data.get("available_balance")
+            if balance is not None:
+                return f"Carrier finance updated - {balance:,} credits available"
+            else:
+                return "Carrier finance updated"
+
+        elif event_type == "CarrierCrewServices":
+            crew_name = key_data.get("crew_name", "crew member")
+            operation = key_data.get("operation", "updated")
+            return f"Carrier crew service: {crew_name} {operation}"
+
+        elif event_type == "CarrierModulePack":
+            operation = key_data.get("operation", "updated")
+            pack_theme = key_data.get("pack_theme", "module pack")
+            if operation == "buypack":
+                return f"Purchased carrier module pack: {pack_theme}"
+            elif operation == "sellpack":
+                return f"Sold carrier module pack: {pack_theme}"
+            else:
+                return f"Carrier module pack {operation}: {pack_theme}"
+
         # Default summary
         return f"{event_type} event occurred"
     
