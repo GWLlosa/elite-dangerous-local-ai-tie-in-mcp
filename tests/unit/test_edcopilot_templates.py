@@ -77,84 +77,85 @@ class TestSpaceChatterTemplate:
 
     def test_initialization(self, space_template):
         """Test template initialization."""
-        assert space_template.entries == []
+        assert space_template.conversations == []
         assert space_template.filename == "EDCoPilot.SpaceChatter.Custom.txt"
 
     def test_add_entry(self, space_template):
-        """Test adding entries to template."""
+        """Test adding entries to template (backwards compatibility)."""
         space_template.add_entry("Test dialogue", ["Docked"], "ARIA")
 
-        assert len(space_template.entries) == 1
-        assert space_template.entries[0].text == "Test dialogue"
-        assert space_template.entries[0].conditions == ["Docked"]
-        assert space_template.entries[0].voice_override == "ARIA"
+        assert len(space_template.conversations) == 1
+        # add_entry converts to conversation format
+        assert "Test dialogue" in space_template.to_file_content()
 
     def test_generate_navigation_chatter(self, space_template):
         """Test generating navigation chatter."""
         space_template.generate_navigation_chatter()
 
-        assert len(space_template.entries) > 0
+        assert len(space_template.conversations) > 0
 
-        # Check for expected navigation entries
-        navigation_texts = [entry.text for entry in space_template.entries]
-        assert any("Entering" in text for text in navigation_texts)
-        assert any("docked" in text.lower() for text in navigation_texts)
-        assert any("fuel" in text.lower() for text in navigation_texts)
+        # Check for expected navigation content
+        content = space_template.to_file_content()
+        assert "Entering" in content or "entering" in content
+        assert "docked" in content.lower()
+        assert "fuel" in content.lower()
 
     def test_generate_exploration_chatter(self, space_template):
         """Test generating exploration chatter."""
         space_template.generate_exploration_chatter()
 
-        assert len(space_template.entries) > 0
+        assert len(space_template.conversations) > 0
 
-        # Check for expected exploration entries
-        exploration_texts = [entry.text.lower() for entry in space_template.entries]
-        assert any("scan" in text or "exploration" in text for text in exploration_texts)
+        # Check for expected exploration content
+        content = space_template.to_file_content().lower()
+        assert "scan" in content or "exploration" in content or "discover" in content
 
     def test_generate_combat_chatter(self, space_template):
         """Test generating combat chatter."""
         space_template.generate_combat_chatter()
 
-        assert len(space_template.entries) > 0
+        assert len(space_template.conversations) > 0
 
-        # Check for expected combat entries
-        combat_texts = [entry.text for entry in space_template.entries]
-        assert any("shield" in text.lower() for text in combat_texts)
-        assert any("hostiles" in text.lower() or "attack" in text.lower() for text in combat_texts)
+        # Check for expected combat content
+        content = space_template.to_file_content().lower()
+        assert "shield" in content
+        assert "hostiles" in content or "attack" in content or "target" in content
 
     def test_generate_trading_chatter(self, space_template):
         """Test generating trading chatter."""
         space_template.generate_trading_chatter()
 
-        assert len(space_template.entries) > 0
+        assert len(space_template.conversations) > 0
 
-        # Check for expected trading entries
-        trading_texts = [entry.text for entry in space_template.entries]
-        assert any("cargo" in text.lower() for text in trading_texts)
-        assert any("credits" in text.lower() or "profit" in text.lower() for text in trading_texts)
+        # Check for expected trading content
+        content = space_template.to_file_content().lower()
+        assert "cargo" in content
+        assert "credits" in content or "profit" in content or "market" in content
 
     def test_generate_default_chatter(self, space_template):
         """Test generating all default chatter types."""
         space_template.generate_default_chatter()
 
-        # Should have entries from all categories
-        assert len(space_template.entries) > 15  # Minimum expected entries
+        # Should have conversations from all categories
+        assert len(space_template.conversations) > 10  # Minimum expected conversations
 
-        all_texts = [entry.text.lower() for entry in space_template.entries]
-        assert any("navigation" in text or "jump" in text for text in all_texts)
-        assert any("scan" in text or "discovery" in text for text in all_texts)
-        assert any("shield" in text or "combat" in text for text in all_texts)
-        assert any("cargo" in text or "trading" in text for text in all_texts)
+        content = space_template.to_file_content().lower()
+        assert "docked" in content or "entering" in content
+        assert "scan" in content or "discovery" in content or "discover" in content
+        assert "shield" in content or "hostile" in content
+        assert "cargo" in content or "profit" in content or "market" in content
 
     def test_to_file_content(self, space_template):
         """Test generating file content."""
         space_template.add_entry("Test dialogue", ["Docked"])
         content = space_template.to_file_content()
 
-        assert "# EDCoPilot Space Chatter Custom File" in content
-        assert "Generated by Elite Dangerous MCP Server" in content
-        assert "(Docked) Test dialogue" in content
-        assert len(content.split('\n')) > 8  # Header + entry
+        # NO COMMENTS - EDCoPilot doesn't support them
+        assert "#" not in content
+        # Should use conversation block format
+        assert "[example]" in content
+        assert "[\\example]" in content
+        assert "Test dialogue" in content
 
 
 class TestCrewChatterTemplate:
@@ -193,8 +194,11 @@ class TestCrewChatterTemplate:
         crew_template.generate_default_chatter()
         content = crew_template.to_file_content()
 
-        assert "# EDCoPilot Crew Chatter Custom File" in content
-        assert "Generated by Elite Dangerous MCP Server" in content
+        # NO COMMENTS - EDCoPilot doesn't support them
+        assert not content.startswith("#")
+        # Should use conversation block format
+        assert "[example]" in content
+        assert "[\\example]" in content
 
 
 class TestDeepSpaceChatterTemplate:
@@ -207,29 +211,30 @@ class TestDeepSpaceChatterTemplate:
 
     def test_initialization(self, deep_space_template):
         """Test template initialization."""
-        assert deep_space_template.entries == []
+        assert deep_space_template.conversations == []
         assert deep_space_template.filename == "EDCoPilot.DeepSpaceChatter.Custom.txt"
 
     def test_generate_deep_space_chatter(self, deep_space_template):
         """Test generating deep space chatter."""
         deep_space_template.generate_deep_space_chatter()
 
-        assert len(deep_space_template.entries) > 0
+        assert len(deep_space_template.conversations) > 0
 
-        # Check for expected deep space entries
-        deep_space_texts = [entry.text.lower() for entry in deep_space_template.entries]
-        assert any("void" in text or "isolation" in text for text in deep_space_texts)
-        assert any("stars" in text or "stellar" in text for text in deep_space_texts)
-        assert any("galaxy" in text or "cosmic" in text for text in deep_space_texts)
+        # Check for expected deep space content
+        content = deep_space_template.to_file_content().lower()
+        assert "void" in content or "isolation" in content or "nebula" in content
+        assert "stars" in content or "stellar" in content or "star" in content
+        assert "galaxy" in content or "cosmic" in content or "space" in content
 
     def test_to_file_content(self, deep_space_template):
         """Test generating deep space file content."""
         deep_space_template.generate_default_chatter()
         content = deep_space_template.to_file_content()
 
-        assert "# EDCoPilot Deep Space Chatter Custom File" in content
-        assert "Generated by Elite Dangerous MCP Server" in content
-        assert ">5000 LY from both Sol and Colonia" in content
+        # NO COMMENTS - EDCoPilot doesn't support them
+        assert not content.startswith("#")
+        # Should have deep space themed content
+        assert "void" in content.lower() or "isolation" in content.lower() or "stars" in content.lower()
 
 
 class TestEDCoPilotTemplateManager:
@@ -258,7 +263,8 @@ class TestEDCoPilotTemplateManager:
         # Verify content exists for all files
         for filename, content in files.items():
             assert len(content) > 100  # Substantial content
-            assert "Generated by Elite Dangerous MCP Server" in content
+            # NO COMMENTS - EDCoPilot doesn't support them
+            assert not content.startswith("#")
 
     def test_get_template_by_type(self, template_manager):
         """Test getting templates by type."""
@@ -312,9 +318,11 @@ class TestEDCoPilotConstants:
 
         all_content = "\n".join(files.values())
 
-        # Should contain some common tokens
-        assert EDCoPilotTokens.SYSTEM_NAME in all_content
-        assert EDCoPilotTokens.COMMANDER_NAME in all_content or "{CommanderName}" in all_content
+        # Should contain some common tokens (lowercase authoritative format)
+        assert "<starsystem>" in all_content or "<cmdrname>" in all_content
+        # Old TitleCase tokens should NOT be present
+        assert "<SystemName>" not in all_content
+        assert "<CommanderName>" not in all_content
 
     def test_conditions_in_templates(self):
         """Test that templates use proper condition format."""

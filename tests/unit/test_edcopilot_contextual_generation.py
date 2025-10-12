@@ -113,9 +113,9 @@ class TestEDCoPilotContextualGeneration:
         # Check that space chatter contains the specific system name
         space_chatter = files.get('EDCoPilot.SpaceChatter.Custom.txt', '')
 
-        # Should use proper token format, not hardcoded system names
-        assert "<SystemName>" in space_chatter, \
-            f"Generated chatter should use <SystemName> token, but content was:\n{space_chatter[:500]}..."
+        # Should use proper lowercase token format (authoritative EDCoPilot format)
+        assert "<starsystem>" in space_chatter, \
+            f"Generated chatter should use <starsystem> token (lowercase), but content was:\n{space_chatter[:500]}..."
 
         # Should NOT contain hardcoded system names (proper token usage)
         assert "Blae Drye IC-S d5-15" not in space_chatter, \
@@ -129,10 +129,10 @@ class TestEDCoPilotContextualGeneration:
         space_chatter = files.get('EDCoPilot.SpaceChatter.Custom.txt', '')
         crew_chatter = files.get('EDCoPilot.CrewChatter.Custom.txt', '')
 
-        # Should use proper token format, not hardcoded ship names
+        # Should use proper lowercase token format (authoritative EDCoPilot format)
         combined_chatter = space_chatter + crew_chatter
-        assert "<ShipName>" in combined_chatter or "<CommanderName>" in combined_chatter, \
-            f"Generated chatter should use proper tokens, but content was:\n{combined_chatter[:500]}..."
+        assert "<myshipname>" in combined_chatter or "<cmdrname>" in combined_chatter, \
+            f"Generated chatter should use proper lowercase tokens, but content was:\n{combined_chatter[:500]}..."
 
         # Should NOT contain hardcoded ship names (proper token usage)
         assert "EXCELSIOR" not in combined_chatter and "Mandalay" not in combined_chatter, \
