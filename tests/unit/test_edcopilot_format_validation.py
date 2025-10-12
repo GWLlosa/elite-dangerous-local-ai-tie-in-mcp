@@ -50,9 +50,13 @@ class TestEDCoPilotFormatValidation(unittest.TestCase):
                     f"Should use <token> format, not {{token}}: {line}")
 
                 # Should use angle bracket tokens if any tokens present
-                if '<' in line and '>' in line:
-                    self.assertRegex(line, r'<[A-Za-z]+>',
-                        f"Tokens should use <TokenName> format: {line}")
+                # Note: speaker roles like [<ship1>] are valid, not tokens
+                # Tokens appear within dialogue text, not as speaker roles
+                if '<' in line and '>' in line and not line.startswith('[<'):
+                    # Check for lowercase tokens (authoritative format)
+                    has_token = re.search(r'<[a-z]+>', line) or re.search(r'<[A-Z][a-z]+>', line)
+                    self.assertTrue(has_token,
+                        f"Tokens should use lowercase or TitleCase format: {line}")
 
     def test_crew_chatter_conversation_blocks(self):
         """Test that Crew Chatter uses proper conversation block format."""
@@ -266,8 +270,13 @@ class TestEDCoPilotFormatValidation(unittest.TestCase):
                 # 1. Simple dialogue: "Text here"
                 # 2. Conditional dialogue: "(Condition) Text here"
                 # 3. Speaker dialogue: "[<Speaker>] Text here"
+                # 4. Conversation block markers: [example] or [\example]
+                # 5. Conversation block with condition: [example] (Condition)
 
                 is_valid_format = (
+                    # Conversation block markers
+                    (line == '[example]' or line == '[\\example]' or
+                     line.startswith('[example] (')) or
                     # Simple dialogue
                     (not line.startswith('(') and not line.startswith('[')) or
                     # Conditional dialogue

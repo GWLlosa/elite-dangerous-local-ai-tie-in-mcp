@@ -69,34 +69,75 @@ class ChatterEntry:
 
 
 class EDCoPilotTokens:
-    """Available tokens that EDCoPilot can replace in chatter."""
+    """
+    Available tokens that EDCoPilot can replace in chatter.
 
-    # Commander and ship tokens
-    COMMANDER_NAME = "<CommanderName>"
+    Token names match authoritative EDCoPilot format (lowercase).
+    Based on tokens found in EDCoPilot default files.
+    """
+
+    # Commander tokens (authoritative)
+    CMDR_NAME = "<cmdrname>"              # Commander's name
+    CMDR_ADDRESS = "<cmdraddress>"        # Sir/Ma'am/Commander
+
+    # Ship tokens (authoritative)
+    MY_SHIP_NAME = "<myshipname>"         # Player's ship name
+    CALLSIGN = "<callsign>"               # Ship callsign
+    OTHER_CALLSIGN = "<othercallsign>"    # Another ship's callsign
+    SHIP_CORPORATION = "<shipCorporation>" # Ship manufacturer (note: CamelCase in original)
+
+    # Location tokens (authoritative)
+    STAR_SYSTEM = "<starsystem>"          # Current star system
+    RANDOM_STAR_SYSTEM = "<randomstarsystem>" # Random system for variety
+    STATION_NAME = "<stationname>"        # Station/port name
+    LOCAL_DESTINATION = "<localdestination>" # Local destination
+
+    # Flight tokens (authoritative)
+    FLIGHT_NUM = "<flightnum>"            # Flight number for Apex/etc
+
+    # Status tokens (authoritative)
+    FUEL_LEVELS = "<fuellevels>"          # Fuel level percentage
+
+    # Old token names (deprecated - kept for backwards compatibility)
+    # These will be mapped to new names in get_token_mapping()
+    COMMANDER_NAME = "<CommanderName>"    # DEPRECATED: Use CMDR_NAME
+    SYSTEM_NAME = "<SystemName>"          # DEPRECATED: Use STAR_SYSTEM
+    STATION_NAME_OLD = "<StationName>"    # DEPRECATED: Use STATION_NAME
+    SHIP_NAME = "<ShipName>"              # DEPRECATED: Use MY_SHIP_NAME
+    FUEL_PERCENT = "<FuelPercent>"        # DEPRECATED: Use FUEL_LEVELS
+
+    # Extended tokens (not in authoritative files, but useful)
     COMMANDER_RANK = "<CommanderRank>"
-    SHIP_NAME = "<ShipName>"
     SHIP_TYPE = "<ShipType>"
-
-    # Location tokens
-    SYSTEM_NAME = "<SystemName>"
-    STATION_NAME = "<StationName>"
     BODY_NAME = "<BodyName>"
-
-    # Status tokens
-    FUEL_PERCENT = "<FuelPercent>"
     SHIELD_PERCENT = "<ShieldPercent>"
     HULL_PERCENT = "<HullPercent>"
     CREDITS = "<Credits>"
-
-    # Navigation tokens
     JUMP_DISTANCE = "<JumpDistance>"
     DISTANCE_FROM_SOL = "<DistanceFromSol>"
     NEXT_SYSTEM = "<NextSystem>"
-
-    # Activity tokens
     CARGO_COUNT = "<CargoCount>"
     CARGO_CAPACITY = "<CargoCapacity>"
     MISSION_COUNT = "<MissionCount>"
+
+    @classmethod
+    def get_token_mapping(cls) -> Dict[str, str]:
+        """
+        Get mapping from old TitleCase token names to new lowercase names.
+
+        Used for backwards compatibility when processing existing templates
+        or user-provided text with old token format.
+
+        Returns:
+            Dictionary mapping old token names to new authoritative names
+        """
+        return {
+            "<CommanderName>": "<cmdrname>",
+            "<SystemName>": "<starsystem>",
+            "<StationName>": "<stationname>",
+            "<ShipName>": "<myshipname>",
+            "<FuelPercent>": "<fuellevels>",
+        }
 
 
 class EDCoPilotConditions:
@@ -130,6 +171,57 @@ class EDCoPilotConditions:
     HIGH_VALUE_TARGET = "HighValueTarget"
 
 
+class SpaceRole(Enum):
+    """Speaker roles for space chatter conversations."""
+    SHIP1 = "[<ship1>]"               # Player's ship
+    SHIP2 = "[<ship2>]"               # Another ship
+    STATIONNAME = "[<stationname>]"   # Station control
+
+
+@dataclass
+class SpaceConversation:
+    """
+    Multi-speaker space conversation for space chatter files.
+
+    Space chatter uses conversation blocks with [example]...[\\example] markers
+    and speaker roles like [<ship1>], [<stationname>].
+
+    Based on authoritative EDCoPilot.SpaceChatter.txt format.
+    """
+    dialogue_lines: List[Tuple[SpaceRole, str]]  # (speaker, text) pairs
+    conditions: Optional[List[str]] = None
+    probability: float = 1.0
+
+    def __post_init__(self):
+        """Validate conversation structure."""
+        if not self.dialogue_lines:
+            raise ValueError("Space conversation must have at least one dialogue line")
+
+    def format_for_edcopilot(self) -> str:
+        """
+        Format conversation for EDCoPilot space chatter format.
+
+        Returns conversation block with [example]...[\\example] markers.
+        Conditions are placed inline with [example] tag if present.
+        """
+        # Build condition string if present
+        condition_str = ""
+        if self.conditions:
+            condition_str = " (" + "&".join(self.conditions) + ")"
+
+        # Start with [example] tag (with optional conditions)
+        lines = [f"[example]{condition_str}"]
+
+        # Add each dialogue line with speaker role
+        for speaker, text in self.dialogue_lines:
+            lines.append(f"{speaker.value} {text}")
+
+        # End with [\example] tag (backslash, not forward slash)
+        lines.append("[\\example]")
+
+        return "\n".join(lines)
+
+
 class CrewRole(Enum):
     """Standard crew roles for crew chatter conversations."""
     EDCOPILOT = "[<EDCoPilot>]"        # Ship's computer
@@ -161,149 +253,161 @@ class CrewConversation:
 
 
 class SpaceChatterTemplate:
-    """Template for generating EDCoPilot Space Chatter files."""
+    """
+    Template for generating EDCoPilot Space Chatter files.
+
+    Space Chatter uses conversation blocks with [example]...[\\example] markers
+    and speaker roles, not single-line conditional format.
+
+    Based on authoritative EDCoPilot.SpaceChatter.txt format.
+    """
 
     def __init__(self):
-        self.entries: List[ChatterEntry] = []
+        self.conversations: List[SpaceConversation] = []
         self.filename = "EDCoPilot.SpaceChatter.Custom.txt"
+
+    def add_conversation(self, conversation: SpaceConversation) -> None:
+        """Add a space conversation block."""
+        self.conversations.append(conversation)
 
     def add_entry(self, text: str, conditions: Optional[List[str]] = None,
                   voice_override: Optional[str] = None) -> None:
-        """Add a chatter entry."""
-        entry = ChatterEntry(text=text, conditions=conditions, voice_override=voice_override,
-                           chatter_type=ChatterType.SPACE_CHATTER)
-        self.entries.append(entry)
+        """
+        DEPRECATED: Add a chatter entry (old API).
+
+        For backwards compatibility, converts single-line entries to conversation blocks.
+        New code should use add_conversation() instead.
+        """
+        # Convert old single-line entry to conversation format
+        conversation = SpaceConversation(
+            dialogue_lines=[(SpaceRole.SHIP1, text)],
+            conditions=conditions
+        )
+        self.conversations.append(conversation)
 
     def generate_navigation_chatter(self) -> None:
-        """Generate navigation-related chatter entries."""
-        nav_entries = [
-            # System entry chatter
-            ChatterEntry(
-                text=f"Entering {EDCoPilotTokens.SYSTEM_NAME}, Commander. Scanning for points of interest.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text=f"Welcome to {EDCoPilotTokens.SYSTEM_NAME}. Population centers detected on sensors.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text=f"Jump complete. We're now in the {EDCoPilotTokens.SYSTEM_NAME} system.",
-                conditions=[EDCoPilotConditions.IN_SUPERCRUISE],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
+        """Generate navigation-related chatter conversations."""
+        # System entry conversation
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"Entering {EDCoPilotTokens.STAR_SYSTEM}. Scanning for points of interest."),
+            ],
+            conditions=[EDCoPilotConditions.IN_SUPERCRUISE]
+        ))
 
-            # Docking chatter
-            ChatterEntry(
-                text=f"Docking request acknowledged by {EDCoPilotTokens.STATION_NAME}. Bringing us in smoothly.",
-                conditions=[EDCoPilotConditions.APPROACHING_STATION],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text=f"Successfully docked at {EDCoPilotTokens.STATION_NAME}. All systems secure.",
-                conditions=[EDCoPilotConditions.DOCKED],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text="Permission to disembark granted. Station services are now available.",
-                conditions=[EDCoPilotConditions.DOCKED],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
+        # Docking clearance conversation
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"{EDCoPilotTokens.STATION_NAME} control, requesting docking clearance."),
+                (SpaceRole.STATIONNAME, f"{EDCoPilotTokens.CALLSIGN}, this is {EDCoPilotTokens.STATION_NAME} control. Sending landing pad assignment now."),
+                (SpaceRole.SHIP1, "Copy that, proceeding to pad."),
+            ],
+            conditions=[EDCoPilotConditions.APPROACHING_STATION]
+        ))
 
-            # Fuel warnings
-            ChatterEntry(
-                text=f"Fuel reserves at {EDCoPilotTokens.FUEL_PERCENT}%. Recommend refueling soon, Commander.",
-                conditions=[EDCoPilotConditions.FUEL_LOW],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text="We should consider fuel management for our next jump sequence.",
-                conditions=[EDCoPilotConditions.FUEL_LOW],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-        ]
+        # Docked conversation
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"Successfully docked at {EDCoPilotTokens.STATION_NAME}."),
+                (SpaceRole.STATIONNAME, "Welcome, Commander. Station services are available."),
+            ],
+            conditions=[EDCoPilotConditions.DOCKED]
+        ))
 
-        self.entries.extend(nav_entries)
+        # Departure conversation
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Control, requesting departure clearance."),
+                (SpaceRole.STATIONNAME, "Clearance granted. Safe travels, Commander."),
+            ],
+            conditions=[EDCoPilotConditions.DOCKED]
+        ))
+
+        # Fuel warning conversation
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"Fuel reserves at {EDCoPilotTokens.FUEL_LEVELS} percent. Need to refuel soon."),
+            ],
+            conditions=[EDCoPilotConditions.FUEL_LOW]
+        ))
 
     def generate_exploration_chatter(self) -> None:
-        """Generate exploration-related chatter entries."""
-        exploration_entries = [
-            ChatterEntry(
-                text=f"Fascinating astronomical data from {EDCoPilotTokens.BODY_NAME}. This should sell well.",
-                conditions=[EDCoPilotConditions.SCANNING, EDCoPilotConditions.EXPLORING],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text="Detailed surface scan complete. Adding to our exploration database.",
-                conditions=[EDCoPilotConditions.SCANNING],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text="Commander, we appear to be the first to discover this. Excellent work!",
-                conditions=[EDCoPilotConditions.FIRST_DISCOVERY],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text=f"We're {EDCoPilotTokens.DISTANCE_FROM_SOL} light years from Sol. True exploration territory.",
-                conditions=[EDCoPilotConditions.EXPLORING],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-            ChatterEntry(
-                text="The void between stars is vast, but every system tells a story.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING],
-                chatter_type=ChatterType.SPACE_CHATTER
-            ),
-        ]
+        """Generate exploration-related chatter conversations."""
+        # Scanning discovery
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Detailed surface scan complete. Fascinating astronomical data."),
+            ],
+            conditions=[EDCoPilotConditions.SCANNING]
+        ))
 
-        self.entries.extend(exploration_entries)
+        # First discovery
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "We appear to be the first to discover this system!"),
+            ],
+            conditions=[EDCoPilotConditions.FIRST_DISCOVERY]
+        ))
+
+        # Deep space exploration
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "The void between stars is vast, but every system tells a story."),
+            ],
+            conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING]
+        ))
 
     def generate_combat_chatter(self) -> None:
-        """Generate combat-related chatter entries."""
-        combat_entries = [
-            ChatterEntry(
-                text=f"Shields at {EDCoPilotTokens.SHIELD_PERCENT}%! Evasive maneuvers recommended!",
-                conditions=[EDCoPilotConditions.UNDER_ATTACK],
-                voice_override="ARIA"  # More dramatic voice for combat
-            ),
-            ChatterEntry(
-                text="Multiple hostiles on scanner. All hands to battle stations!",
-                conditions=[EDCoPilotConditions.UNDER_ATTACK]
-            ),
-            ChatterEntry(
-                text="Shield generators are offline! Hull integrity critical!",
-                conditions=[EDCoPilotConditions.SHIELDS_DOWN, EDCoPilotConditions.IN_DANGER]
-            ),
-            ChatterEntry(
-                text="Target eliminated. Scanning for additional threats.",
-                conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]  # After combat
-            ),
-        ]
+        """Generate combat-related chatter conversations."""
+        # Under attack
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Multiple hostiles on scanner! Engaging defensive systems!"),
+            ],
+            conditions=[EDCoPilotConditions.UNDER_ATTACK]
+        ))
 
-        self.entries.extend(combat_entries)
+        # Shields down
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Shield generators offline! Hull integrity critical!"),
+            ],
+            conditions=[EDCoPilotConditions.SHIELDS_DOWN, EDCoPilotConditions.IN_DANGER]
+        ))
+
+        # Post-combat
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Target eliminated. Scanning for additional threats."),
+            ],
+            conditions=[EDCoPilotConditions.IN_NORMAL_SPACE]
+        ))
 
     def generate_trading_chatter(self) -> None:
-        """Generate trading-related chatter entries."""
-        trading_entries = [
-            ChatterEntry(
-                text=f"Cargo manifest shows {EDCoPilotTokens.CARGO_COUNT} of {EDCoPilotTokens.CARGO_CAPACITY} tons loaded.",
-                conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED]
-            ),
-            ChatterEntry(
-                text="Market data suggests excellent profit margins on our current cargo.",
-                conditions=[EDCoPilotConditions.TRADING]
-            ),
-            ChatterEntry(
-                text=f"Credits updated: {EDCoPilotTokens.CREDITS}. Profitable trading run, Commander.",
-                conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED]
-            ),
-            ChatterEntry(
-                text="Supply and demand fluctuations detected. Adjusting trade calculations.",
-                conditions=[EDCoPilotConditions.TRADING]
-            ),
-        ]
+        """Generate trading-related chatter conversations."""
+        # Cargo status
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"Cargo manifest shows {EDCoPilotTokens.CARGO_COUNT} of {EDCoPilotTokens.CARGO_CAPACITY} tons loaded."),
+            ],
+            conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED]
+        ))
 
-        self.entries.extend(trading_entries)
+        # Profitable trade
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, f"Credits updated: {EDCoPilotTokens.CREDITS}. Profitable trading run."),
+            ],
+            conditions=[EDCoPilotConditions.TRADING, EDCoPilotConditions.DOCKED]
+        ))
+
+        # Market analysis
+        self.conversations.append(SpaceConversation(
+            dialogue_lines=[
+                (SpaceRole.SHIP1, "Market data suggests excellent profit margins on our current cargo."),
+            ],
+            conditions=[EDCoPilotConditions.TRADING]
+        ))
 
     def generate_default_chatter(self) -> None:
         """Generate all default chatter categories."""
@@ -314,22 +418,18 @@ class SpaceChatterTemplate:
         self.generate_trading_chatter()
 
     def to_file_content(self) -> str:
-        """Generate the complete file content for EDCoPilot."""
-        lines = [
-            "# EDCoPilot Space Chatter Custom File",
-            "# Generated by Elite Dangerous MCP Server",
-            "# Format: (ConditionName) Dialogue text with <Tokens>",
-            "# Simple format: Dialogue text",
-            "#",
-            "# Available Tokens: <CommanderName>, <SystemName>, <ShipName>, <FuelPercent>, etc.",
-            "# Available Conditions: Docked, InSupercruise, UnderAttack, Scanning, etc.",
-            "#",
-            ""
-        ]
+        """
+        Generate the complete file content for EDCoPilot.
 
-        # Add all entries
-        for entry in self.entries:
-            lines.append(entry.format_for_edcopilot())
+        NO COMMENTS - EDCoPilot parser rejects comment lines.
+        Uses conversation blocks with [example]...[\\example] markers.
+        """
+        lines = []
+
+        # Add all conversations
+        for conversation in self.conversations:
+            lines.append(conversation.format_for_edcopilot())
+            lines.append("")  # Blank line between conversations
 
         return "\n".join(lines)
 
@@ -350,14 +450,14 @@ class CrewChatterTemplate:
     def generate_crew_responses(self) -> None:
         """Generate crew response chatter using proper conversation block format."""
         # Crew chatter uses conversation blocks instead of individual entries
-        # We'll store conversation blocks as special entries
+        # Use lowercase tokens matching authoritative format
         self.conversation_blocks = [
             # Navigation conversation
             {
                 "condition": EDCoPilotConditions.IN_SUPERCRUISE,
                 "conversation": [
-                    f"{CrewRole.OPERATIONS.value} Navigation officer reports jump calculations complete, Commander",
-                    f"{CrewRole.EDCOPILOT.value} Acknowledged, {EDCoPilotTokens.COMMANDER_NAME}. Course set and locked"
+                    f"{CrewRole.OPERATIONS.value} Navigation officer reports jump calculations complete, {EDCoPilotTokens.CMDR_ADDRESS}",
+                    f"{CrewRole.EDCOPILOT.value} Acknowledged, {EDCoPilotTokens.CMDR_NAME}. Course set and locked"
                 ]
             },
             # Docking conversation
@@ -374,7 +474,7 @@ class CrewChatterTemplate:
                 "condition": EDCoPilotConditions.DOCKED,
                 "conversation": [
                     f"{CrewRole.ENGINEERING.value} Engineering reports all systems nominal. Power distribution at peak efficiency",
-                    f"{CrewRole.OPERATIONS.value} Station services are available, {EDCoPilotTokens.COMMANDER_NAME}",
+                    f"{CrewRole.OPERATIONS.value} Station services are available, {EDCoPilotTokens.CMDR_ADDRESS}",
                     f"{CrewRole.EDCOPILOT.value} Ship maintenance and refuel options displayed on your console"
                 ]
             },
@@ -382,7 +482,7 @@ class CrewChatterTemplate:
             {
                 "condition": EDCoPilotConditions.FUEL_LOW,
                 "conversation": [
-                    f"{CrewRole.ENGINEERING.value} Chief Engineer here. Fuel reserves at {EDCoPilotTokens.FUEL_PERCENT}%. Recommend topping off",
+                    f"{CrewRole.ENGINEERING.value} Chief Engineer here. Fuel reserves at {EDCoPilotTokens.FUEL_LEVELS} percent. Recommend topping off",
                     f"{CrewRole.EDCOPILOT.value} Fuel warning acknowledged. Plotting course to nearest fuel source"
                 ]
             },
@@ -412,15 +512,13 @@ class CrewChatterTemplate:
         self.generate_crew_responses()
 
     def to_file_content(self) -> str:
-        """Generate the complete file content for EDCoPilot."""
-        lines = [
-            "# EDCoPilot Crew Chatter Custom File",
-            "# Generated by Elite Dangerous MCP Server",
-            "# Format: Conversation blocks with speaker roles",
-            "# Each conversation uses [example] and [\\example] blocks",
-            "#",
-            ""
-        ]
+        """
+        Generate the complete file content for EDCoPilot.
+
+        NO COMMENTS - EDCoPilot parser rejects comment lines.
+        Uses conversation blocks with [example]...[\\example] markers.
+        """
+        lines = []
 
         # Generate conversation blocks if they exist
         if hasattr(self, 'conversation_blocks'):
@@ -501,15 +599,13 @@ class DeepSpaceChatterTemplate:
         self.generate_deep_space_chatter()
 
     def to_file_content(self) -> str:
-        """Generate the complete file content for EDCoPilot."""
-        lines = [
-            "# EDCoPilot Deep Space Chatter Custom File",
-            "# Generated by Elite Dangerous MCP Server",
-            "# Triggers only when >5000 LY from both Sol and Colonia",
-            "# Format: (ConditionName) Deep space dialogue with <Tokens>",
-            "#",
-            ""
-        ]
+        """
+        Generate the complete file content for EDCoPilot.
+
+        NO COMMENTS - EDCoPilot parser rejects comment lines.
+        Deep Space Chatter uses conversation blocks like Crew Chatter.
+        """
+        lines = []
 
         for entry in self.entries:
             lines.append(entry.format_for_edcopilot())
