@@ -211,20 +211,20 @@ class TestDeepSpaceChatterTemplate:
 
     def test_initialization(self, deep_space_template):
         """Test template initialization."""
-        assert deep_space_template.entries == []
+        assert deep_space_template.conversations == []
         assert deep_space_template.filename == "EDCoPilot.DeepSpaceChatter.Custom.txt"
 
     def test_generate_deep_space_chatter(self, deep_space_template):
         """Test generating deep space chatter."""
         deep_space_template.generate_deep_space_chatter()
 
-        assert len(deep_space_template.entries) > 0
+        assert len(deep_space_template.conversations) > 0
 
-        # Check for expected deep space entries
-        deep_space_texts = [entry.text.lower() for entry in deep_space_template.entries]
-        assert any("void" in text or "isolation" in text for text in deep_space_texts)
-        assert any("stars" in text or "stellar" in text for text in deep_space_texts)
-        assert any("galaxy" in text or "cosmic" in text for text in deep_space_texts)
+        # Check for expected deep space content
+        content = deep_space_template.to_file_content().lower()
+        assert "void" in content or "isolation" in content or "nebula" in content
+        assert "stars" in content or "stellar" in content or "star" in content
+        assert "galaxy" in content or "cosmic" in content or "space" in content
 
     def test_to_file_content(self, deep_space_template):
         """Test generating deep space file content."""

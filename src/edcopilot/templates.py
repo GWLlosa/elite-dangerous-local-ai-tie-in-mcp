@@ -537,61 +537,85 @@ class CrewChatterTemplate:
 
 
 class DeepSpaceChatterTemplate:
-    """Template for generating EDCoPilot Deep Space Chatter files."""
+    """
+    Template for generating EDCoPilot Deep Space Chatter files.
+
+    Deep Space Chatter uses conversation blocks with [example]...[\\example] markers
+    and speaker roles (typically [<Science>]), matching authoritative format.
+    """
 
     def __init__(self):
-        self.entries: List[ChatterEntry] = []
+        self.conversations: List[CrewConversation] = []
         self.filename = "EDCoPilot.DeepSpaceChatter.Custom.txt"
 
-    def add_entry(self, text: str, conditions: Optional[List[str]] = None,
-                  voice_override: Optional[str] = None) -> None:
-        """Add a deep space chatter entry."""
-        entry = ChatterEntry(text=text, conditions=conditions, voice_override=voice_override)
-        self.entries.append(entry)
+    def add_conversation(self, conversation: CrewConversation) -> None:
+        """Add a deep space conversation block."""
+        self.conversations.append(conversation)
 
     def generate_deep_space_chatter(self) -> None:
-        """Generate atmospheric deep space dialogue."""
-        deep_space_entries = [
-            # Isolation and wonder
-            ChatterEntry(
-                text=f"We're {EDCoPilotTokens.DISTANCE_FROM_SOL} light years from home. The isolation is profound.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE]
-            ),
-            ChatterEntry(
-                text="Out here in the void, every star is a beacon of hope in the cosmic darkness.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE]
-            ),
-            ChatterEntry(
-                text="The silence between the stars is deafening, yet somehow comforting.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING]
-            ),
+        """Generate atmospheric deep space dialogue using conversation blocks."""
+        # Isolation and wonder
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Crew, we may soon witness a coronal mass ejection from a nearby star. This is a large release of plasma and magnetic fields that can be quite spectacular."),
+            ]
+        ))
 
-            # Discovery and exploration
-            ChatterEntry(
-                text="Commander, we may be among the first humans to witness this stellar phenomena.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.FIRST_DISCOVERY]
-            ),
-            ChatterEntry(
-                text="The galaxy is vast beyond comprehension. We're just tiny explorers in infinity.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE]
-            ),
-            ChatterEntry(
-                text="Each system we discover adds another verse to humanity's cosmic story.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.EXPLORING]
-            ),
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Everyone, we might be passing through a nebula soon. This is a cloud of gas and dust illuminated by nearby stars, giving off a beautiful glow."),
+            ]
+        ))
 
-            # Philosophical musings
-            ChatterEntry(
-                text="In deep space, you realize how connected yet alone we all are.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE]
-            ),
-            ChatterEntry(
-                text="The ancient light of distant stars carries stories from eons past.",
-                conditions=[EDCoPilotConditions.DEEP_SPACE, EDCoPilotConditions.SCANNING]
-            ),
-        ]
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Out here in the void, every star is a beacon of hope in the cosmic darkness."),
+            ]
+        ))
 
-        self.entries.extend(deep_space_entries)
+        # Discovery and exploration
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, f"We are approximately {EDCoPilotTokens.DISTANCE_FROM_SOL} light years from Sol. The isolation is profound, yet the discoveries make it worthwhile."),
+            ]
+        ))
+
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Commander, we may be among the first humans to witness this stellar phenomena. A rare privilege indeed."),
+            ]
+        ))
+
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "The galaxy is vast beyond comprehension. We're just tiny explorers in infinity, but every system we discover adds another verse to humanity's cosmic story."),
+            ]
+        ))
+
+        # Philosophical and scientific observations
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "In deep space, you realize how connected yet alone we all are."),
+            ]
+        ))
+
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "The ancient light of distant stars carries stories from eons past. Each photon has traveled for millions of years to reach us."),
+            ]
+        ))
+
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Keep an eye out for pulsars. They're highly magnetized rotating neutron stars that emit beams of electromagnetic radiation, spinning up to 700 times per second."),
+            ]
+        ))
+
+        self.conversations.append(CrewConversation(
+            dialogue_lines=[
+                (CrewRole.SCIENCE, "Watch for planetary nebulae - clouds of gas and dust formed from dying stars. They can be quite colorful and sometimes have fascinating shapes."),
+            ]
+        ))
 
     def generate_default_chatter(self) -> None:
         """Generate all default deep space chatter."""
@@ -603,12 +627,13 @@ class DeepSpaceChatterTemplate:
         Generate the complete file content for EDCoPilot.
 
         NO COMMENTS - EDCoPilot parser rejects comment lines.
-        Deep Space Chatter uses conversation blocks like Crew Chatter.
+        Deep Space Chatter uses conversation blocks with [example]...[\\example] markers.
         """
         lines = []
 
-        for entry in self.entries:
-            lines.append(entry.format_for_edcopilot())
+        for conversation in self.conversations:
+            lines.append(conversation.format_for_edcopilot())
+            lines.append("")  # Blank line between conversations
 
         return "\n".join(lines)
 
