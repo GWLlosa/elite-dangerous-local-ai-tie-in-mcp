@@ -2399,14 +2399,30 @@ Social interactions and communications.
 ---
 
 ### ReceiveText
-**Purpose**: Received text message.
+**Purpose**: Received text message from NPCs, players, or system (including Captain's Log entries).
 
-**Key Fields**:
-- `From` - Sender name
-- `Message` - Message text
-- `Channel` - Channel type
+**Key Fields** (extracted to `key_data`):
+- `message` - Message text (prefers `Message_Localised` over `Message`)
+- `from` - Sender name (prefers `From_Localised` over `From`, may be empty for system messages)
+- `channel` - Channel type (`npc`, `player`, `local`, `system`, `squadron`, `wing`, etc.)
 
-**Example Use**: Display messages
+**Raw Event Fields**:
+- `From` / `From_Localised` - Sender identification
+- `Message` / `Message_Localised` - Message content
+- `Channel` - Communication channel
+
+**Example Use**:
+- Access Captain's Log entries via API
+- Retrieve in-game chat messages
+- Search message content with `contains_text` parameter
+- Track NPC communications and player interactions
+
+**Summary Format**: "Message from {sender}: {message preview}" or "Message ({channel}): {message preview}"
+
+**Notes**:
+- Captain's Log entries typically have empty `From` field and `npc` channel
+- Localised fields provide human-readable versions of templated messages
+- Message content is now fully accessible via `key_data` (Issue #23 fix)
 
 ---
 
