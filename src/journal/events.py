@@ -600,6 +600,15 @@ class EventProcessor:
             key_data["pack_tier"] = event.get("PackTier")
             key_data["cost"] = event.get("Cost")
 
+        # Social events - ReceiveText (Issue #23)
+        elif event_type == "ReceiveText":
+            # Extract message content (prefer localised version)
+            key_data["message"] = event.get("Message_Localised") or event.get("Message", "")
+            # Extract sender (prefer localised version)
+            key_data["from"] = event.get("From_Localised") or event.get("From", "")
+            # Extract channel
+            key_data["channel"] = event.get("Channel", "")
+
         return key_data
     
     def _generate_summary(self, event: Dict[str, Any], event_type: str, 
@@ -782,6 +791,29 @@ class EventProcessor:
                 return f"Sold carrier module pack: {pack_theme}"
             else:
                 return f"Carrier module pack {operation}: {pack_theme}"
+
+        # Social events - ReceiveText (Issue #23)
+        elif event_type == "ReceiveText":
+            sender = key_data.get("from", "")
+            message = key_data.get("message", "")
+            channel = key_data.get("channel", "")
+
+            # Build meaningful summary
+            if sender and message:
+                # Truncate long messages for summary
+                message_preview = message[:50] + "..." if len(message) > 50 else message
+                return f"Message from {sender}: {message_preview}"
+            elif message:
+                # Message without sender (e.g., Captain's Log or system message)
+                message_preview = message[:50] + "..." if len(message) > 50 else message
+                channel_info = f" ({channel})" if channel else ""
+                return f"Message{channel_info}: {message_preview}"
+            elif sender:
+                # Sender without message (edge case)
+                return f"Message from {sender}"
+            else:
+                # Fallback if both missing
+                return "ReceiveText event occurred"
 
         # Default summary
         return f"{event_type} event occurred"
