@@ -2399,25 +2399,59 @@ Social interactions and communications.
 ---
 
 ### ReceiveText
-**Purpose**: Received text message.
+**Purpose**: Received text message from NPCs, players, or system (including Captain's Log entries).
 
-**Key Fields**:
-- `From` - Sender name
-- `Message` - Message text
-- `Channel` - Channel type
+**Key Fields** (extracted to `key_data`):
+- `message` - Message text (prefers `Message_Localised` over `Message`)
+- `from` - Sender name (prefers `From_Localised` over `From`, may be empty for system messages)
+- `channel` - Channel type (`npc`, `player`, `local`, `system`, `squadron`, `wing`, etc.)
 
-**Example Use**: Display messages
+**Raw Event Fields**:
+- `From` / `From_Localised` - Sender identification
+- `Message` / `Message_Localised` - Message content
+- `Channel` - Communication channel
+
+**Example Use**:
+- Access Captain's Log entries via API
+- Retrieve in-game chat messages
+- Search message content with `contains_text` parameter
+- Track NPC communications and player interactions
+
+**Summary Format**: "Message from {sender}: {message preview}" or "Message ({channel}): {message preview}"
+
+**Notes**:
+- Captain's Log entries typically have empty `From` field and `npc` channel
+- Localised fields provide human-readable versions of templated messages
+- Message content is now fully accessible via `key_data` (Issue #23 fix)
 
 ---
 
 ### SendText
-**Purpose**: Sent text message.
+**Purpose**: Text message sent by the player to channels or other players.
 
-**Key Fields**:
-- `To` - Recipient name
-- `Message` - Message text
+**Key Fields** (extracted to `key_data`):
+- `message` - Message text sent by the player
+- `to` - Recipient or channel (`local`, `squadron`, `wing`, player name, etc.)
+- `sent` - Boolean indicating if message was successfully sent
 
-**Example Use**: Log sent messages
+**Raw Event Fields**:
+- `Message` - Message content
+- `To` - Recipient/channel identifier
+- `Sent` - Send status boolean
+
+**Example Use**:
+- Track player communication history
+- Log sent messages to local/squadron/wing channels
+- Monitor direct messages to other commanders
+- Detect failed message sends (Sent=False)
+
+**Summary Format**: "Sent to {recipient}: {message preview}"
+
+**Notes**:
+- Message content is now fully accessible via `key_data` (Issue #23 fix)
+- Supports all recipient types: local, squadron, wing, player names
+- Long messages truncated to 50 characters in summary
+- Sent status allows detection of failed message delivery
 
 ---
 
