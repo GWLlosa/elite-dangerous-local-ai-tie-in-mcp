@@ -1,16 +1,21 @@
 """
-Unit tests for Issue #23: ReceiveText events tracked but message content not exposed.
+Unit tests for Issue #23: ReceiveText/SendText events tracked but message content not exposed.
 
 GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
 
-Problem: ReceiveText events are being tracked and categorized correctly, but the
-         message content, sender, and channel information are not being extracted
-         into the key_data dictionary, making them inaccessible via the API.
+Problem: ReceiveText and SendText events are being tracked and categorized correctly, but the
+         message content and associated metadata are not being extracted into the key_data
+         dictionary, making them inaccessible via the API.
 
-Expected: key_data should contain:
+Expected for ReceiveText: key_data should contain:
           - message: The actual message text (Message_Localised or Message)
           - from: Sender information (From_Localised or From)
           - channel: Communication channel (npc, player, local, etc.)
+
+Expected for SendText: key_data should contain:
+          - message: The actual message text
+          - to: Recipient/channel information
+          - sent: Send status boolean
 
 Actual (before fix): key_data is empty ({})
 """
@@ -255,3 +260,193 @@ class TestIssue23ReceiveTextEvents:
 
             assert processed.key_data["channel"] == channel, f"Channel {channel} should be extracted"
             assert processed.key_data["message"] == f"Message on {channel} channel"
+
+
+class TestIssue23SendTextEvents:
+    """Test suite for SendText event data extraction (Issue #23)."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.processor = EventProcessor()
+
+    def test_issue_23_sendtext_local_channel_extraction(self):
+        """
+        Test for Issue #23: SendText Local Channel Message Extraction
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Sent messages not extracted to key_data
+        Expected: Message, recipient, and sent status should be in key_data
+        Actual (before fix): key_data is empty
+        """
+        event = {
+            "timestamp": "2025-07-30T19:33:06Z",
+            "event": "SendText",
+            "To": "local",
+            "Message": "how much do you need in the bank to \"Buy an FC and not super stress over the bills\" these days?",
+            "Sent": True
+        }
+
+        processed = self.processor.process_event(event)
+
+        # Verify event categorization
+        assert processed.event_type == "SendText"
+        assert processed.category == EventCategory.SOCIAL
+        assert processed.is_valid is True
+
+        # Verify key_data extraction
+        assert "message" in processed.key_data, "Message should be extracted to key_data"
+        assert processed.key_data["message"] == "how much do you need in the bank to \"Buy an FC and not super stress over the bills\" these days?"
+
+        assert "to" in processed.key_data, "Recipient should be extracted to key_data"
+        assert processed.key_data["to"] == "local"
+
+        assert "sent" in processed.key_data, "Sent status should be extracted to key_data"
+        assert processed.key_data["sent"] is True
+
+    def test_issue_23_sendtext_player_direct_message(self):
+        """
+        Test for Issue #23: SendText Direct Message to Player
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Direct messages to players not extracted
+        Expected: Message and recipient player name should be in key_data
+        """
+        event = {
+            "timestamp": "2025-10-26T04:00:00Z",
+            "event": "SendText",
+            "To": "CMDR_TestPlayer",
+            "Message": "o7 Commander, safe travels!",
+            "Sent": True
+        }
+
+        processed = self.processor.process_event(event)
+
+        assert processed.event_type == "SendText"
+        assert processed.category == EventCategory.SOCIAL
+
+        assert processed.key_data["message"] == "o7 Commander, safe travels!"
+        assert processed.key_data["to"] == "CMDR_TestPlayer"
+        assert processed.key_data["sent"] is True
+
+    def test_issue_23_sendtext_squadron_message(self):
+        """
+        Test for Issue #23: SendText Squadron Channel Message
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Squadron messages not extracted
+        Expected: Message and squadron channel should be in key_data
+        """
+        event = {
+            "timestamp": "2025-10-26T04:05:00Z",
+            "event": "SendText",
+            "To": "squadron",
+            "Message": "Anyone up for some wing mining?",
+            "Sent": True
+        }
+
+        processed = self.processor.process_event(event)
+
+        assert processed.key_data["message"] == "Anyone up for some wing mining?"
+        assert processed.key_data["to"] == "squadron"
+        assert processed.key_data["sent"] is True
+
+    def test_issue_23_sendtext_summary_generation(self):
+        """
+        Test for Issue #23: SendText Summary Should Be Meaningful
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Generic "SendText event occurred" summary not useful
+        Expected: Summary should include recipient and/or message preview
+        Actual (before fix): "SendText event occurred"
+        """
+        event = {
+            "timestamp": "2025-10-26T04:10:00Z",
+            "event": "SendText",
+            "To": "local",
+            "Message": "This is a test message for summary generation",
+            "Sent": True
+        }
+
+        processed = self.processor.process_event(event)
+
+        # Summary should be more meaningful than generic message
+        assert processed.summary != "SendText event occurred"
+        assert "local" in processed.summary or "test message" in processed.summary.lower()
+
+    def test_issue_23_sendtext_long_message_truncation(self):
+        """
+        Test for Issue #23: SendText Long Message Truncation in Summary
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Long messages should be truncated in summary
+        Expected: Summary should truncate message to 50 characters with "..."
+        """
+        long_message = "A" * 100  # 100 character message
+
+        event = {
+            "timestamp": "2025-10-26T04:15:00Z",
+            "event": "SendText",
+            "To": "local",
+            "Message": long_message,
+            "Sent": True
+        }
+
+        processed = self.processor.process_event(event)
+
+        # Full message in key_data
+        assert processed.key_data["message"] == long_message
+
+        # Summary should be truncated
+        assert len(processed.summary) < len(f"Sent to local: {long_message}")
+        assert "..." in processed.summary
+
+    def test_issue_23_sendtext_sent_false_status(self):
+        """
+        Test for Issue #23: SendText Handles Sent=False
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: Should handle Sent=False (message failed to send)
+        Expected: sent status should be False in key_data
+        """
+        event = {
+            "timestamp": "2025-10-26T04:20:00Z",
+            "event": "SendText",
+            "To": "local",
+            "Message": "Test message",
+            "Sent": False
+        }
+
+        processed = self.processor.process_event(event)
+
+        assert processed.key_data["sent"] is False
+
+    def test_issue_23_sendtext_different_recipients(self):
+        """
+        Test for Issue #23: SendText Supports Different Recipient Types
+
+        GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/23
+
+        Problem: All recipient types should be extracted to key_data
+        Expected: local, squadron, wing, player names all supported
+        """
+        recipients = ["local", "squadron", "wing", "CMDR_Player"]
+
+        for recipient in recipients:
+            event = {
+                "timestamp": "2025-10-26T04:25:00Z",
+                "event": "SendText",
+                "To": recipient,
+                "Message": f"Message to {recipient}",
+                "Sent": True
+            }
+
+            processed = self.processor.process_event(event)
+
+            assert processed.key_data["to"] == recipient, f"Recipient {recipient} should be extracted"
+            assert processed.key_data["message"] == f"Message to {recipient}"

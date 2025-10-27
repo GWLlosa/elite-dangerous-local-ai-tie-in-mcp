@@ -2427,13 +2427,31 @@ Social interactions and communications.
 ---
 
 ### SendText
-**Purpose**: Sent text message.
+**Purpose**: Text message sent by the player to channels or other players.
 
-**Key Fields**:
-- `To` - Recipient name
-- `Message` - Message text
+**Key Fields** (extracted to `key_data`):
+- `message` - Message text sent by the player
+- `to` - Recipient or channel (`local`, `squadron`, `wing`, player name, etc.)
+- `sent` - Boolean indicating if message was successfully sent
 
-**Example Use**: Log sent messages
+**Raw Event Fields**:
+- `Message` - Message content
+- `To` - Recipient/channel identifier
+- `Sent` - Send status boolean
+
+**Example Use**:
+- Track player communication history
+- Log sent messages to local/squadron/wing channels
+- Monitor direct messages to other commanders
+- Detect failed message sends (Sent=False)
+
+**Summary Format**: "Sent to {recipient}: {message preview}"
+
+**Notes**:
+- Message content is now fully accessible via `key_data` (Issue #23 fix)
+- Supports all recipient types: local, squadron, wing, player names
+- Long messages truncated to 50 characters in summary
+- Sent status allows detection of failed message delivery
 
 ---
 

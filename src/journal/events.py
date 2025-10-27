@@ -609,6 +609,15 @@ class EventProcessor:
             # Extract channel
             key_data["channel"] = event.get("Channel", "")
 
+        # Social events - SendText (Issue #23)
+        elif event_type == "SendText":
+            # Extract message content
+            key_data["message"] = event.get("Message", "")
+            # Extract recipient
+            key_data["to"] = event.get("To", "")
+            # Extract sent status (optional)
+            key_data["sent"] = event.get("Sent", False)
+
         return key_data
     
     def _generate_summary(self, event: Dict[str, Any], event_type: str, 
@@ -814,6 +823,27 @@ class EventProcessor:
             else:
                 # Fallback if both missing
                 return "ReceiveText event occurred"
+
+        # Social events - SendText (Issue #23)
+        elif event_type == "SendText":
+            recipient = key_data.get("to", "")
+            message = key_data.get("message", "")
+
+            # Build meaningful summary
+            if recipient and message:
+                # Truncate long messages for summary
+                message_preview = message[:50] + "..." if len(message) > 50 else message
+                return f"Sent to {recipient}: {message_preview}"
+            elif message:
+                # Message without recipient (edge case)
+                message_preview = message[:50] + "..." if len(message) > 50 else message
+                return f"Sent message: {message_preview}"
+            elif recipient:
+                # Recipient without message (edge case)
+                return f"Sent message to {recipient}"
+            else:
+                # Fallback if both missing
+                return "SendText event occurred"
 
         # Default summary
         return f"{event_type} event occurred"
