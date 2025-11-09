@@ -7,14 +7,18 @@ time-based filtering, and efficient querying for Elite Dangerous journal events.
 
 import threading
 import time
+import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Set, Any, Callable, Union
 from dataclasses import dataclass, field
+from pathlib import Path
 
-from ..journal.events import ProcessedEvent, EventCategory
+from ..journal.events import ProcessedEvent, EventCategory, EventProcessor
 from .date_parser import parse_date_range, DateParseError
+
+logger = logging.getLogger(__name__)
 
 
 class EventStorageError(Exception):
@@ -114,17 +118,19 @@ class DataStore:
     - Thread-safe operations
     """
     
-    def __init__(self, max_events: int = 10000, cleanup_interval: int = 300):
+    def __init__(self, max_events: int = 10000, cleanup_interval: int = 300, journal_path: Optional[Path] = None):
         """
         Initialize the data store.
-        
+
         Args:
             max_events: Maximum number of events to store
             cleanup_interval: Cleanup interval in seconds
+            journal_path: Optional path to Elite Dangerous journal directory for on-demand loading
         """
         self.max_events = max_events
         self.cleanup_interval = cleanup_interval
-        
+        self.journal_path = journal_path
+
         # Thread safety
         self._lock = threading.RLock()
         
@@ -255,6 +261,97 @@ class DataStore:
         filter_criteria = EventFilter(start_time=cutoff_time)
         return self.query_events(filter_criteria)
 
+    def _load_journal_files_for_range(
+        self,
+        start_dt: datetime,
+        end_dt: datetime
+    ) -> int:
+        """
+        Load journal files on demand for a specific date range.
+
+        Args:
+            start_dt: Start of date range (timezone-aware)
+            end_dt: End of date range (timezone-aware)
+
+        Returns:
+            Number of events loaded from journal files
+        """
+        if not self.journal_path:
+            logger.debug("No journal_path configured, cannot load historical files")
+            return 0
+
+        try:
+            # Import here to avoid circular dependency
+            from ..journal.parser import JournalParser
+
+            # Initialize parser and processor
+            parser = JournalParser(self.journal_path)
+            processor = EventProcessor()
+
+            # Find all journal files
+            all_files = parser.find_journal_files()
+            if not all_files:
+                logger.warning(f"No journal files found in {self.journal_path}")
+                return 0
+
+            # Filter files by date range
+            relevant_files = []
+            for file_path in all_files:
+                try:
+                    file_timestamp = parser._extract_timestamp_from_filename(file_path)
+                    # Include file if it could contain events in our range
+                    # File is relevant if: file_timestamp <= end_dt
+                    # (We can't easily tell when file ends, so include if it starts before range ends)
+                    if file_timestamp <= end_dt:
+                        relevant_files.append((file_path, file_timestamp))
+                except Exception as e:
+                    logger.debug(f"Error extracting timestamp from {file_path.name}: {e}")
+
+            # Sort by timestamp
+            relevant_files.sort(key=lambda x: x[1])
+
+            logger.info(f"Loading {len(relevant_files)} journal files for date range {start_dt} to {end_dt}")
+
+            events_loaded = 0
+            for file_path, file_timestamp in relevant_files:
+                try:
+                    # Read all events from this file
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        for line_no, line in enumerate(f, 1):
+                            try:
+                                # Parse journal entry
+                                event_data = parser.parse_journal_entry(line)
+                                if event_data:
+                                    # Process the event
+                                    processed_event = processor.process_event(event_data)
+
+                                    # Check if event is in our date range
+                                    if start_dt <= processed_event.timestamp <= end_dt:
+                                        # Check if we already have this event (avoid duplicates)
+                                        # Simple duplicate check: same timestamp and event_type
+                                        is_duplicate = any(
+                                            e.timestamp == processed_event.timestamp and
+                                            e.event_type == processed_event.event_type
+                                            for e in list(self._events)[-100:]  # Check last 100 events
+                                        )
+
+                                        if not is_duplicate:
+                                            self.store_event(processed_event)
+                                            events_loaded += 1
+
+                            except Exception as e:
+                                logger.debug(f"Error processing line {line_no} in {file_path.name}: {e}")
+
+                except Exception as e:
+                    logger.warning(f"Error reading journal file {file_path.name}: {e}")
+
+            logger.info(f"Loaded {events_loaded} new events from {len(relevant_files)} journal files")
+            return events_loaded
+
+        except Exception as e:
+            logger.error(f"Failed to load historical journal files: {e}")
+            return 0
+
     def query_historical_events(
         self,
         start_date: Optional[str] = None,
@@ -303,6 +400,27 @@ class DataStore:
         """
         # Parse date range
         start_dt, end_dt = parse_date_range(start_date, end_date)
+
+        # Load journal files on demand if date range is specified
+        # This ensures we have data for the requested range, not just what's in memory
+        if start_dt and end_dt and self.journal_path:
+            logger.debug(f"Checking if historical data load needed for range {start_dt} to {end_dt}")
+
+            # Check if we need to load more data
+            # We'll load if the requested range extends beyond what we have in memory
+            with self._lock:
+                if len(self._events) > 0:
+                    oldest_in_memory = min(e.timestamp for e in self._events)
+                    newest_in_memory = max(e.timestamp for e in self._events)
+
+                    # Load if requested range is outside our in-memory range
+                    if start_dt < oldest_in_memory or end_dt > newest_in_memory:
+                        logger.info(f"Loading historical data: requested {start_dt} to {end_dt}, have {oldest_in_memory} to {newest_in_memory}")
+                        self._load_journal_files_for_range(start_dt, end_dt)
+                else:
+                    # No events in memory, definitely need to load
+                    logger.info(f"No events in memory, loading historical data for {start_dt} to {end_dt}")
+                    self._load_journal_files_for_range(start_dt, end_dt)
 
         # Build filter criteria
         filter_criteria = EventFilter(
@@ -779,11 +897,20 @@ class DataStore:
 _data_store: Optional[DataStore] = None
 
 
-def get_data_store() -> DataStore:
-    """Get the global data store instance."""
+def get_data_store(journal_path: Optional[Path] = None) -> DataStore:
+    """
+    Get the global data store instance.
+
+    Args:
+        journal_path: Optional path to journal directory for on-demand loading.
+                     Only used when creating the instance for the first time.
+
+    Returns:
+        The global DataStore instance
+    """
     global _data_store
     if _data_store is None:
-        _data_store = DataStore()
+        _data_store = DataStore(journal_path=journal_path)
     return _data_store
 
 

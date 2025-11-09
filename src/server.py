@@ -97,7 +97,7 @@ class EliteDangerousServer:
         # Initialize components
         self.journal_monitor: Optional[JournalMonitor] = None
         self.event_processor = EventProcessor()
-        self.data_store = get_data_store()
+        self.data_store = get_data_store(journal_path=self.config.journal_path)
         self.mcp_tools = MCPTools(self.data_store)
         self.mcp_resources = MCPResources(self.data_store)
         self.mcp_prompts = MCPPrompts(self.data_store)
@@ -246,7 +246,7 @@ class EliteDangerousServer:
             
             # Clear any existing data store state
             reset_data_store()
-            self.data_store = get_data_store()
+            self.data_store = get_data_store(journal_path=self.config.journal_path)
             self.mcp_tools = MCPTools(self.data_store)
             self.mcp_resources = MCPResources(self.data_store)
             self.mcp_prompts = MCPPrompts(self.data_store)
