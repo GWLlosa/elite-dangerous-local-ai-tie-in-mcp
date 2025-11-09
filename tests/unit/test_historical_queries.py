@@ -388,3 +388,135 @@ class TestHistoricalQueryExamples:
             assert event_date.year == 2025
             assert event_date.month == 1
             assert event_date.day == 15
+
+
+class TestIssue25HistoricalDataGap:
+    """
+    Test for Issue #25: Historical event search missing data between October 14 - November 3, 2025
+
+    GitHub Issue: https://github.com/GWLlosa/elite-dangerous-local-ai-tie-in-mcp/issues/25
+
+    Problem: search_historical_events returns 0 events for date ranges beyond 24 hours,
+             even when journal files exist on disk for those dates.
+    Expected: Query should load journal files on demand when searching for historical dates.
+    Actual (before fix): Only searches in-memory data store (limited to last 24h on startup).
+    """
+
+    def test_issue_25_reproducer_in_memory_only_search(self, data_store, sample_events):
+        """
+        Reproduce issue #25: Historical queries only search in-memory data.
+
+        This test simulates the actual scenario:
+        1. Server loads only last 24h of data on startup
+        2. User queries for data from 30 days ago
+        3. Journal files exist for that period but aren't loaded
+        4. Result: 0 events returned
+        """
+        # Simulate server startup: Only load "recent" events (last 5 days)
+        recent_cutoff = datetime(2025, 2, 10, 0, 0, 0, tzinfo=timezone.utc)
+        recent_events = [e for e in sample_events if e.timestamp >= recent_cutoff]
+
+        for event in recent_events:
+            data_store.store_event(event)
+
+        # Verify recent events are in the data store
+        recent_result = data_store.query_historical_events(
+            start_date="2025-02-10",
+            end_date="2025-02-14"
+        )
+        assert recent_result["total_count"] > 0, "Recent events should be in data store"
+
+        # Now query for older data (30 days ago) that exists in sample_events
+        # but was never loaded into the data store
+        old_result = data_store.query_historical_events(
+            start_date="2025-01-15",
+            end_date="2025-01-20"
+        )
+
+        # TEST EXPECTS CORRECT BEHAVIOR (will fail before fix, pass after fix):
+        # After fix implemented: query_historical_events should detect the gap and load journal files
+        # Note: This test uses sample_events fixture, not actual journal files,
+        # so we can't load from disk. This demonstrates the in-memory limitation.
+        # The real fix will be tested with actual journal file loading below.
+        pytest.skip(
+            "This test demonstrates the concept but can't verify file loading. "
+            "See test_issue_25_october_to_november_date_range for the real scenario."
+        )
+
+    @pytest.mark.asyncio
+    async def test_issue_25_october_to_november_date_range(self):
+        """
+        Test the exact scenario from issue #25.
+
+        Query for events between October 14 - November 3, 2025.
+        This should load journal files on demand if they exist.
+        """
+        # Create empty data store (simulating fresh startup with only 24h data)
+        data_store = DataStore()
+        mcp_tools = MCPTools(data_store)
+
+        # Simulate that only November 3 16:51 onwards is in memory
+        nov_3_event = ProcessedEvent(
+            event_type="Location",
+            category=EventCategory.NAVIGATION,
+            timestamp=datetime(2025, 11, 3, 16, 51, 16, tzinfo=timezone.utc),
+            summary="Location in Pyroifoea BG-X b34-1",
+            key_data={"system": "Pyroifoea BG-X b34-1"},
+            raw_event={"event": "Location", "StarSystem": "Pyroifoea BG-X b34-1"},
+            is_valid=True
+        )
+        data_store.store_event(nov_3_event)
+
+        # Query for October 14 - November 3 (the problematic date range from issue #25)
+        result = await mcp_tools.search_historical_events(
+            start_date="2025-10-14",
+            end_date="2025-11-03",
+            limit=2000,
+            sort_order="asc"
+        )
+
+        # Before fix: Returns only 1 event (the one we manually added)
+        # After fix: Should load journal files and return many more events
+        assert result["total_count"] == 1, (
+            "BEFORE FIX: Only returns events already in memory (1 event). "
+            "AFTER FIX: Should load journal files on demand and return 100+ events."
+        )
+
+        # Verify date range was parsed correctly
+        assert result["date_range"]["start"] == "2025-10-14T00:00:00+00:00"
+        assert result["date_range"]["end"] == "2025-11-03T23:59:59.999999+00:00"
+
+    @pytest.mark.asyncio
+    async def test_issue_25_expected_behavior_after_fix(self):
+        """
+        Test expected behavior after implementing on-demand loading.
+
+        This test documents what SHOULD happen after the fix:
+        1. Query detects requested date range is not fully in memory
+        2. Identifies which journal files are needed for that range
+        3. Loads those journal files on demand
+        4. Returns filtered results from loaded data
+
+        This test will SKIP until the fix is implemented.
+        """
+        pytest.skip("Test documents expected behavior after fix is implemented")
+
+        # After fix, this workflow should work:
+        data_store = DataStore()
+        mcp_tools = MCPTools(data_store)
+
+        # Query for historical data without pre-loading
+        result = await mcp_tools.search_historical_events(
+            start_date="2025-10-14",
+            end_date="2025-11-03",
+            limit=2000
+        )
+
+        # Should return events by loading journal files on demand
+        assert result["total_count"] > 10, "Should load journal files and return many events"
+
+        # All events should be within requested range
+        for event in result["events"]:
+            timestamp = datetime.fromisoformat(event["timestamp"])
+            assert timestamp >= datetime(2025, 10, 14, 0, 0, 0, tzinfo=timezone.utc)
+            assert timestamp <= datetime(2025, 11, 3, 23, 59, 59, tzinfo=timezone.utc)
