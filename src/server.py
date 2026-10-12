@@ -21,7 +21,7 @@ sys.path.insert(0, str(project_root))
 # Change to the project directory to ensure relative paths work
 os.chdir(project_root)
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 # Import modules using try/except to handle both relative and absolute imports
 try:
@@ -92,7 +92,7 @@ class EliteDangerousServer:
             raise
         
         # Initialize MCP server
-        self.app = FastMCP("Elite Dangerous MCP Server")
+        self.app = MCPServer("Elite Dangerous MCP Server")
         
         # Initialize components
         self.journal_monitor: Optional[JournalMonitor] = None
