@@ -11,6 +11,24 @@ The theme system allows you to:
 - **Create themed EDCoPilot content** automatically
 - **Manage multiple ships** with different crew dynamics
 
+##  Theme Storage Location
+
+By default the theme system stores its configuration in the bundled
+`edcopilot_themes` directory (`current_theme.json`, `ship_configurations.json`,
+`theme_history.json`, `theme_presets.json`).
+
+You can point the theme system at a different directory:
+
+- **MCP server:** set the environment variable `ELITE_EDCOPILOT_THEMES_PATH` to the
+  directory you want to use.
+- **Headless CLI:** pass `--edcopilot-themes-path PATH` (or set the same environment
+  variable). The flag takes precedence over the environment variable.
+
+Seeding behavior: if the specified directory does not exist or is empty, the contents of
+the bundled `edcopilot_themes` directory are copied into it first. If the directory
+already contains files, it is used as-is and nothing is copied. When the setting is left
+unset, the bundled `edcopilot_themes` directory is used and no copying takes place.
+
 ##  Quick Start
 
 ### Basic Theme Setup

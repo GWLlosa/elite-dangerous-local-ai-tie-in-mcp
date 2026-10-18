@@ -15,6 +15,7 @@ Environment variables commonly used by the server:
 ```
 ELITE_JOURNAL_PATH      # Elite Dangerous journal directory
 ELITE_EDCOPILOT_PATH    # (optional) EDCoPilot custom files directory
+ELITE_EDCOPILOT_THEMES_PATH  # (optional) EDCoPilot theme storage directory
 ELITE_DEBUG=false       # Enable extra logging when true
 ```
 
@@ -36,6 +37,7 @@ Continue supports MCP servers and can use OpenAI models (ChatGPT) as the LLM pro
       "env": {
         "ELITE_JOURNAL_PATH": "C:/Users/YourUsername/Saved Games/Frontier Developments/Elite Dangerous",
         "ELITE_EDCOPILOT_PATH": "C:/Utilities/EDCoPilot/User custom files",
+        "ELITE_EDCOPILOT_THEMES_PATH": "C:/Utilities/EDCoPilot/themes",
         "ELITE_DEBUG": "false"
       }
     }
@@ -91,6 +93,7 @@ Cline is an opensource VS Code extension that supports MCP servers.
     "env": {
       "ELITE_JOURNAL_PATH": "C:/Users/YourUsername/Saved Games/Frontier Developments/Elite Dangerous",
       "ELITE_EDCOPILOT_PATH": "C:/Utilities/EDCoPilot/User custom files",
+      "ELITE_EDCOPILOT_THEMES_PATH": "C:/Utilities/EDCoPilot/themes",
       "ELITE_DEBUG": "false"
     }
   }

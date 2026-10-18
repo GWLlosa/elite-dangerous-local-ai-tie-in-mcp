@@ -118,6 +118,33 @@ class TestEliteConfig:
             assert config.journal_encoding == "latin-1"
             assert config.async_mode is False
     
+    def test_edcopilot_themes_path_defaults_to_none(self):
+        """The themes directory is unset by default (bundled directory is used)."""
+        config = EliteConfig()
+        assert config.edcopilot_themes_path is None
+    
+    def test_edcopilot_themes_path_from_env_var(self, temp_config_dir):
+        """The themes directory can be set through ELITE_EDCOPILOT_THEMES_PATH."""
+        env_vars = {"ELITE_EDCOPILOT_THEMES_PATH": str(temp_config_dir)}
+        with patch.dict(os.environ, env_vars):
+            config = EliteConfig()
+        assert config.edcopilot_themes_path == temp_config_dir.resolve()
+    
+    def test_edcopilot_themes_path_expands_user(self):
+        """A path containing ~ is expanded and resolved."""
+        config = EliteConfig(edcopilot_themes_path="~/edc_themes")
+        assert config.edcopilot_themes_path == Path("~/edc_themes").expanduser().resolve()
+    
+    def test_edcopilot_themes_path_empty_string_selects_default(self):
+        """An empty string selects the default (None) per input semantics."""
+        config = EliteConfig(edcopilot_themes_path="")
+        assert config.edcopilot_themes_path is None
+    
+    def test_edcopilot_themes_path_invalid_type(self):
+        """A non-path value is rejected with a validation error."""
+        with pytest.raises(ValidationError):
+            EliteConfig(edcopilot_themes_path=123)
+    
     def test_path_validation_string_input(self):
         """Test path validation with string inputs."""
         config = EliteConfig(
@@ -345,6 +372,8 @@ class TestEliteConfig:
         
         assert 'journal_path' in summary
         assert 'edcopilot_path' in summary
+        assert 'edcopilot_themes_path' in summary
+        assert summary['edcopilot_themes_path'] is None
         assert summary['debug'] is True
         assert summary['max_recent_events'] == 500
         assert summary['file_check_interval'] == 2.0

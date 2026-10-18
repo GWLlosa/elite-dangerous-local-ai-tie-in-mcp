@@ -43,6 +43,12 @@ class EliteConfig(BaseSettings):
         default=Path("C:/Utilities/EDCoPilot/User custom files"),
         description="Path to EDCoPilot custom files directory"
     )
+    edcopilot_themes_path: Optional[Path] = Field(
+        default=None,
+        description="Optional directory for EDCoPilot theme storage; "
+                    "seeded from the bundled edcopilot_themes when empty. "
+                    "Unset uses the bundled edcopilot_themes directory."
+    )
     
     # Server configuration
     debug: bool = Field(default=False, description="Enable debug logging")
@@ -88,6 +94,21 @@ class EliteConfig(BaseSettings):
         
         logger.debug(f"Validated EDCoPilot path: {v}")
         return v
+    
+    @field_validator('edcopilot_themes_path', mode='before')
+    @classmethod
+    def validate_edcopilot_themes_path(cls, v):
+        """Validate and resolve the optional EDCoPilot themes directory."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            # Empty string selects the default (bundled) directory
+            if not v.strip():
+                return None
+            return Path(v).expanduser().resolve()
+        if isinstance(v, Path):
+            return v.expanduser().resolve()
+        raise ValueError("edcopilot_themes_path must be a string, Path, or None")
     
     @field_validator('max_recent_events')
     @classmethod
@@ -268,6 +289,10 @@ class EliteConfig(BaseSettings):
         return {
             'journal_path': str(self.journal_path),
             'edcopilot_path': str(self.edcopilot_path),
+            'edcopilot_themes_path': (
+                str(self.edcopilot_themes_path)
+                if self.edcopilot_themes_path is not None else None
+            ),
             'debug': self.debug,
             'max_recent_events': self.max_recent_events,
             'file_check_interval': self.file_check_interval,
@@ -354,6 +379,7 @@ def create_sample_config(output_file: Path) -> bool:
             "_note": "All paths support environment variable expansion",
             "journal_path": str(_get_default_journal_path()),
             "edcopilot_path": "C:/Utilities/EDCoPilot/User custom files",
+            "edcopilot_themes_path": None,
             "debug": False,
             "max_recent_events": 1000,
             "server_port": 3000,
@@ -367,6 +393,7 @@ def create_sample_config(output_file: Path) -> bool:
                 "_note": "These can be set as environment variables with ELITE_ prefix",
                 "ELITE_JOURNAL_PATH": "/path/to/elite/dangerous/journals",
                 "ELITE_EDCOPILOT_PATH": "/path/to/edcopilot/custom/files",
+                "ELITE_EDCOPILOT_THEMES_PATH": "/path/to/edcopilot/themes",
                 "ELITE_DEBUG": "true/false",
                 "ELITE_MAX_RECENT_EVENTS": "1000"
             }

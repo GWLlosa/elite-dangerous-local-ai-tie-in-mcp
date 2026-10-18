@@ -544,6 +544,7 @@ config.to_dict() -> Dict[str, Any]  # Export as dictionary
 ### Environment Variables
 - `ELITE_JOURNAL_PATH`
 - `ELITE_EDCOPILOT_PATH`
+- `ELITE_EDCOPILOT_THEMES_PATH`
 - `ELITE_DEBUG`
 - `ELITE_MAX_RECENT_EVENTS`
 - `ELITE_LOG_LEVEL`

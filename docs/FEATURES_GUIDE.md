@@ -876,6 +876,7 @@ processed = processor.process_event({
 ### Environment Variables
 - `ELITE_JOURNAL_PATH`: Journal directory path (auto-detected if not set)
 - `ELITE_EDCOPILOT_PATH`: EDCoPilot custom files directory
+- `ELITE_EDCOPILOT_THEMES_PATH`: Optional EDCoPilot theme storage directory (seeded from the bundled `edcopilot_themes` when empty)
 - `ELITE_DEBUG`: Enable debug logging (true/false)
 - `ELITE_MAX_RECENT_EVENTS`: Event storage limit (default: 10000)
 

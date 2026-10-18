@@ -156,6 +156,7 @@ Add the following to your Claude Desktop configuration file:
       "env": {
         "ELITE_JOURNAL_PATH": "C:/Users/YourUsername/Saved Games/Frontier Developments/Elite Dangerous",
         "ELITE_EDCOPILOT_PATH": "C:/Utilities/EDCoPilot/User custom files",
+        "ELITE_EDCOPILOT_THEMES_PATH": "C:/Utilities/EDCoPilot/themes",
         "ELITE_DEBUG": "false"
       }
     }
@@ -195,6 +196,7 @@ If configured correctly, Claude will respond with your current game state using 
 ### Environment Variables
 - `ELITE_JOURNAL_PATH` - Path to Elite Dangerous journal directory (auto-detected if not set)
 - `ELITE_EDCOPILOT_PATH` - Path to EDCoPilot custom files directory
+- `ELITE_EDCOPILOT_THEMES_PATH` - Optional directory for EDCoPilot theme storage. If unset, the bundled `edcopilot_themes` directory is used. When set and the directory is empty, it is seeded with a copy of the bundled `edcopilot_themes` contents
 - `ELITE_DEBUG` - Enable debug logging (true/false)
 - `ELITE_MAX_RECENT_EVENTS` - Maximum recent events to store (default: 10000)
 
@@ -565,7 +567,7 @@ Use ChatGPT (OpenAI) models with MCPcapable clients to get the same tool/resourc
 
 Quick start:
 - Configure the clients `mcpServers` to run this repos Python with `src/server.py`
-- Set `ELITE_JOURNAL_PATH` (and optional `ELITE_EDCOPILOT_PATH`, `ELITE_DEBUG`)
+- Set `ELITE_JOURNAL_PATH` (and optional `ELITE_EDCOPILOT_PATH`, `ELITE_EDCOPILOT_THEMES_PATH`, `ELITE_DEBUG`)
 - Ask it to use the Elite Dangerous MCP tools (e.g., Whats my current status?)
 
 Full setup and troubleshooting: see `docs/CHATGPT_CODEX_INTEGRATION.md`.

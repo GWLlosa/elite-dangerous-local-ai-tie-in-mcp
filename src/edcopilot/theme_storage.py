@@ -7,6 +7,7 @@ and ship-specific settings for the Dynamic Multi-Crew Theme System.
 
 import json
 import logging
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -14,6 +15,36 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+# Name of the theme storage directory, used both for the default location and
+# as the source of seed data when a custom directory is empty.
+THEMES_DIRNAME = "edcopilot_themes"
+
+
+def get_bundled_themes_dir() -> Path:
+    """
+    Return the repository-bundled ``edcopilot_themes`` directory.
+
+    Resolved relative to this module so it is stable no matter where the CLI or
+    server is launched from. Falls back to a ``cwd``-relative directory when the
+    module-relative path does not exist (for example, a packaged install).
+
+    Returns:
+        Path: Directory holding the bundled theme JSON files.
+    """
+    candidate = Path(__file__).resolve().parents[2] / THEMES_DIRNAME
+    if candidate.exists():
+        return candidate
+    return Path.cwd() / THEMES_DIRNAME
+
+
+def _is_empty_dir(path: Path) -> bool:
+    """Return True when the directory is missing or contains no entries."""
+    if not path.exists():
+        return True
+    if not path.is_dir():
+        return False
+    return not any(path.iterdir())
 
 
 class CrewRole(Enum):
@@ -98,16 +129,26 @@ class ThemeStorage:
     efficient access to current themes and ship configurations.
     """
 
-    def __init__(self, storage_path: Optional[Path] = None):
+    def __init__(self, storage_path: Optional[Path] = None,
+                 seed_source: Optional[Path] = None):
         """
         Initialize theme storage with optional custom path.
 
         Args:
-            storage_path: Custom path for theme storage. If None, uses default.
+            storage_path: Custom path for theme storage. If None, uses the
+                bundled ``edcopilot_themes`` directory.
+            seed_source: Optional directory whose contents are copied into
+                ``storage_path`` when it is missing or empty. Used to seed a
+                freshly specified directory from the bundled themes. No seeding
+                happens when the source equals the target, when the source does
+                not exist, or when the target already contains files.
         """
+        # Directory that was seeded into the storage path, if any.
+        self.seeded_from: Optional[Path] = None
+
         if storage_path is None:
-            # Default to subdirectory in current working directory
-            self.storage_path = Path.cwd() / "edcopilot_themes"
+            # Default to the repository-bundled themes directory
+            self.storage_path = get_bundled_themes_dir()
         else:
             sp = Path(storage_path)
             # If a file path is provided (exists as file), use its parent as storage directory
@@ -116,7 +157,15 @@ class ThemeStorage:
             else:
                 self.storage_path = sp
 
-        self.storage_path.mkdir(exist_ok=True)
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+
+        # Seed a custom, empty directory from the bundled themes before loading
+        if seed_source is not None:
+            source = Path(seed_source)
+            if (source.exists()
+                    and source.resolve() != self.storage_path.resolve()
+                    and _is_empty_dir(self.storage_path)):
+                self._seed_from(source)
 
         # Storage files
         self.current_theme_file = self.storage_path / "current_theme.json"
@@ -132,6 +181,35 @@ class ThemeStorage:
 
         # Load existing data
         self._load_all_data()
+
+    def _seed_from(self, source: Path) -> None:
+        """
+        Copy the contents of ``source`` into this storage directory.
+
+        Existing entries in the storage directory are never overwritten. The
+        caller is responsible for confirming the directory is empty first.
+
+        Args:
+            source: Directory to copy theme files from.
+        """
+        copied = 0
+        try:
+            for item in source.iterdir():
+                dest = self.storage_path / item.name
+                if dest.exists():
+                    continue
+                if item.is_dir():
+                    shutil.copytree(item, dest)
+                else:
+                    shutil.copy2(item, dest)
+                copied += 1
+        except OSError as e:
+            logger.warning(f"Failed to seed themes from {source}: {e}")
+            return
+
+        if copied:
+            self.seeded_from = source
+            logger.info(f"Seeded {copied} theme file(s) from {source}")
 
     def _load_all_data(self) -> None:
         """Load all theme data from storage files."""
@@ -476,6 +554,7 @@ class ThemeStorage:
         """Get information about theme storage."""
         return {
             "storage_path": str(self.storage_path),
+            "seeded_from": str(self.seeded_from) if self.seeded_from else None,
             "current_theme": self._current_theme is not None,
             "ship_configs_count": len(self._ship_configs),
             "history_entries": len(self._theme_history),

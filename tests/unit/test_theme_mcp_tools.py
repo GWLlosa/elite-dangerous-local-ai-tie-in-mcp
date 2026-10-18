@@ -8,6 +8,7 @@ including theme management, crew configuration, and AI integration.
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 from pathlib import Path
+import os
 import tempfile
 
 from src.edcopilot.theme_mcp_tools import ThemeMCPTools
@@ -459,3 +460,41 @@ class TestThemeMCPTools:
         assert result["success"] is True
         # Should use current ship from game state
         assert result["ship_name"] == "Federal Corvette"
+
+
+class TestThemeMCPToolsThemesPath:
+    """Test that ThemeMCPTools honors the configured themes directory."""
+
+    @pytest.fixture
+    def mock_data_store(self):
+        """Create mock data store."""
+        data_store = Mock(spec=DataStore)
+        game_state = Mock(spec=GameState)
+        game_state.current_ship = "Anaconda"
+        game_state.current_system = "Sol"
+        game_state.commander_name = "Test Commander"
+        data_store.get_game_state.return_value = game_state
+        return data_store
+
+    def test_uses_configured_themes_path_and_seeds(self, mock_data_store, tmp_path):
+        """A configured themes directory is used and seeded from the bundled themes."""
+        target = tmp_path / "configured_themes"
+
+        with patch.dict(os.environ, {"ELITE_EDCOPILOT_THEMES_PATH": str(target)}):
+            with patch('src.edcopilot.theme_mcp_tools.EDCoPilotGenerator'):
+                tools = ThemeMCPTools(mock_data_store)
+
+        assert tools.theme_storage.storage_path == target
+        assert (target / "current_theme.json").exists()
+        assert tools.theme_storage.seeded_from is not None
+
+    def test_defaults_to_bundled_themes_when_unset(self, mock_data_store):
+        """With no configured path the bundled themes directory is used."""
+        os.environ.pop("ELITE_EDCOPILOT_THEMES_PATH", None)
+
+        with patch('src.edcopilot.theme_mcp_tools.EDCoPilotGenerator'):
+            tools = ThemeMCPTools(mock_data_store)
+
+        assert tools.theme_storage.storage_path.name == "edcopilot_themes"
+        assert tools.theme_storage.seeded_from is None
+

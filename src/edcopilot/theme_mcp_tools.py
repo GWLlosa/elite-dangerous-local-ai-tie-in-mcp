@@ -10,7 +10,9 @@ import json
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
-from .theme_storage import ThemeStorage, CrewMemberTheme, ShipCrewConfig
+from .theme_storage import (
+    ThemeStorage, CrewMemberTheme, ShipCrewConfig, get_bundled_themes_dir
+)
 from .theme_generator import ThemeGenerator, TemplateValidator
 from .templates import ChatterType
 from .generator import EDCoPilotContentGenerator as EDCoPilotGenerator
@@ -46,13 +48,20 @@ class ThemeMCPTools:
         """
         self.data_store = data_store
 
-        # Initialize theme system components
-        self.theme_storage = ThemeStorage()
+        # Load config to resolve the EDCoPilot paths
+        config = load_config()
+
+        # Initialize theme system components. A custom themes directory is
+        # seeded from the bundled edcopilot_themes when it is empty.
+        self.theme_storage = ThemeStorage(
+            storage_path=config.edcopilot_themes_path,
+            seed_source=get_bundled_themes_dir(),
+        )
         self.theme_generator = ThemeGenerator(self.theme_storage)
 
-        # Load config to get edcopilot_path
-        config = load_config()
-        self.edcopilot_generator = EDCoPilotGenerator(data_store, config.edcopilot_path)
+        self.edcopilot_generator = EDCoPilotGenerator(
+            data_store, config.edcopilot_path, theme_storage=self.theme_storage
+        )
 
         logger.info("Theme MCP tools initialized")
 

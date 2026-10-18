@@ -30,12 +30,14 @@ try:
     from src.journal.parser import JournalParser
     from src.journal.events import EventProcessor
     from src.edcopilot.generator import EDCoPilotContentGenerator
+    from src.edcopilot.theme_storage import ThemeStorage, get_bundled_themes_dir
 except ImportError:
     from ..src.utils.config import EliteConfig
     from ..src.utils.data_store import DataStore
     from ..src.journal.parser import JournalParser
     from ..src.journal.events import EventProcessor
     from ..src.edcopilot.generator import EDCoPilotContentGenerator
+    from ..src.edcopilot.theme_storage import ThemeStorage, get_bundled_themes_dir
 
 
 LOG = logging.getLogger("generate_edcopilot")
@@ -65,6 +67,13 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     # Paths
     parser.add_argument("--journal-path", type=str, help="Override journal directory path")
     parser.add_argument("--edcopilot-path", type=str, help="Override EDCoPilot custom files path")
+    parser.add_argument(
+        "--edcopilot-themes-path",
+        dest="edcopilot_themes_path",
+        type=str,
+        help="Directory for EDCoPilot theme storage (seeded from the bundled "
+             "edcopilot_themes when empty)",
+    )
     parser.add_argument("--output-dir", type=str, help="Alternate output directory (testing)")
 
     # Behavior
@@ -156,8 +165,8 @@ def ingest_journals(journal_path: Path, start_utc: datetime, end_utc: datetime, 
     return count
 
 
-def generate_and_write(data_store: DataStore, output_dir: Path, backup: bool, overwrite: bool, dry_run: bool, selected_types: Optional[List[str]], theme: str, context: str) -> Dict[str, Path]:
-    gen = EDCoPilotContentGenerator(data_store, output_dir)
+def generate_and_write(data_store: DataStore, output_dir: Path, backup: bool, overwrite: bool, dry_run: bool, selected_types: Optional[List[str]], theme: str, context: str, theme_storage: Optional[ThemeStorage] = None) -> Dict[str, Path]:
+    gen = EDCoPilotContentGenerator(data_store, output_dir, theme_storage=theme_storage)
     files = gen.generate_contextual_chatter()
 
     # Filter by types if provided
@@ -226,8 +235,25 @@ def main(argv: Optional[List[str]] = None) -> int:
     edcopilot_path = Path(args.edcopilot_path).expanduser() if args.edcopilot_path else config.edcopilot_path
     output_dir = Path(args.output_dir).expanduser() if args.output_dir else edcopilot_path
 
+    # Resolve the themes directory: CLI flag -> config env var -> unset.
+    # When unset, theme storage is not used (output stays generic).
+    themes_path_str = args.edcopilot_themes_path
+    if themes_path_str is None and config.edcopilot_themes_path is not None:
+        themes_path_str = str(config.edcopilot_themes_path)
+
+    theme_storage: Optional[ThemeStorage] = None
+    if themes_path_str:
+        theme_storage = ThemeStorage(
+            storage_path=Path(themes_path_str).expanduser(),
+            seed_source=get_bundled_themes_dir(),
+        )
+
     LOG.info(f"Journal path: {journal_path}")
     LOG.info(f"Output dir: {output_dir}")
+    if theme_storage is not None:
+        LOG.info(f"Themes path: {theme_storage.storage_path}")
+        if theme_storage.seeded_from is not None:
+            LOG.info(f"Seeded themes from: {theme_storage.seeded_from}")
     LOG.info(f"Window (UTC): {start_utc.isoformat()} -> {end_utc.isoformat()}")
     LOG.info(f"Theme: {args.theme}")
     LOG.info(f"Context: {args.context}")
@@ -253,6 +279,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             selected_types=types_selected,
             theme=args.theme,
             context=args.context,
+            theme_storage=theme_storage,
         )
     except Exception as e:
         LOG.error(f"Generation error: {e}")

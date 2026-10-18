@@ -29,6 +29,7 @@ Content:
 Paths:
 - `--journal-path PATH`  Override auto-detected journal directory
 - `--edcopilot-path PATH`  Override EDCoPilot destination
+- `--edcopilot-themes-path PATH`  Directory for EDCoPilot theme storage. When the directory is empty, it is seeded with a copy of the bundled `edcopilot_themes` contents. Falls back to `ELITE_EDCOPILOT_THEMES_PATH` when the flag is omitted; when neither is set no theme storage is used
 - `--output-dir PATH`  Alternate output directory (testing)
 
 Behavior:
@@ -59,6 +60,11 @@ python scripts/generate_edcopilot.py --from 2025-09-10 --to "2025-09-13 18:00" -
 - Generate only Crew Chatter, overwrite if exists:
 ```
 python scripts/generate_edcopilot.py --hours 48 --types crew --overwrite
+```
+
+- Use a custom themes directory (seeded from the bundled `edcopilot_themes` if empty):
+```
+python scripts/generate_edcopilot.py --hours 48 --edcopilot-themes-path C:\EDCoPilot\themes
 ```
 
 ## Backup Behavior

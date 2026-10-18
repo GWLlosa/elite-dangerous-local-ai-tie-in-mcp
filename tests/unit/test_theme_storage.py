@@ -381,3 +381,102 @@ class TestThemeStorage:
         assert storage.get_current_theme() is None
         assert len(storage.get_all_ship_configs()) == 0
         assert len(storage.get_all_presets()) == 0
+
+
+class TestThemeStorageSeeding:
+    """Test seeding a custom, empty themes directory from a source directory."""
+
+    @pytest.fixture
+    def seed_source(self):
+        """Create a source directory with theme files to seed from."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir)
+            (src / "current_theme.json").write_text(
+                json.dumps({"theme": "seed", "context": "seeded"}),
+                encoding="utf-8",
+            )
+            (src / "ship_configurations.json").write_text("{}", encoding="utf-8")
+            (src / "nested").mkdir()
+            (src / "nested" / "extra.json").write_text("{}", encoding="utf-8")
+            yield src
+
+    def test_missing_custom_dir_is_created_and_seeded(self, tmp_path, seed_source):
+        """A missing custom directory is created and seeded with source files."""
+        target = tmp_path / "custom_themes"
+
+        storage = ThemeStorage(target, seed_source=seed_source)
+
+        assert storage.storage_path == target
+        assert (target / "current_theme.json").exists()
+        assert (target / "ship_configurations.json").exists()
+        assert (target / "nested" / "extra.json").exists()
+        assert storage.seeded_from == seed_source
+        # Seeded data is loaded into memory
+        assert storage.get_current_theme()["theme"] == "seed"
+
+    def test_empty_custom_dir_is_seeded(self, tmp_path, seed_source):
+        """An existing but empty custom directory is seeded."""
+        target = tmp_path / "custom_themes"
+        target.mkdir()
+
+        storage = ThemeStorage(target, seed_source=seed_source)
+
+        assert (target / "current_theme.json").exists()
+        assert storage.seeded_from == seed_source
+
+    def test_custom_dir_with_existing_files_is_not_overwritten(self, tmp_path, seed_source):
+        """A populated custom directory is used as-is; nothing is copied."""
+        target = tmp_path / "custom_themes"
+        target.mkdir()
+        (target / "current_theme.json").write_text(
+            json.dumps({"theme": "existing", "context": "keep"}),
+            encoding="utf-8",
+        )
+
+        storage = ThemeStorage(target, seed_source=seed_source)
+
+        assert storage.seeded_from is None
+        assert storage.get_current_theme()["theme"] == "existing"
+        # Files that were not already present are not copied in
+        assert not (target / "ship_configurations.json").exists()
+
+    def test_no_seeding_without_seed_source(self, tmp_path):
+        """Without a seed source the directory is left untouched."""
+        target = tmp_path / "custom_themes"
+        target.mkdir()
+
+        storage = ThemeStorage(target)
+
+        assert storage.seeded_from is None
+        assert list(target.iterdir()) == []
+
+    def test_self_copy_is_skipped(self, tmp_path, seed_source):
+        """Seeding does not run when the source equals the target."""
+        storage = ThemeStorage(seed_source, seed_source=seed_source)
+
+        assert storage.seeded_from is None
+        # Original file is intact (not copied onto itself)
+        assert (seed_source / "current_theme.json").exists()
+
+    def test_missing_seed_source_is_ignored(self, tmp_path):
+        """A missing seed source is ignored without error."""
+        target = tmp_path / "custom_themes"
+
+        storage = ThemeStorage(target, seed_source=tmp_path / "does_not_exist")
+
+        assert storage.seeded_from is None
+        assert list(target.iterdir()) == []
+
+    def test_storage_info_reports_seed_source(self, tmp_path, seed_source):
+        """get_storage_info reports the directory that was seeded from."""
+        target = tmp_path / "custom_themes"
+
+        storage = ThemeStorage(target, seed_source=seed_source)
+
+        info = storage.get_storage_info()
+        assert info["seeded_from"] == str(seed_source)
+
+    def test_storage_info_seeded_from_none(self, tmp_path):
+        """get_storage_info reports None when nothing was seeded."""
+        storage = ThemeStorage(tmp_path / "custom_themes")
+        assert storage.get_storage_info()["seeded_from"] is None

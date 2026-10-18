@@ -22,7 +22,8 @@ from .templates import (
     SpaceChatterTemplate, CrewChatterTemplate, DeepSpaceChatterTemplate
 )
 from .theme_storage import (
-    ThemeStorage, CrewMemberTheme, ShipCrewConfig, CrewRole
+    ThemeStorage, CrewMemberTheme, ShipCrewConfig, CrewRole,
+    get_bundled_themes_dir, THEMES_DIRNAME
 )
 from .theme_generator import (
     ThemeGenerator, ThemePromptGenerator, TemplateValidator
@@ -46,6 +47,8 @@ __all__ = [
     "CrewMemberTheme",
     "ShipCrewConfig",
     "CrewRole",
+    "get_bundled_themes_dir",
+    "THEMES_DIRNAME",
     "ThemeGenerator",
     "ThemePromptGenerator",
     "TemplateValidator",
